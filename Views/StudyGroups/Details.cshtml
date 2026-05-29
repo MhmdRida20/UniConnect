@@ -1,0 +1,196 @@
+@model UniConnect.Models.StudyGroup
+@{
+    ViewData["Title"] = Model.GroupName;
+    var isMember = (bool)ViewBag.IsMember;
+    var isCreator = (bool)ViewBag.IsCreator;
+    var approved = (int)ViewBag.ApprovedCount;
+    var currentId = ViewBag.CurrentUserId as string;
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="d-flex justify-content-between align-items-start">
+    <div>
+        <h2>@Model.GroupName</h2>
+        <h5 class="text-muted">@Model.Course?.CourseCode — @Model.Course?.CourseName</h5>
+        <p class="text-muted small">
+            Instructor: @Model.Course?.InstructorName ·
+            Created by @Model.Creator?.FullName on @Model.CreatedAt.ToString("MMM dd, yyyy")
+        </p>
+    </div>
+    <div>
+        @if (!isMember)
+        {
+            <form asp-action="Join" asp-route-id="@Model.Id" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-success"
+                        @(Model.Status == UniConnect.Models.StudyGroupStatus.Full ? "disabled" : "")>
+                    Join Group
+                </button>
+            </form>
+        }
+        else if (!isCreator)
+        {
+            <form asp-action="Leave" asp-route-id="@Model.Id" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-danger">Leave Group</button>
+            </form>
+        }
+    </div>
+</div>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-7">
+        <h5>About</h5>
+        <p>@(string.IsNullOrEmpty(Model.Description) ? "No description provided." : Model.Description)</p>
+
+        <p><strong>Meeting Location:</strong> @(Model.MeetingLocation ?? "Not set")</p>
+        <p><strong>Capacity:</strong> @approved / @Model.MaxMembers (minimum @Model.MinMembers)</p>
+        <p>
+            <strong>Status:</strong>
+            <span class="badge bg-secondary">@Model.Status</span>
+        </p>
+
+        <hr />
+        <h5>Group Messages <small class="text-muted" id="liveStatus">(connecting…)</small></h5>
+
+        @if (isMember)
+        {
+            <form id="messageForm" class="mb-3">
+                @Html.AntiForgeryToken()
+                <div class="input-group">
+                    <input type="text" id="messageInput" class="form-control"
+                           maxlength="1000" placeholder="Write a message..." required autocomplete="off" />
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>
+            </form>
+        }
+
+        <div id="messagesList" class="list-group" style="max-height: 400px; overflow-y: auto;">
+            @if (!Model.Messages.Any())
+            {
+                <div id="noMessagesPlaceholder" class="text-muted small">No messages yet.</div>
+            }
+            @foreach (var msg in Model.Messages)
+            {
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>@msg.Sender?.FullName</strong>
+                        <small class="text-muted">@msg.SentAt.ToString("MMM dd, HH:mm")</small>
+                    </div>
+                    <div>@msg.Content</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <h5>Members (@approved)</h5>
+        <ul class="list-group">
+            @foreach (var m in Model.Members
+                        .Where(x => x.Status == UniConnect.Models.MembershipStatus.Approved))
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        @m.User?.FullName
+                        @if (m.UserId == Model.CreatorId)
+                        {
+                            <span class="badge bg-primary ms-1">Creator</span>
+                        }
+                    </span>
+                    <small class="text-muted">@m.JoinedAt.ToString("MMM dd")</small>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+<p class="mt-3">
+    <a asp-action="Index" class="btn btn-link">← Back to study groups</a>
+</p>
+
+@section Scripts {
+    @if (isMember)
+    {
+        <!-- SignalR client library, served by ASP.NET Core automatically -->
+        <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+        <script>
+            // Settings injected from the server-side model
+            const groupId       = @Model.Id;
+            const currentUserId = '@currentId';
+            const messagesList  = document.getElementById('messagesList');
+            const statusLabel   = document.getElementById('liveStatus');
+            const form          = document.getElementById('messageForm');
+            const input         = document.getElementById('messageInput');
+            const placeholder   = document.getElementById('noMessagesPlaceholder');
+
+            // 1) Build the SignalR connection
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl('/studygroupHub')
+                .withAutomaticReconnect()
+                .build();
+
+            // 2) Listen for incoming messages broadcast by the server
+            connection.on('ReceiveMessage', (msg) => {
+                if (placeholder) placeholder.remove();
+                const item = document.createElement('div');
+                item.className = 'list-group-item';
+                item.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <strong></strong>
+                        <small class="text-muted"></small>
+                    </div>
+                    <div class="msg-content"></div>`;
+                item.querySelector('strong').textContent          = msg.senderName;
+                item.querySelector('small').textContent           = msg.sentAt;
+                item.querySelector('.msg-content').textContent    = msg.content;
+                messagesList.appendChild(item);
+                messagesList.scrollTop = messagesList.scrollHeight;
+            });
+
+            // 3) Start the connection and join this study group's room
+            connection.start()
+                .then(() => connection.invoke('JoinGroup', groupId))
+                .then(() => { statusLabel.textContent = '(live)'; statusLabel.classList.add('text-success'); })
+                .catch(err => { statusLabel.textContent = '(offline — refresh needed)'; console.error(err); });
+
+            // 4) Submit messages via fetch instead of a full form post
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const content = input.value.trim();
+                    if (!content) return;
+
+                    const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const fd = new FormData();
+                    fd.append('content', content);
+                    fd.append('__RequestVerificationToken', token);
+
+                    const resp = await fetch('@Url.Action("PostMessage", "StudyGroups", new { id = Model.Id })', {
+                        method: 'POST',
+                        body: fd
+                    });
+                    if (resp.ok) {
+                        input.value = '';
+                    } else {
+                        alert('Could not send message.');
+                    }
+                });
+            }
+
+            // 5) When leaving the page, tell the server to remove us from the room
+            window.addEventListener('beforeunload', () => {
+                connection.invoke('LeaveGroup', groupId).catch(() => {});
+            });
+        </script>
+    }
+}

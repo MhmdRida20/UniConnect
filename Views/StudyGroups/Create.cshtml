@@ -1,0 +1,62 @@
+@model UniConnect.ViewModels.StudyGroupCreateVM
+@{
+    ViewData["Title"] = "Create Study Group";
+}
+
+<h2>Create a Study Group</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="GroupName" class="form-label"></label>
+                <input asp-for="GroupName" class="form-control" />
+                <span asp-validation-for="GroupName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CourseCode" class="form-label"></label>
+                <select asp-for="CourseCode" class="form-select"
+                        asp-items="Model.AvailableCourses">
+                    <option value="">-- Select a course --</option>
+                </select>
+                <span asp-validation-for="CourseCode" class="text-danger"></span>
+                <div class="form-text">Only courses you are enrolled in are shown.</div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <label asp-for="MinMembers" class="form-label"></label>
+                    <input asp-for="MinMembers" class="form-control" />
+                    <span asp-validation-for="MinMembers" class="text-danger"></span>
+                </div>
+                <div class="col">
+                    <label asp-for="MaxMembers" class="form-label"></label>
+                    <input asp-for="MaxMembers" class="form-control" />
+                    <span asp-validation-for="MaxMembers" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3 mt-3">
+                <label asp-for="MeetingLocation" class="form-label"></label>
+                <input asp-for="MeetingLocation" class="form-control"
+                       placeholder="e.g. Library room 204, or Online" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create Group</button>
+            <a asp-action="Index" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

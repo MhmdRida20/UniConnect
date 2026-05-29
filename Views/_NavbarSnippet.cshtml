@@ -1,0 +1,14 @@
+@*
+    PASTE THIS BLOCK into Views/Shared/_Layout.cshtml inside the existing navbar <ul>,
+    between the Home link and the right-side login/register block.
+    Look for the existing line that says:
+        <li class="nav-item"><a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+    and add these <li> elements next to it.
+*@
+
+<li class="nav-item">
+    <a class="nav-link text-dark" asp-controller="StudyGroups" asp-action="Index">Study Groups</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link text-dark" asp-controller="StudyGroups" asp-action="MyCourses">My Courses</a>
+</li>

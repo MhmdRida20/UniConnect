@@ -1,0 +1,45 @@
+@model IEnumerable<UniConnect.Models.Course>
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<h2>My Registered Courses</h2>
+<p class="text-muted">These courses come from your university enrollment record.</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">
+        You have no registered courses. Contact the administrator.
+    </div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Course Code</th>
+                <th>Course Name</th>
+                <th>Instructor</th>
+                <th>Credits</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.CourseCode</td>
+                    <td>@c.CourseName</td>
+                    <td>@c.InstructorName</td>
+                    <td>@c.Credits</td>
+                    <td>
+                        <a asp-action="Index" asp-route-courseCode="@c.CourseCode"
+                           class="btn btn-sm btn-outline-primary">
+                            Study Groups
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,73 @@
+@model IEnumerable<UniConnect.Models.StudyGroup>
+@{
+    ViewData["Title"] = "Study Groups";
+    var currentUserId = ViewBag.CurrentUserId as string;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Study Groups</h2>
+    <a class="btn btn-primary" asp-action="Create">+ Create New Group</a>
+</div>
+
+@if (TempData["Success"] != null) {
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null) {
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-4">
+        <select name="courseCode" class="form-select" asp-items="ViewBag.MyCourses">
+            <option value="">— All my courses —</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No study groups yet for your courses.
+        <a asp-action="Create">Create the first one</a>.
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var g in Model)
+        {
+            var approved = g.Members.Count(m => m.Status == UniConnect.Models.MembershipStatus.Approved);
+            var isMine   = g.Members.Any(m => m.UserId == currentUserId
+                                           && m.Status == UniConnect.Models.MembershipStatus.Approved);
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@g.GroupName</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            @g.Course?.CourseCode — @g.Course?.CourseName
+                        </h6>
+                        <p class="card-text small">@g.Description</p>
+                        <p class="small mb-1">
+                            <strong>Members:</strong> @approved / @g.MaxMembers
+                            @if (g.Status == UniConnect.Models.StudyGroupStatus.Full)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">Full</span>
+                            }
+                        </p>
+                        <p class="small text-muted">Created by @g.Creator?.FullName</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <a asp-action="Details" asp-route-id="@g.Id" class="btn btn-sm btn-outline-primary">View</a>
+                        @if (isMine)
+                        {
+                            <span class="badge bg-success ms-2">Member</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
