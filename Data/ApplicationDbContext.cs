@@ -27,6 +27,9 @@ namespace UniConnect.Data
         public DbSet<StudyGroup> StudyGroups => Set<StudyGroup>();
         public DbSet<StudyGroupMember> StudyGroupMembers => Set<StudyGroupMember>();
         public DbSet<StudyGroupMessage> StudyGroupMessages => Set<StudyGroupMessage>();
+        // Ride Sharing module
+        public DbSet<Ride> Rides => Set<Ride>();
+        public DbSet<RideRequest> RideRequests => Set<RideRequest>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -104,6 +107,25 @@ namespace UniConnect.Data
                 .HasOne(m => m.Sender)
                 .WithMany()
                 .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ----- Ride relationships -----
+            builder.Entity<Ride>()
+                .HasOne(r => r.Driver)
+                .WithMany()
+                .HasForeignKey(r => r.DriverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<RideRequest>()
+                .HasOne(rr => rr.Ride)
+                .WithMany(r => r.Requests)
+                .HasForeignKey(rr => rr.RideId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<RideRequest>()
+                .HasOne(rr => rr.Passenger)
+                .WithMany()
+                .HasForeignKey(rr => rr.PassengerId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

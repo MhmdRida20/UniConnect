@@ -56,6 +56,22 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Mohamed/source/repos/UniConnect/Views/Rides/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmlkZXNcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Mohamed/source/repos/UniConnect/Views/Rides/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmlkZXNcRGV0YWlscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Mohamed/source/repos/UniConnect/Views/Rides/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmlkZXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Mohamed/source/repos/UniConnect/Views/Rides/MyRides.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmlkZXNcTXlSaWRlcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Mohamed/source/repos/UniConnect/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 

@@ -1,0 +1,66 @@
+@model IEnumerable<UniConnect.Models.Ride>
+@{
+    ViewData["Title"] = "Available Rides";
+    var myRequests = ViewBag.MyRequests as List<UniConnect.Models.RideRequest>
+                     ?? new List<UniConnect.Models.RideRequest>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Available Rides</h2>
+    <div>
+        <a class="btn btn-outline-secondary" asp-action="MyRides">My Rides</a>
+        <a class="btn btn-primary" asp-action="Create">+ Offer a Ride</a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null) {
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null) {
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No rides available right now.
+        <a asp-action="Create">Offer one</a>.
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var r in Model)
+        {
+            var alreadyRequested = myRequests.Any(
+                rr => rr.RideId == r.Id
+                   && (rr.Status == UniConnect.Models.RideRequestStatus.Pending
+                    || rr.Status == UniConnect.Models.RideRequestStatus.Accepted));
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            @r.DepartureLocation → @r.Destination
+                        </h5>
+                        <p class="small mb-1">
+                            <strong>Departs:</strong> @r.DepartureTime.ToString("ddd, MMM dd · HH:mm")
+                        </p>
+                        <p class="small mb-1"><strong>Vehicle:</strong> @r.VehicleType</p>
+                        <p class="small mb-1">
+                            <strong>Seats left:</strong> @r.AvailableSeats / @r.TotalSeats
+                        </p>
+                        <p class="small text-muted">Driver: @r.Driver?.FullName</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <a asp-action="Details" asp-route-id="@r.Id"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                        @if (alreadyRequested)
+                        {
+                            <span class="badge bg-info ms-2">Requested</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

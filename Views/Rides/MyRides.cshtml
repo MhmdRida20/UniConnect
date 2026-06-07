@@ -1,0 +1,102 @@
+@model IEnumerable<UniConnect.Models.RideRequest>
+@{
+    ViewData["Title"] = "My Rides";
+    var driving = ViewBag.DrivingRides as List<UniConnect.Models.Ride>
+                  ?? new List<UniConnect.Models.Ride>();
+}
+
+<h2>My Rides</h2>
+
+@if (TempData["Success"] != null) {
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null) {
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<h4 class="mt-4">Rides I'm Driving</h4>
+@if (!driving.Any())
+{
+    <p class="text-muted">You haven't offered any rides yet.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Route</th>
+                <th>Departs</th>
+                <th>Seats</th>
+                <th>Requests</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in driving)
+            {
+                var pending = r.Requests.Count(
+                    x => x.Status == UniConnect.Models.RideRequestStatus.Pending);
+                <tr>
+                    <td>@r.DepartureLocation → @r.Destination</td>
+                    <td>@r.DepartureTime.ToString("MMM dd · HH:mm")</td>
+                    <td>@r.AvailableSeats / @r.TotalSeats</td>
+                    <td>
+                        @if (pending > 0)
+                        {
+                            <span class="badge bg-warning text-dark">@pending pending</span>
+                        }
+                        else { <span class="text-muted">—</span> }
+                    </td>
+                    <td><span class="badge bg-secondary">@r.Status</span></td>
+                    <td><a asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">Manage</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h4 class="mt-5">Rides I've Requested</h4>
+@if (!Model.Any())
+{
+    <p class="text-muted">You haven't requested any rides yet.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Route</th>
+                <th>Driver</th>
+                <th>Departs</th>
+                <th>Pickup</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var rr in Model)
+            {
+                <tr>
+                    <td>@rr.Ride?.DepartureLocation → @rr.Ride?.Destination</td>
+                    <td>@rr.Ride?.Driver?.FullName</td>
+                    <td>@rr.Ride?.DepartureTime.ToString("MMM dd · HH:mm")</td>
+                    <td>@rr.PickupLocation</td>
+                    <td>
+                        @{
+                            var cls = rr.Status switch
+                            {
+                                UniConnect.Models.RideRequestStatus.Accepted => "bg-success",
+                                UniConnect.Models.RideRequestStatus.Rejected => "bg-danger",
+                                UniConnect.Models.RideRequestStatus.Pending  => "bg-warning text-dark",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @cls">@rr.Status</span>
+                    </td>
+                    <td><a asp-action="Details" asp-route-id="@rr.RideId" class="btn btn-sm btn-outline-primary">View</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

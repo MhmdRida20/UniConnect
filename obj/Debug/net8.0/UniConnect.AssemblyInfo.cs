@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UniConnect")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6ee3e5b12bc9a32a0654ecc29dd35ce15cc270b4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+af6bcb439ffdf0909447cad170951bbb535f3c92")]
 [assembly: System.Reflection.AssemblyProductAttribute("UniConnect")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UniConnect")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
