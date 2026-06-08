@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using UniConnect.Data;
 using UniConnect.Models;
 using UniConnect.ViewModels;
+using UniConnect.Services;
 
 namespace UniConnect.Controllers
 {
@@ -20,11 +21,15 @@ namespace UniConnect.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IGeocodingService _geocoder;
 
-        public RidesController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public RidesController(ApplicationDbContext db,
+                               UserManager<ApplicationUser> userManager,
+                               IGeocodingService geocoder)
         {
             _db = db;
             _userManager = userManager;
+            _geocoder = geocoder;
         }
 
         // ---------- INDEX: browse available rides (FR-09) -------------------------
@@ -82,17 +87,25 @@ namespace UniConnect.Controllers
 
             var ride = new Ride
             {
-                DriverId          = user.Id,
+                DriverId = user.Id,
                 DepartureLocation = vm.DepartureLocation.Trim(),
-                Destination       = vm.Destination.Trim(),
-                DepartureTime     = vm.DepartureTime,
-                VehicleType       = vm.VehicleType.Trim(),
-                TotalSeats        = vm.TotalSeats,
-                AvailableSeats    = vm.TotalSeats,   // all seats free at creation (FR-15)
-                Status            = RideStatus.Active,
-                Notes             = vm.Notes?.Trim(),
-                CreatedAt         = DateTime.UtcNow
+                Destination = vm.Destination.Trim(),
+                DepartureTime = vm.DepartureTime,
+                VehicleType = vm.VehicleType.Trim(),
+                TotalSeats = vm.TotalSeats,
+                AvailableSeats = vm.TotalSeats,   // all seats free at creation (FR-15)
+                Status = RideStatus.Active,
+                Notes = vm.Notes?.Trim(),
+                CreatedAt = DateTime.UtcNow
             };
+
+            // Geocode the addresses into coordinates for the map
+            var dep = await _geocoder.GeocodeAsync(ride.DepartureLocation);
+            if (dep.HasValue) { ride.DepartureLat = dep.Value.lat; ride.DepartureLng = dep.Value.lng; }
+
+            var dest = await _geocoder.GeocodeAsync(ride.Destination);
+            if (dest.HasValue) { ride.DestinationLat = dest.Value.lat; ride.DestinationLng = dest.Value.lng; }
+
             _db.Rides.Add(ride);
             await _db.SaveChangesAsync();
 
@@ -166,14 +179,20 @@ namespace UniConnect.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            _db.RideRequests.Add(new RideRequest
+            var newRequest = new RideRequest
             {
-                RideId         = id,
-                PassengerId    = user.Id,
+                RideId = id,
+                PassengerId = user.Id,
                 PickupLocation = pickupLocation.Trim(),
-                Status         = RideRequestStatus.Pending,
-                RequestedAt    = DateTime.UtcNow
-            });
+                Status = RideRequestStatus.Pending,
+                RequestedAt = DateTime.UtcNow
+            };
+
+            // Geocode the pickup location for the map
+            var pick = await _geocoder.GeocodeAsync(newRequest.PickupLocation);
+            if (pick.HasValue) { newRequest.PickupLat = pick.Value.lat; newRequest.PickupLng = pick.Value.lng; }
+
+            _db.RideRequests.Add(newRequest);
             await _db.SaveChangesAsync();
 
             TempData["Success"] = "Ride request sent to the driver.";

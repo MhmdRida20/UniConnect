@@ -31,6 +31,10 @@ namespace UniConnect.Models
         [Display(Name = "Pickup Location")]
         public string PickupLocation { get; set; } = string.Empty;
 
+        // Pickup coordinates for the map.
+        public double? PickupLat { get; set; }
+        public double? PickupLng { get; set; }
+
         public RideRequestStatus Status { get; set; } = RideRequestStatus.Pending;
 
         [Display(Name = "Requested On")]

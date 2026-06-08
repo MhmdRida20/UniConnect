@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using UniConnect.Data;
 using UniConnect.Models;
 using UniConnect.Hubs;
-
+using UniConnect.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Database ---------------------------------------------------------------
@@ -39,6 +39,8 @@ builder.Services
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
+// Geocoding service (text address → coordinates) using a typed HttpClient
+builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>();
 
 var app = builder.Build();
 

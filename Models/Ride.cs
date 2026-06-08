@@ -57,6 +57,12 @@ namespace UniConnect.Models
 
         [StringLength(300)]
         public string? Notes { get; set; }
+        // Coordinates for the map (filled by geocoding; nullable so old rows are fine).
+        // Ready for a future click-picker that writes accurate values here.
+        public double? DepartureLat { get; set; }
+        public double? DepartureLng { get; set; }
+        public double? DestinationLat { get; set; }
+        public double? DestinationLng { get; set; }
 
         // Navigation: requests made for this ride
         public virtual ICollection<RideRequest> Requests { get; set; } = new List<RideRequest>();
