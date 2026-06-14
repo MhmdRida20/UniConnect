@@ -5,192 +5,175 @@
     var isCreator = (bool)ViewBag.IsCreator;
     var approved = (int)ViewBag.ApprovedCount;
     var currentId = ViewBag.CurrentUserId as string;
+    var isFull = Model.Status == UniConnect.Models.StudyGroupStatus.Full;
+    var currentName = Model.Members.FirstOrDefault(m => m.UserId == currentId)?.User?.FullName ?? "";
+
+    string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 1 ? parts[0][..1].ToUpper()
+            : (parts[0][..1] + parts[^1][..1]).ToUpper();
+    }
 }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/study-group-details.css" asp-append-version="true" />
 }
 
-<div class="d-flex justify-content-between align-items-start">
-    <div>
-        <h2>@Model.GroupName</h2>
-        <h5 class="text-muted">@Model.Course?.CourseCode — @Model.Course?.CourseName</h5>
-        <p class="text-muted small">
-            Instructor: @Model.Course?.InstructorName ·
-            Created by @Model.Creator?.FullName on @Model.CreatedAt.ToString("MMM dd, yyyy")
+@if (TempData["Success"] != null) { <div class="alert alert-success uc-flash">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger uc-flash">@TempData["Error"]</div> }
+
+<a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to study groups</a>
+
+@* ── Group header ── *@
+<div class="sgd-header">
+    <div class="sgd-header-main">
+        <span class="uc-pill uc-pill-green mb-2"><span class="dot"></span>@Model.Course?.CourseCode — @Model.Course?.CourseName</span>
+        <h1>@Model.GroupName</h1>
+        <p class="sgd-header-meta">
+            <span><i class="bi bi-person-circle"></i> Created by @Model.Creator?.FullName</span>
+            <span><i class="bi bi-calendar3"></i> @Model.CreatedAt.ToString("MMM dd, yyyy")</span>
+            @if (!string.IsNullOrWhiteSpace(Model.Course?.InstructorName))
+            {
+                <span><i class="bi bi-mortarboard"></i> @Model.Course?.InstructorName</span>
+            }
         </p>
     </div>
-    <div>
+    <div class="sgd-header-action">
         @if (!isMember)
         {
-            <form asp-action="Join" asp-route-id="@Model.Id" method="post" class="d-inline">
+            <form asp-action="Join" asp-route-id="@Model.Id" method="post" data-loading>
                 @Html.AntiForgeryToken()
-                <button class="btn btn-success"
-                        @(Model.Status == UniConnect.Models.StudyGroupStatus.Full ? "disabled" : "")>
-                    Join Group
+                <button class="btn btn-primary btn-lg" @(isFull ? "disabled" : "") data-loading-text="Joining…">
+                    <i class="bi bi-plus-circle me-1"></i>@(isFull ? "Group Full" : "Join Group")
                 </button>
             </form>
         }
         else if (!isCreator)
         {
-            <form asp-action="Leave" asp-route-id="@Model.Id" method="post" class="d-inline">
+            <form asp-action="Leave" asp-route-id="@Model.Id" method="post"
+                  data-confirm="Leave this study group?">
                 @Html.AntiForgeryToken()
-                <button class="btn btn-outline-danger">Leave Group</button>
+                <button class="btn btn-outline-danger"><i class="bi bi-box-arrow-left me-1"></i>Leave Group</button>
             </form>
+        }
+        else
+        {
+            <span class="uc-pill uc-pill-green"><i class="bi bi-star-fill"></i>You created this group</span>
         }
     </div>
 </div>
 
-<hr />
+<div class="row g-4 sgd-body">
+    @* ── Left: info + chat ── *@
+    <div class="col-lg-8">
+        @* Stat tiles *@
+        <div class="sgd-stats">
+            <div class="sgd-stat">
+                <span class="sgd-stat-ico" style="background:#dcfce7;color:#15803d;"><i class="bi bi-people-fill"></i></span>
+                <div><span class="sgd-stat-val">@approved / @Model.MaxMembers</span><span class="sgd-stat-lbl">Members</span></div>
+            </div>
+            <div class="sgd-stat">
+                <span class="sgd-stat-ico" style="background:#ccfbf1;color:#0f766e;"><i class="bi bi-geo-alt-fill"></i></span>
+                <div><span class="sgd-stat-val">@(string.IsNullOrWhiteSpace(Model.MeetingLocation) ? "Not set" : Model.MeetingLocation)</span><span class="sgd-stat-lbl">Meeting spot</span></div>
+            </div>
+            <div class="sgd-stat">
+                <span class="sgd-stat-ico" style="background:#fef3c7;color:#92400e;"><i class="bi bi-flag-fill"></i></span>
+                <div><span class="sgd-stat-val">@Model.Status</span><span class="sgd-stat-lbl">Status</span></div>
+            </div>
+        </div>
 
-<div class="row">
-    <div class="col-md-7">
-        <h5>About</h5>
-        <p>@(string.IsNullOrEmpty(Model.Description) ? "No description provided." : Model.Description)</p>
+        @* About *@
+        <div class="sgd-panel">
+            <h2 class="sgd-panel-title"><i class="bi bi-info-circle"></i> About this group</h2>
+            <p class="sgd-about">@(string.IsNullOrEmpty(Model.Description) ? "No description provided." : Model.Description)</p>
+            <p class="sgd-meta-line"><strong>Minimum to run:</strong> @Model.MinMembers members</p>
+        </div>
 
-        <p><strong>Meeting Location:</strong> @(Model.MeetingLocation ?? "Not set")</p>
-        <p><strong>Capacity:</strong> @approved / @Model.MaxMembers (minimum @Model.MinMembers)</p>
-        <p>
-            <strong>Status:</strong>
-            <span class="badge bg-secondary">@Model.Status</span>
-        </p>
+        @* Chat *@
+        <div class="sgd-panel sgd-chat-panel"
+             data-group-id="@Model.Id"
+             data-current-name="@currentName"
+             data-post-url="@Url.Action("PostMessage", "StudyGroups", new { id = Model.Id })">
+            <h2 class="sgd-panel-title">
+                <i class="bi bi-chat-dots"></i> Group Chat
+                <span class="sgd-live" id="liveStatus"><span class="sgd-live-dot"></span>connecting…</span>
+            </h2>
 
-        <hr />
-        <h5>Group Messages <small class="text-muted" id="liveStatus">(connecting…)</small></h5>
-
-        @if (isMember)
-        {
-            <form id="messageForm" class="mb-3">
-                @Html.AntiForgeryToken()
-                <div class="input-group">
-                    <input type="text" id="messageInput" class="form-control"
-                           maxlength="1000" placeholder="Write a message..." required autocomplete="off" />
-                    <button type="submit" class="btn btn-primary">Send</button>
-                </div>
-            </form>
-        }
-
-        <div id="messagesList" class="list-group" style="max-height: 400px; overflow-y: auto;">
-            @if (!Model.Messages.Any())
-            {
-                <div id="noMessagesPlaceholder" class="text-muted small">No messages yet.</div>
-            }
-            @foreach (var msg in Model.Messages)
-            {
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <strong>@msg.Sender?.FullName</strong>
-                        <small class="text-muted">@msg.SentAt.ToString("MMM dd, HH:mm")</small>
+            <div id="messagesList" class="sgd-messages">
+                @if (!Model.Messages.Any())
+                {
+                    <div id="noMessagesPlaceholder" class="sgd-chat-empty">
+                        <i class="bi bi-chat-square-text"></i>
+                        <span>No messages yet. @(isMember ? "Say hello!" : "Join the group to start chatting.")</span>
                     </div>
-                    <div>@msg.Content</div>
+                }
+                @foreach (var msg in Model.Messages)
+                {
+                    var mine = msg.SenderId == currentId;
+                    <div class="sgd-msg @(mine ? "is-mine" : "")">
+                        <span class="sgd-avatar">@Initials(msg.Sender?.FullName)</span>
+                        <div class="sgd-bubble">
+                            <div class="sgd-bubble-head">
+                                <strong>@(mine ? "You" : msg.Sender?.FullName)</strong>
+                                <small>@msg.SentAt.ToString("MMM dd, HH:mm")</small>
+                            </div>
+                            <div class="sgd-bubble-text">@msg.Content</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (isMember)
+            {
+                <form id="messageForm" class="sgd-composer">
+                    @Html.AntiForgeryToken()
+                    <input type="text" id="messageInput" class="form-control" maxlength="1000"
+                           placeholder="Write a message…" required autocomplete="off" />
+                    <button type="submit" class="btn btn-primary" aria-label="Send message">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="sgd-join-hint">
+                    <i class="bi bi-lock"></i> Join this group to take part in the chat.
                 </div>
             }
         </div>
     </div>
 
-    <div class="col-md-5">
-        <h5>Members (@approved)</h5>
-        <ul class="list-group">
-            @foreach (var m in Model.Members
-                        .Where(x => x.Status == UniConnect.Models.MembershipStatus.Approved))
-            {
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>
-                        @m.User?.FullName
+    @* ── Right: members ── *@
+    <div class="col-lg-4">
+        <div class="sgd-panel sgd-members">
+            <h2 class="sgd-panel-title"><i class="bi bi-people"></i> Members <span class="sgd-count">@approved</span></h2>
+            <ul class="sgd-member-list">
+                @foreach (var m in Model.Members.Where(x => x.Status == UniConnect.Models.MembershipStatus.Approved))
+                {
+                    var isOwn = m.UserId == currentId;
+                    <li class="sgd-member @(isOwn ? "is-own" : "")">
+                        <span class="sgd-avatar">@Initials(m.User?.FullName)</span>
+                        <div class="sgd-member-info">
+                            <strong>@m.User?.FullName @(isOwn ? "(You)" : "")</strong>
+                            <small>Joined @m.JoinedAt.ToString("MMM dd")</small>
+                        </div>
                         @if (m.UserId == Model.CreatorId)
                         {
-                            <span class="badge bg-primary ms-1">Creator</span>
+                            <span class="uc-pill uc-pill-green ms-auto"><i class="bi bi-star-fill"></i>Creator</span>
                         }
-                    </span>
-                    <small class="text-muted">@m.JoinedAt.ToString("MMM dd")</small>
-                </li>
-            }
-        </ul>
+                    </li>
+                }
+            </ul>
+        </div>
     </div>
 </div>
-
-<p class="mt-3">
-    <a asp-action="Index" class="btn btn-link">← Back to study groups</a>
-</p>
 
 @section Scripts {
     @if (isMember)
     {
-        <!-- SignalR client library, served by ASP.NET Core automatically -->
         <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
-        <script>
-            // Settings injected from the server-side model
-            const groupId       = @Model.Id;
-            const currentUserId = '@currentId';
-            const messagesList  = document.getElementById('messagesList');
-            const statusLabel   = document.getElementById('liveStatus');
-            const form          = document.getElementById('messageForm');
-            const input         = document.getElementById('messageInput');
-            const placeholder   = document.getElementById('noMessagesPlaceholder');
-
-            // 1) Build the SignalR connection
-            const connection = new signalR.HubConnectionBuilder()
-                .withUrl('/studygroupHub')
-                .withAutomaticReconnect()
-                .build();
-
-            // 2) Listen for incoming messages broadcast by the server
-            connection.on('ReceiveMessage', (msg) => {
-                if (placeholder) placeholder.remove();
-                const item = document.createElement('div');
-                item.className = 'list-group-item';
-                item.innerHTML = `
-                    <div class="d-flex justify-content-between">
-                        <strong></strong>
-                        <small class="text-muted"></small>
-                    </div>
-                    <div class="msg-content"></div>`;
-                item.querySelector('strong').textContent          = msg.senderName;
-                item.querySelector('small').textContent           = msg.sentAt;
-                item.querySelector('.msg-content').textContent    = msg.content;
-                messagesList.appendChild(item);
-                messagesList.scrollTop = messagesList.scrollHeight;
-            });
-
-            // 3) Start the connection and join this study group's room
-            connection.start()
-                .then(() => connection.invoke('JoinGroup', groupId))
-                .then(() => { statusLabel.textContent = '(live)'; statusLabel.classList.add('text-success'); })
-                .catch(err => { statusLabel.textContent = '(offline — refresh needed)'; console.error(err); });
-
-            // 4) Submit messages via fetch instead of a full form post
-            if (form) {
-                form.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const content = input.value.trim();
-                    if (!content) return;
-
-                    const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
-                    const fd = new FormData();
-                    fd.append('content', content);
-                    fd.append('__RequestVerificationToken', token);
-
-                    const resp = await fetch('@Url.Action("PostMessage", "StudyGroups", new { id = Model.Id })', {
-                        method: 'POST',
-                        body: fd
-                    });
-                    if (resp.ok) {
-                        input.value = '';
-                    } else {
-                        alert('Could not send message.');
-                    }
-                });
-            }
-
-            // 5) When leaving the page, tell the server to remove us from the room
-            window.addEventListener('beforeunload', () => {
-                connection.invoke('LeaveGroup', groupId).catch(() => {});
-            });
-        </script>
+        <script src="~/js/pages/study-group-details.js" asp-append-version="true"></script>
     }
 }

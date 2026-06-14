@@ -1,8 +1,180 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@using Microsoft.AspNetCore.Identity
+@using UniConnect.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    ViewData["Title"] = "Home";
+    var signedIn = SignInManager.IsSignedIn(User);
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home.css" asp-append-version="true" />
+}
+
+<div class="home">
+
+    @* ─────────────────────────── HERO ─────────────────────────── *@
+    <section class="home-hero uc-hero">
+        <div class="uc-hero-inner row align-items-center g-4">
+            <div class="col-lg-7">
+                <p class="uc-eyebrow"><i class="bi bi-stars"></i>Your campus, connected</p>
+                <h1 class="uc-hero-title">
+                    Study together.<br />Ride together.<br />
+                    <span class="home-hero-accent">Succeed together.</span>
+                </h1>
+                <p class="uc-hero-sub mb-4">
+                    UniConnect brings your courses, study groups, and campus carpools into one
+                    friendly place — so you spend less time organising and more time learning.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    @if (signedIn)
+                    {
+                        <a class="btn btn-light btn-lg home-cta-light" asp-controller="StudyGroups" asp-action="Index">
+                            <i class="bi bi-people me-1"></i>Browse Study Groups
+                        </a>
+                        <a class="btn btn-outline-light btn-lg" asp-controller="Rides" asp-action="Index">
+                            <i class="bi bi-car-front me-1"></i>Find a Ride
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-light btn-lg home-cta-light" asp-area="Identity" asp-page="/Account/Register">
+                            <i class="bi bi-person-plus me-1"></i>Get Started — it's free
+                        </a>
+                        <a class="btn btn-outline-light btn-lg" asp-area="Identity" asp-page="/Account/Login">
+                            Log in
+                        </a>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="home-hero-card">
+                    <div class="home-hero-card-row">
+                        <span class="home-hero-card-ico" style="background:#dcfce7;color:#15803d;"><i class="bi bi-people-fill"></i></span>
+                        <div>
+                            <strong>Calculus Crew</strong>
+                            <small>MAT201 · 4 members · meeting tonight</small>
+                        </div>
+                        <span class="uc-pill uc-pill-green ms-auto">Live</span>
+                    </div>
+                    <div class="home-hero-card-row">
+                        <span class="home-hero-card-ico" style="background:#ccfbf1;color:#0f766e;"><i class="bi bi-geo-alt-fill"></i></span>
+                        <div>
+                            <strong>Hamra → Main Gate</strong>
+                            <small>Today 08:30 · 2 seats left</small>
+                        </div>
+                        <span class="uc-pill uc-pill-blue ms-auto">Ride</span>
+                    </div>
+                    <div class="home-hero-card-row">
+                        <span class="home-hero-card-ico" style="background:#fef3c7;color:#92400e;"><i class="bi bi-journal-check"></i></span>
+                        <div>
+                            <strong>5 courses</strong>
+                            <small>15 credits · Fall 2026</small>
+                        </div>
+                        <span class="uc-pill uc-pill-amber ms-auto">You</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ─────────────────────────── STATS ─────────────────────────── *@
+    <section class="home-stats container-fluid px-0">
+        <div class="row g-3 justify-content-center">
+            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-num" data-count="1200">0</span><span class="home-stat-label">Students connected</span></div></div>
+            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-num" data-count="340">0</span><span class="home-stat-label">Study groups</span></div></div>
+            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-num" data-count="890">0</span><span class="home-stat-label">Rides shared</span></div></div>
+            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-num" data-count="48">0</span><span class="home-stat-label">Courses covered</span></div></div>
+        </div>
+    </section>
+
+    @* ─────────────────────────── FEATURES ─────────────────────────── *@
+    <section class="home-section">
+        <div class="uc-section-head text-center">
+            <p class="home-kicker">What you can do</p>
+            <h2>Everything you need, in one place</h2>
+            <p class="uc-section-sub">Three tools built around how students actually work together.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <a class="home-feature uc-reveal" asp-controller="StudyGroups" asp-action="Index">
+                    <span class="home-feature-ico" style="--f:#16a34a;--fb:#dcfce7;"><i class="bi bi-people-fill"></i></span>
+                    <h3>Study Groups</h3>
+                    <p>Create or join groups for your courses, chat in real time, and keep everyone on the same page.</p>
+                    <span class="home-feature-link">Explore groups <i class="bi bi-arrow-right"></i></span>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a class="home-feature uc-reveal" asp-controller="Rides" asp-action="Index">
+                    <span class="home-feature-ico" style="--f:#0d9488;--fb:#ccfbf1;"><i class="bi bi-car-front-fill"></i></span>
+                    <h3>Campus Rides</h3>
+                    <p>Offer a seat or request a pickup. See routes on a live map and split the commute with classmates.</p>
+                    <span class="home-feature-link">Find a ride <i class="bi bi-arrow-right"></i></span>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a class="home-feature uc-reveal" asp-controller="StudyGroups" asp-action="MyCourses">
+                    <span class="home-feature-ico" style="--f:#ca8a04;--fb:#fef9c3;"><i class="bi bi-journal-bookmark-fill"></i></span>
+                    <h3>My Courses</h3>
+                    <p>All your enrolled courses, searchable and filterable, each linked straight to its study groups.</p>
+                    <span class="home-feature-link">View courses <i class="bi bi-arrow-right"></i></span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    @* ─────────────────────────── HOW IT WORKS ─────────────────────────── *@
+    <section class="home-section home-steps">
+        <div class="uc-section-head text-center">
+            <p class="home-kicker">How it works</p>
+            <h2>Up and running in three steps</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="home-step uc-reveal">
+                    <span class="home-step-num">1</span>
+                    <h4>Pick your courses</h4>
+                    <p>Your enrolment syncs automatically, so your courses are ready the moment you sign in.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="home-step uc-reveal">
+                    <span class="home-step-num">2</span>
+                    <h4>Join or create</h4>
+                    <p>Spin up a study group or offer a ride in seconds. Classmates can request to join instantly.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="home-step uc-reveal">
+                    <span class="home-step-num">3</span>
+                    <h4>Connect &amp; go</h4>
+                    <p>Chat live, coordinate pickups on the map, and meet up — on campus or on the road.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ─────────────────────────── CTA ─────────────────────────── *@
+    <section class="home-cta uc-reveal">
+        <div class="home-cta-inner">
+            <h2>Ready to connect with your campus?</h2>
+            <p>Join your classmates already studying smarter and commuting together on UniConnect.</p>
+            @if (signedIn)
+            {
+                <a class="btn btn-light btn-lg home-cta-light" asp-controller="StudyGroups" asp-action="Index">
+                    Go to my dashboard <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            }
+            else
+            {
+                <a class="btn btn-light btn-lg home-cta-light" asp-area="Identity" asp-page="/Account/Register">
+                    Create your free account <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            }
+        </div>
+    </section>
 </div>
+
+@section Scripts {
+    <script src="~/js/pages/home.js" asp-append-version="true"></script>
+}

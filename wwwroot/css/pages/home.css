@@ -1,0 +1,160 @@
+/* ==========================================================================
+   Home / landing page
+   ========================================================================== */
+
+.home-hero { padding-bottom: 3.25rem; }
+.home-hero-accent {
+    background: linear-gradient(90deg, #bbf7d0, #86efac);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Floating preview card in the hero */
+.home-hero-card {
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: var(--uc-radius-lg);
+    padding: 1rem;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+    animation: ucCardIn .6s ease both;
+}
+.home-hero-card-row {
+    display: flex; align-items: center; gap: .75rem;
+    background: #fff;
+    border-radius: var(--uc-radius);
+    padding: .8rem .9rem;
+    margin-bottom: .65rem;
+    box-shadow: var(--uc-shadow);
+    transition: transform var(--uc-transition);
+}
+.home-hero-card-row:last-child { margin-bottom: 0; }
+.home-hero-card-row:hover { transform: translateX(4px); }
+.home-hero-card-row strong { display: block; color: var(--uc-text); font-size: .92rem; }
+.home-hero-card-row small { color: var(--uc-muted); font-size: .76rem; }
+.home-hero-card-ico {
+    width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+}
+
+.home-cta-light {
+    font-weight: 700;
+    color: var(--uc-primary-darker) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+.home-cta-light:hover { color: var(--uc-primary-deep) !important; }
+
+/* ── Stats strip ── */
+.home-stats {
+    margin-top: -2.25rem;
+    position: relative; z-index: 5;
+    margin-bottom: 1rem;
+}
+.home-stat {
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow-md);
+    padding: 1.25rem 1rem;
+    text-align: center;
+    height: 100%;
+}
+.home-stat-num {
+    display: block;
+    font-size: 1.9rem; font-weight: 800;
+    color: var(--uc-primary-dark);
+    letter-spacing: -.03em; line-height: 1;
+}
+.home-stat-label {
+    display: block; margin-top: .3rem;
+    font-size: .78rem; font-weight: 600;
+    color: var(--uc-muted);
+    text-transform: uppercase; letter-spacing: .04em;
+}
+
+/* ── Sections ── */
+.home-section { padding: 3.25rem 0 1rem; }
+.home-kicker {
+    color: var(--uc-primary);
+    font-size: .76rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .12em;
+    margin-bottom: .35rem;
+}
+
+/* ── Feature cards ── */
+.home-feature {
+    display: block; height: 100%;
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius-lg);
+    padding: 1.75rem;
+    box-shadow: var(--uc-shadow);
+    color: inherit;
+    transition: transform var(--uc-transition), box-shadow var(--uc-transition), border-color var(--uc-transition);
+}
+.home-feature:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--uc-shadow-lg);
+    border-color: #bbf7d0;
+    color: inherit;
+}
+.home-feature-ico {
+    width: 54px; height: 54px; border-radius: 15px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin-bottom: 1rem;
+    color: var(--f); background: var(--fb);
+}
+.home-feature h3 { font-size: 1.15rem; margin-bottom: .5rem; }
+.home-feature p { color: var(--uc-muted); font-size: .9rem; margin-bottom: 1rem; }
+.home-feature-link {
+    font-weight: 700; font-size: .88rem; color: var(--uc-primary-dark);
+    display: inline-flex; align-items: center; gap: .35rem;
+    transition: gap var(--uc-transition);
+}
+.home-feature:hover .home-feature-link { gap: .65rem; }
+
+/* ── Steps ── */
+.home-step {
+    height: 100%;
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    padding: 1.75rem 1.5rem;
+    box-shadow: var(--uc-shadow-xs);
+    position: relative;
+}
+.home-step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; border-radius: 12px;
+    background: var(--uc-primary-soft); color: var(--uc-primary-darker);
+    font-weight: 800; font-size: 1.2rem; margin-bottom: 1rem;
+}
+.home-step h4 { font-size: 1.05rem; margin-bottom: .45rem; }
+.home-step p { color: var(--uc-muted); font-size: .9rem; margin: 0; }
+
+/* ── CTA banner ── */
+.home-cta { padding: 2rem 0 1rem; }
+.home-cta-inner {
+    background: linear-gradient(135deg, var(--uc-primary-darker), var(--uc-primary));
+    border-radius: var(--uc-radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #fff;
+    box-shadow: var(--uc-shadow-lg);
+    position: relative; overflow: hidden;
+}
+.home-cta-inner::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, .08) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+}
+.home-cta-inner > * { position: relative; z-index: 1; }
+.home-cta-inner h2 { color: #fff; margin-bottom: .5rem; }
+.home-cta-inner p { color: rgba(255, 255, 255, .8); margin-bottom: 1.5rem; }
+
+@media (max-width: 575.98px) {
+    .home-stats { margin-top: -1.5rem; }
+    .home-stat-num { font-size: 1.55rem; }
+    .home-cta-inner { padding: 2.25rem 1.25rem; }
+}

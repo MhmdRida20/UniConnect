@@ -1,0 +1,65 @@
+/* ==========================================================================
+   Static / utility pages — Privacy + Error
+   ========================================================================== */
+
+/* ── Privacy ── */
+.static-page { max-width: 800px; margin: 0 auto; padding-top: 1.5rem; }
+.static-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.static-ico {
+    width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #fff;
+    background: linear-gradient(135deg, var(--uc-primary-light), var(--uc-primary-dark));
+    box-shadow: var(--uc-shadow-green);
+}
+.static-head h1 { font-size: 1.7rem; margin: 0; }
+.static-head p { color: var(--uc-muted); margin: .15rem 0 0; font-size: .88rem; }
+
+.static-card {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius-lg); box-shadow: var(--uc-shadow);
+    padding: 2rem;
+}
+.static-card .lead {
+    font-size: 1.05rem; color: var(--uc-text-soft); line-height: 1.6; margin-bottom: 1.75rem;
+}
+.static-card h2 {
+    font-size: 1.1rem; margin: 1.75rem 0 .6rem;
+    display: flex; align-items: center; gap: .5rem;
+}
+.static-card h2 i { color: var(--uc-primary); }
+.static-card p { color: var(--uc-text-soft); line-height: 1.7; font-size: .94rem; margin-bottom: .5rem; }
+.static-note {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--uc-primary-tint); border: 1px solid #bbf7d0; border-radius: var(--uc-radius);
+    font-size: .88rem; color: var(--uc-primary-darker);
+    display: flex; gap: .6rem; align-items: flex-start;
+}
+.static-note i { color: var(--uc-primary); font-size: 1.1rem; flex-shrink: 0; }
+
+/* ── Error ── */
+.error-page {
+    max-width: 560px; margin: 2rem auto; text-align: center;
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius-lg); box-shadow: var(--uc-shadow-md);
+    padding: 3rem 2rem;
+}
+.error-ico {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 76px; height: 76px; border-radius: 50%;
+    background: #fef2f2; color: var(--uc-danger); font-size: 2.2rem; margin-bottom: 1.25rem;
+}
+.error-page h1 { font-size: 1.6rem; margin-bottom: .5rem; }
+.error-page > p { color: var(--uc-muted); font-size: .95rem; max-width: 42ch; margin: 0 auto 1.5rem; }
+.error-reqid { font-size: .82rem; color: var(--uc-muted); }
+.error-reqid code { color: var(--uc-danger); }
+.error-actions { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+
+.error-dev {
+    margin-top: 2rem; text-align: left;
+    border-top: 1px solid var(--uc-border-soft); padding-top: 1.25rem;
+}
+.error-dev summary {
+    cursor: pointer; font-weight: 600; font-size: .88rem; color: var(--uc-primary-dark);
+}
+.error-dev p { color: var(--uc-muted); font-size: .85rem; line-height: 1.6; margin-top: .75rem; }
+.error-dev code { background: var(--uc-primary-tint); padding: .1rem .35rem; border-radius: 4px; color: var(--uc-primary-darker); }

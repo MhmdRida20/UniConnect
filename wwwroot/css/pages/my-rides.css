@@ -1,0 +1,45 @@
+/* ==========================================================================
+   My Rides — tabbed driving / requested tables
+   ========================================================================== */
+
+.mr-head {
+    display: flex; flex-wrap: wrap; gap: 1rem;
+    align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+.mr-head h1 { font-size: 1.6rem; margin: 0; }
+
+/* ── Tabs ── */
+.mr-tabs {
+    display: inline-flex; gap: .25rem; padding: .3rem;
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); box-shadow: var(--uc-shadow-xs);
+    margin-bottom: 1.25rem;
+}
+.mr-tab {
+    border: none; background: transparent; cursor: pointer;
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .5rem 1rem; border-radius: var(--uc-radius-sm);
+    font-size: .88rem; font-weight: 600; color: var(--uc-muted);
+    transition: background var(--uc-transition), color var(--uc-transition);
+}
+.mr-tab:hover { color: var(--uc-primary-dark); background: var(--uc-primary-tint); }
+.mr-tab.active { background: var(--uc-primary); color: #fff; box-shadow: 0 2px 8px rgba(22, 163, 74, .25); }
+.mr-tab-count {
+    font-size: .72rem; font-weight: 700; padding: .05rem .45rem; border-radius: 99px;
+    background: rgba(0, 0, 0, .08);
+}
+.mr-tab.active .mr-tab-count { background: rgba(255, 255, 255, .25); }
+
+.mr-panel { animation: ucCardIn .35s ease both; }
+
+.mr-route {
+    font-weight: 600; color: var(--uc-text);
+    display: inline-flex; align-items: center; gap: .4rem;
+}
+.mr-route i { color: var(--uc-primary); }
+
+@media (max-width: 575.98px) {
+    .mr-tabs { display: flex; width: 100%; }
+    .mr-tab { flex: 1; justify-content: center; }
+}

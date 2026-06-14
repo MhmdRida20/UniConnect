@@ -3,60 +3,100 @@
     ViewData["Title"] = "Create Study Group";
 }
 
-<h2>Create a Study Group</h2>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
+}
 
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="form-page">
+    <nav aria-label="breadcrumb">
+        <a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to study groups</a>
+    </nav>
 
-            <div class="mb-3">
-                <label asp-for="GroupName" class="form-label"></label>
-                <input asp-for="GroupName" class="form-control" />
-                <span asp-validation-for="GroupName" class="text-danger"></span>
+    <div class="form-page-head">
+        <span class="form-page-ico"><i class="bi bi-people-fill"></i></span>
+        <div>
+            <h1>Create a Study Group</h1>
+            <p>Set up a space for your course and invite classmates to join.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="uc-form-card">
+                <form asp-action="Create" method="post" data-loading novalidate>
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="GroupName" class="form-label"></label>
+                        <input asp-for="GroupName" class="form-control" placeholder="e.g. Calculus Crew" autofocus />
+                        <span asp-validation-for="GroupName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CourseCode" class="form-label"></label>
+                        <select asp-for="CourseCode" class="form-select" asp-items="Model.AvailableCourses">
+                            <option value="">-- Select a course --</option>
+                        </select>
+                        <span asp-validation-for="CourseCode" class="text-danger"></span>
+                        <div class="form-text"><i class="bi bi-info-circle me-1"></i>Only courses you're enrolled in are shown.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3" maxlength="500"
+                                  placeholder="What will this group focus on? When do you plan to meet?"></textarea>
+                        <div class="d-flex justify-content-between">
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                            <small class="form-text ms-auto" id="descCount">0 / 500</small>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label asp-for="MinMembers" class="form-label"></label>
+                            <input asp-for="MinMembers" class="form-control" type="number" min="2" max="50" />
+                            <span asp-validation-for="MinMembers" class="text-danger"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="MaxMembers" class="form-label"></label>
+                            <input asp-for="MaxMembers" class="form-control" type="number" min="2" max="50" />
+                            <span asp-validation-for="MaxMembers" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <label asp-for="MeetingLocation" class="form-label"></label>
+                        <div class="input-icon">
+                            <i class="bi bi-geo-alt"></i>
+                            <input asp-for="MeetingLocation" class="form-control" placeholder="e.g. Library room 204, or Online" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary" data-loading-text="Creating…">
+                            <i class="bi bi-check-lg me-1"></i>Create Group
+                        </button>
+                        <a asp-action="Index" class="btn btn-link">Cancel</a>
+                    </div>
+                </form>
             </div>
+        </div>
 
-            <div class="mb-3">
-                <label asp-for="CourseCode" class="form-label"></label>
-                <select asp-for="CourseCode" class="form-select"
-                        asp-items="Model.AvailableCourses">
-                    <option value="">-- Select a course --</option>
-                </select>
-                <span asp-validation-for="CourseCode" class="text-danger"></span>
-                <div class="form-text">Only courses you are enrolled in are shown.</div>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <label asp-for="MinMembers" class="form-label"></label>
-                    <input asp-for="MinMembers" class="form-control" />
-                    <span asp-validation-for="MinMembers" class="text-danger"></span>
-                </div>
-                <div class="col">
-                    <label asp-for="MaxMembers" class="form-label"></label>
-                    <input asp-for="MaxMembers" class="form-control" />
-                    <span asp-validation-for="MaxMembers" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="mb-3 mt-3">
-                <label asp-for="MeetingLocation" class="form-label"></label>
-                <input asp-for="MeetingLocation" class="form-control"
-                       placeholder="e.g. Library room 204, or Online" />
-            </div>
-
-            <button type="submit" class="btn btn-primary">Create Group</button>
-            <a asp-action="Index" class="btn btn-link">Cancel</a>
-        </form>
+        <div class="col-lg-5">
+            <aside class="form-aside">
+                <h2><i class="bi bi-lightbulb-fill"></i> Tips for a great group</h2>
+                <ul>
+                    <li><strong>Be specific.</strong> A clear name and focus help the right classmates find you.</li>
+                    <li><strong>Set a realistic size.</strong> Smaller groups (4–6) tend to stay active and focused.</li>
+                    <li><strong>Pick a spot.</strong> Whether it's the library or online, let people know where you'll meet.</li>
+                    <li><strong>You're the creator.</strong> You'll be added automatically and can chat with members in real time.</li>
+                </ul>
+            </aside>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
 }

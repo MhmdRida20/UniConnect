@@ -1,0 +1,77 @@
+/* ==========================================================================
+   Rides — index list with route-styled cards
+   ========================================================================== */
+
+.rides-header { padding-bottom: 2.5rem; }
+.rides-body { margin-top: 1.25rem; }
+
+.rides-controls {
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+.rides-controls .sg-results { margin-top: .75rem; }
+
+/* ── Card ── */
+.ride-card {
+    padding: 1.35rem;
+    display: flex; flex-direction: column; height: 100%;
+    animation: ucCardIn .45s ease both;
+}
+.ride-card-head {
+    display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap;
+}
+.ride-vehicle {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: var(--uc-primary-tint); color: var(--uc-primary-darker);
+    padding: .3rem .7rem; border-radius: 99px;
+    font-size: .78rem; font-weight: 700;
+}
+.ride-vehicle i { color: var(--uc-primary); }
+
+/* ── Route visual ── */
+.ride-route { display: flex; gap: .8rem; margin-bottom: 1rem; }
+.ride-route-line {
+    display: flex; flex-direction: column; align-items: center;
+    padding-top: 5px; flex-shrink: 0;
+}
+.ride-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.ride-dot-start { background: var(--uc-primary); box-shadow: 0 0 0 3px var(--uc-primary-soft); }
+.ride-dot-end { background: var(--uc-danger); box-shadow: 0 0 0 3px #fee2e2; }
+.ride-dash { width: 2px; flex: 1; min-height: 26px; background:
+    repeating-linear-gradient(to bottom, var(--uc-border) 0 4px, transparent 4px 8px); margin: 2px 0; }
+.ride-route-text { display: flex; flex-direction: column; justify-content: space-between; gap: .9rem; min-width: 0; flex: 1; }
+.ride-stop { min-width: 0; }
+.ride-stop-label { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--uc-muted); font-weight: 600; }
+.ride-stop strong { font-size: .92rem; color: var(--uc-text); display: block;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Meta ── */
+.ride-meta {
+    display: flex; flex-direction: column; gap: .3rem;
+    font-size: .8rem; color: var(--uc-muted);
+    border-top: 1px solid var(--uc-border-soft); padding-top: .85rem; margin-bottom: .85rem;
+}
+.ride-meta i { color: var(--uc-primary); margin-right: .25rem; }
+.ride-meta span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Seats ── */
+.ride-seats { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+.ride-seats-label { font-size: .78rem; font-weight: 600; color: var(--uc-text-soft); display: inline-flex; align-items: center; gap: .25rem; }
+.ride-seats-label i { color: var(--uc-primary); }
+.ride-seats-pips { display: inline-flex; gap: 3px; flex: 1; flex-wrap: wrap; }
+.ride-pip { width: 14px; height: 8px; border-radius: 3px; background: var(--uc-border); }
+.ride-pip.is-open { background: var(--uc-primary); }
+.ride-seats-count { font-size: .8rem; font-weight: 700; color: var(--uc-text); margin-left: auto; }
+
+/* search wrap reuse from study-groups markup */
+.sg-search-wrap { position: relative; }
+.sg-search-wrap i {
+    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
+    color: var(--uc-muted); pointer-events: none;
+}
+.sg-search-wrap .form-control { padding-left: 2.4rem; }
+.sg-results { font-size: .82rem; color: var(--uc-muted); }

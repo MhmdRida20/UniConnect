@@ -3,64 +3,107 @@
     ViewData["Title"] = "Offer a Ride";
 }
 
-<h2>Offer a Ride</h2>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
+}
 
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="form-page">
+    <nav aria-label="breadcrumb">
+        <a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to rides</a>
+    </nav>
 
-            <div class="mb-3">
-                <label asp-for="DepartureLocation" class="form-label"></label>
-                <input asp-for="DepartureLocation" class="form-control"
-                       placeholder="e.g. Hamra, Beirut" />
-                <span asp-validation-for="DepartureLocation" class="text-danger"></span>
+    <div class="form-page-head">
+        <span class="form-page-ico"><i class="bi bi-car-front-fill"></i></span>
+        <div>
+            <h1>Offer a Ride</h1>
+            <p>Share your trip with classmates and split the commute.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="uc-form-card">
+                <form asp-action="Create" method="post" data-loading novalidate>
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="DepartureLocation" class="form-label"></label>
+                        <div class="input-icon">
+                            <i class="bi bi-geo-alt"></i>
+                            <input asp-for="DepartureLocation" class="form-control" placeholder="e.g. Hamra, Beirut" autofocus />
+                        </div>
+                        <span asp-validation-for="DepartureLocation" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Destination" class="form-label"></label>
+                        <div class="input-icon">
+                            <i class="bi bi-flag"></i>
+                            <input asp-for="Destination" class="form-control" placeholder="e.g. University Main Gate" />
+                        </div>
+                        <span asp-validation-for="Destination" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="DepartureTime" class="form-label"></label>
+                        <input asp-for="DepartureTime" class="form-control" type="datetime-local" />
+                        <span asp-validation-for="DepartureTime" class="text-danger"></span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-sm-7">
+                            <label asp-for="VehicleType" class="form-label"></label>
+                            <select asp-for="VehicleType" class="form-select">
+                                <option value="">-- Select --</option>
+                                <option>Sedan</option>
+                                <option>SUV</option>
+                                <option>Hatchback</option>
+                                <option>Van</option>
+                                <option>Motorcycle</option>
+                            </select>
+                            <span asp-validation-for="VehicleType" class="text-danger"></span>
+                        </div>
+                        <div class="col-sm-5">
+                            <label asp-for="TotalSeats" class="form-label"></label>
+                            <input asp-for="TotalSeats" class="form-control" type="number" min="1" max="8" />
+                            <span asp-validation-for="TotalSeats" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <label asp-for="Notes" class="form-label"></label>
+                        <textarea asp-for="Notes" class="form-control" rows="2" maxlength="300"
+                                  placeholder="e.g. Leaving on time, small bag space only"></textarea>
+                        <div class="d-flex justify-content-end">
+                            <small class="form-text" id="descCount">0 / 300</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary" data-loading-text="Posting…">
+                            <i class="bi bi-check-lg me-1"></i>Create Ride
+                        </button>
+                        <a asp-action="Index" class="btn btn-link">Cancel</a>
+                    </div>
+                </form>
             </div>
+        </div>
 
-            <div class="mb-3">
-                <label asp-for="Destination" class="form-label"></label>
-                <input asp-for="Destination" class="form-control"
-                       placeholder="e.g. University Main Gate" />
-                <span asp-validation-for="Destination" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="DepartureTime" class="form-label"></label>
-                <input asp-for="DepartureTime" class="form-control" type="datetime-local" />
-                <span asp-validation-for="DepartureTime" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="VehicleType" class="form-label"></label>
-                <select asp-for="VehicleType" class="form-select">
-                    <option value="">-- Select --</option>
-                    <option>Sedan</option>
-                    <option>SUV</option>
-                    <option>Hatchback</option>
-                    <option>Van</option>
-                    <option>Motorcycle</option>
-                </select>
-                <span asp-validation-for="VehicleType" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="TotalSeats" class="form-label"></label>
-                <input asp-for="TotalSeats" class="form-control" type="number" min="1" max="8" />
-                <span asp-validation-for="TotalSeats" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Notes" class="form-label"></label>
-                <textarea asp-for="Notes" class="form-control" rows="2"
-                          placeholder="e.g. Leaving on time, small bag space only"></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Create Ride</button>
-            <a asp-action="Index" class="btn btn-link">Cancel</a>
-        </form>
+        <div class="col-lg-5">
+            <aside class="form-aside">
+                <h2><i class="bi bi-shield-check"></i> Before you post</h2>
+                <ul>
+                    <li><strong>Double-check the time.</strong> Passengers plan around your departure, so be precise.</li>
+                    <li><strong>Set honest seat counts.</strong> Only offer seats you can actually fill comfortably.</li>
+                    <li><strong>Add helpful notes.</strong> Mention luggage space, stops, or anything riders should know.</li>
+                    <li><strong>You stay in control.</strong> You approve each request before anyone joins your ride.</li>
+                </ul>
+            </aside>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
 }

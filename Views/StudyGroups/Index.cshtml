@@ -2,72 +2,147 @@
 @{
     ViewData["Title"] = "Study Groups";
     var currentUserId = ViewBag.CurrentUserId as string;
+    var groups = Model.ToList();
+    var openCount = groups.Count(g => g.Status != UniConnect.Models.StudyGroupStatus.Full);
+    var mineCount = groups.Count(g => g.Members.Any(m => m.UserId == currentUserId
+                                          && m.Status == UniConnect.Models.MembershipStatus.Approved));
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Study Groups</h2>
-    <a class="btn btn-primary" asp-action="Create">+ Create New Group</a>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/study-groups.css" asp-append-version="true" />
+}
+
+@* ── Header ── *@
+<div class="sg-header uc-hero">
+    <div class="uc-hero-inner d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+        <div>
+            <p class="uc-eyebrow"><i class="bi bi-people-fill"></i>Collaborate</p>
+            <h1 class="uc-hero-title mb-1">Study Groups</h1>
+            <p class="uc-hero-sub">
+                @groups.Count group@(groups.Count == 1 ? "" : "s") for your courses ·
+                @openCount open · @mineCount you're in
+            </p>
+        </div>
+        <a class="btn btn-light home-cta-light fw-bold" asp-action="Create">
+            <i class="bi bi-plus-lg me-1"></i>Create New Group
+        </a>
+    </div>
 </div>
 
-@if (TempData["Success"] != null) {
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null) {
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
+<div class="container-fluid px-0 sg-body">
 
-<form method="get" class="row g-2 mb-4">
-    <div class="col-md-4">
-        <select name="courseCode" class="form-select" asp-items="ViewBag.MyCourses">
-            <option value="">— All my courses —</option>
-        </select>
-    </div>
-    <div class="col-md-2">
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
-    </div>
-</form>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success uc-flash">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger uc-flash">@TempData["Error"]</div>
+    }
 
-@if (!Model.Any())
-{
-    <div class="alert alert-info">
-        No study groups yet for your courses.
-        <a asp-action="Create">Create the first one</a>.
-    </div>
-}
-else
-{
-    <div class="row">
-        @foreach (var g in Model)
-        {
-            var approved = g.Members.Count(m => m.Status == UniConnect.Models.MembershipStatus.Approved);
-            var isMine   = g.Members.Any(m => m.UserId == currentUserId
-                                           && m.Status == UniConnect.Models.MembershipStatus.Approved);
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">@g.GroupName</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            @g.Course?.CourseCode — @g.Course?.CourseName
-                        </h6>
-                        <p class="card-text small">@g.Description</p>
-                        <p class="small mb-1">
-                            <strong>Members:</strong> @approved / @g.MaxMembers
-                            @if (g.Status == UniConnect.Models.StudyGroupStatus.Full)
-                            {
-                                <span class="badge bg-warning text-dark ms-1">Full</span>
-                            }
-                        </p>
-                        <p class="small text-muted">Created by @g.Creator?.FullName</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <a asp-action="Details" asp-route-id="@g.Id" class="btn btn-sm btn-outline-primary">View</a>
-                        @if (isMine)
-                        {
-                            <span class="badge bg-success ms-2">Member</span>
-                        }
-                    </div>
+    @* ── Controls ── *@
+    <div class="sg-controls">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" for="sgSearch">Search</label>
+                <div class="sg-search-wrap">
+                    <i class="bi bi-search"></i>
+                    <input id="sgSearch" type="text" class="form-control" autocomplete="off"
+                           placeholder="Search by name, course, or creator…" aria-label="Search groups" />
                 </div>
             </div>
-        }
+            <form method="get" class="col-md-7">
+                <div class="row g-2 align-items-end">
+                    <div class="col-sm">
+                        <label class="form-label" for="courseCode">Filter by course</label>
+                        <select id="courseCode" name="courseCode" class="form-select" asp-items="ViewBag.MyCourses"
+                                onchange="this.form.submit()">
+                            <option value="">— All my courses —</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-auto">
+                        <button class="btn btn-outline-primary w-100" type="submit">
+                            <i class="bi bi-funnel me-1"></i>Apply
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
+
+    @if (!groups.Any())
+    {
+        <div class="uc-empty mt-4">
+            <span class="uc-empty-icon"><i class="bi bi-people"></i></span>
+            <h5>No study groups yet</h5>
+            <p>There are no groups for your courses right now. Be the first to start one!</p>
+            <a class="btn btn-primary mt-3" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Create the first group</a>
+        </div>
+    }
+    else
+    {
+        <p class="sg-results" id="sgResults">Showing <strong>@groups.Count</strong> of @groups.Count group@(groups.Count == 1 ? "" : "s")</p>
+
+        <div class="row g-3" id="sgGrid">
+            @{ var idx = 0; }
+            @foreach (var g in groups)
+            {
+                var approved = g.Members.Count(m => m.Status == UniConnect.Models.MembershipStatus.Approved);
+                var isMine = g.Members.Any(m => m.UserId == currentUserId
+                                             && m.Status == UniConnect.Models.MembershipStatus.Approved);
+                var isFull = g.Status == UniConnect.Models.StudyGroupStatus.Full;
+                var pct = g.MaxMembers > 0 ? (int)Math.Round(100.0 * approved / g.MaxMembers) : 0;
+                var searchKey = ((g.GroupName ?? "") + " " + (g.Course?.CourseCode ?? "") + " "
+                                + (g.Course?.CourseName ?? "") + " " + (g.Creator?.FullName ?? "")).ToLower();
+                <div class="col-12 col-sm-6 col-xl-4 sg-col" data-search="@searchKey">
+                    <div class="sg-card uc-card uc-hover-lift" style="animation-delay:@(idx * 60)ms">
+                        <div class="sg-card-top">
+                            <span class="uc-pill uc-pill-green"><span class="dot"></span>@g.Course?.CourseCode</span>
+                            @if (isFull)
+                            {
+                                <span class="uc-pill uc-pill-amber">Full</span>
+                            }
+                            else
+                            {
+                                <span class="uc-pill uc-pill-grey">@(g.MaxMembers - approved) seat@(g.MaxMembers - approved == 1 ? "" : "s") left</span>
+                            }
+                        </div>
+
+                        <h3 class="sg-card-title">@g.GroupName</h3>
+                        <p class="sg-card-course">@g.Course?.CourseName</p>
+                        <p class="sg-card-desc">@(string.IsNullOrWhiteSpace(g.Description) ? "No description provided." : g.Description)</p>
+
+                        <div class="sg-progress" title="@approved of @g.MaxMembers members">
+                            <div class="sg-progress-bar" style="width:@pct%"></div>
+                        </div>
+                        <div class="sg-card-meta">
+                            <span><i class="bi bi-people-fill"></i> @approved / @g.MaxMembers</span>
+                            <span><i class="bi bi-person-circle"></i> @g.Creator?.FullName</span>
+                        </div>
+
+                        <div class="sg-card-foot">
+                            <a asp-action="Details" asp-route-id="@g.Id" class="btn btn-primary btn-sm flex-grow-1">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>View group
+                            </a>
+                            @if (isMine)
+                            {
+                                <span class="uc-pill uc-pill-green ms-2"><i class="bi bi-check-circle-fill"></i>Member</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                idx++;
+            }
+        </div>
+
+        <div id="sgEmpty" class="uc-empty mt-3 hidden">
+            <span class="uc-empty-icon"><i class="bi bi-search"></i></span>
+            <h5>No matches</h5>
+            <p>No groups match your search. Try a different keyword.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/study-groups.js" asp-append-version="true"></script>
 }

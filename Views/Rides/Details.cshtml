@@ -3,245 +3,230 @@
     ViewData["Title"] = "Ride Details";
     var isDriver = (bool)ViewBag.IsDriver;
     var myRequest = ViewBag.MyRequest as UniConnect.Models.RideRequest;
+
+    string StatusPill(UniConnect.Models.RideStatus s) => s switch
+    {
+        UniConnect.Models.RideStatus.Active => "uc-pill-green",
+        UniConnect.Models.RideStatus.Full => "uc-pill-amber",
+        UniConnect.Models.RideStatus.Completed => "uc-pill-blue",
+        _ => "uc-pill-grey"
+    };
+
+    // Build the points the map should plot, server-side, as plain JSON.
+    var mapPoints = new List<object>();
+    if (Model.DepartureLat.HasValue && Model.DepartureLng.HasValue)
+    {
+        mapPoints.Add(new { lat = Model.DepartureLat.Value, lng = Model.DepartureLng.Value,
+            label = "Departure: " + Model.DepartureLocation, color = "green" });
+    }
+    if (Model.DestinationLat.HasValue && Model.DestinationLng.HasValue)
+    {
+        mapPoints.Add(new { lat = Model.DestinationLat.Value, lng = Model.DestinationLng.Value,
+            label = "Destination: " + Model.Destination, color = "red" });
+    }
+    if (isDriver)
+    {
+        foreach (var req in Model.Requests.Where(r =>
+            r.Status == UniConnect.Models.RideRequestStatus.Accepted
+            && r.PickupLat.HasValue && r.PickupLng.HasValue))
+        {
+            mapPoints.Add(new { lat = req.PickupLat!.Value, lng = req.PickupLng!.Value,
+                label = "Pickup: " + (req.Passenger?.FullName ?? "Passenger"), color = "blue" });
+        }
+    }
 }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="~/css/pages/ride-details.css" asp-append-version="true" />
 }
 
-<div class="d-flex justify-content-between align-items-start">
-    <div>
-        <h2>@Model.DepartureLocation → @Model.Destination</h2>
-        <p class="text-muted">
-            Driver: @Model.Driver?.FullName ·
-            Departs @Model.DepartureTime.ToString("dddd, MMM dd · HH:mm")
+@if (TempData["Success"] != null) { <div class="alert alert-success uc-flash">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger uc-flash">@TempData["Error"]</div> }
+
+<a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to rides</a>
+
+@* ── Header ── *@
+<div class="rd-header">
+    <div class="rd-route">
+        <span class="ride-vehicle"><i class="bi bi-car-front"></i>@Model.VehicleType</span>
+        <h1>
+            @Model.DepartureLocation
+            <i class="bi bi-arrow-right rd-arrow"></i>
+            @Model.Destination
+        </h1>
+        <p class="rd-subtitle">
+            <span><i class="bi bi-person-badge"></i> @Model.Driver?.FullName</span>
+            <span><i class="bi bi-calendar-event"></i> @Model.DepartureTime.ToString("dddd, MMM dd · HH:mm")</span>
         </p>
     </div>
-    <span class="badge bg-secondary fs-6 align-self-center">@Model.Status</span>
+    <span class="uc-pill @StatusPill(Model.Status) rd-status">@Model.Status</span>
 </div>
 
-<hr />
+@* ── Map ── *@
+<div class="rd-map-wrap">
+    <div id="rideMap" class="rd-map"></div>
+    <div class="rd-map-legend">
+        <span><span class="rd-leg rd-leg-green"></span>Departure</span>
+        <span><span class="rd-leg rd-leg-red"></span>Destination</span>
+        @if (isDriver) { <span><span class="rd-leg rd-leg-blue"></span>Pickups</span> }
+    </div>
+</div>
+<script type="application/json" id="rideMapData">@Html.Raw(Json.Serialize(mapPoints))</script>
 
-@* ---------- MAP ---------- *@
-<div id="rideMap" style="height: 350px; border-radius: 8px; margin-bottom: 1rem;
-     border: 1px solid #ddd;"></div>
-
-<div class="row">
-    <div class="col-md-6">
-        <h5>Ride Info</h5>
-        <p><strong>Vehicle:</strong> @Model.VehicleType</p>
-        <p><strong>Seats:</strong> @Model.AvailableSeats available of @Model.TotalSeats</p>
-        @if (!string.IsNullOrEmpty(Model.Notes))
-        {
-            <p><strong>Notes:</strong> @Model.Notes</p>
-        }
-
-        @* ---------- DRIVER CONTROLS ---------- *@
-        @if (isDriver)
-        {
-            <div class="mt-3">
-                @if (Model.Status == UniConnect.Models.RideStatus.Active
-               || Model.Status == UniConnect.Models.RideStatus.Full)
-                {
-                    <form asp-action="CompleteRide" asp-route-id="@Model.Id" method="post" class="d-inline">
-                        @Html.AntiForgeryToken()
-                        <button class="btn btn-success btn-sm">Mark Completed</button>
-                    </form>
-                    <form asp-action="CancelRide" asp-route-id="@Model.Id" method="post" class="d-inline"
-                          onsubmit="return confirm('Cancel this ride? All passengers will be notified.');">
-                        @Html.AntiForgeryToken()
-                        <button class="btn btn-outline-danger btn-sm">Cancel Ride</button>
-                    </form>
-                }
+<div class="row g-4 mt-1">
+    @* ── Ride info + controls ── *@
+    <div class="col-lg-6">
+        <div class="rd-panel">
+            <h2 class="rd-panel-title"><i class="bi bi-info-circle"></i> Ride Info</h2>
+            <div class="rd-info-grid">
+                <div class="rd-info"><span class="rd-info-lbl">Vehicle</span><span class="rd-info-val">@Model.VehicleType</span></div>
+                <div class="rd-info"><span class="rd-info-lbl">Seats available</span><span class="rd-info-val">@Model.AvailableSeats of @Model.TotalSeats</span></div>
+                <div class="rd-info"><span class="rd-info-lbl">Departs</span><span class="rd-info-val">@Model.DepartureTime.ToString("MMM dd, HH:mm")</span></div>
+                <div class="rd-info"><span class="rd-info-lbl">Status</span><span class="rd-info-val">@Model.Status</span></div>
             </div>
-        }
-        else
-        {
-            @* ---------- PASSENGER CONTROLS ---------- *@
-            @if (myRequest == null)
+            @if (!string.IsNullOrEmpty(Model.Notes))
             {
-                @if (Model.Status == UniConnect.Models.RideStatus.Active && Model.AvailableSeats > 0)
+                <div class="rd-notes"><i class="bi bi-chat-left-quote"></i> @Model.Notes</div>
+            }
+
+            @* ── Driver controls ── *@
+            @if (isDriver)
+            {
+                @if (Model.Status == UniConnect.Models.RideStatus.Active
+                   || Model.Status == UniConnect.Models.RideStatus.Full)
                 {
-                    <div class="card mt-3">
-                        <div class="card-body">
-                            <h6>Request a seat</h6>
-                            <form asp-action="RequestRide" asp-route-id="@Model.Id" method="post">
+                    <div class="rd-actions">
+                        <form asp-action="CompleteRide" asp-route-id="@Model.Id" method="post" class="d-inline" data-loading>
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-success btn-sm"><i class="bi bi-check2-circle me-1"></i>Mark Completed</button>
+                        </form>
+                        <form asp-action="CancelRide" asp-route-id="@Model.Id" method="post" class="d-inline"
+                              data-confirm="Cancel this ride? All passengers will be notified.">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle me-1"></i>Cancel Ride</button>
+                        </form>
+                    </div>
+                }
+            }
+            else
+            {
+                @* ── Passenger controls ── *@
+                @if (myRequest == null)
+                {
+                    @if (Model.Status == UniConnect.Models.RideStatus.Active && Model.AvailableSeats > 0)
+                    {
+                        <div class="rd-request-box">
+                            <h3><i class="bi bi-hand-index-thumb"></i> Request a seat</h3>
+                            <form asp-action="RequestRide" asp-route-id="@Model.Id" method="post" data-loading>
                                 @Html.AntiForgeryToken()
-                                <div class="mb-2">
-                                    <label class="form-label">Your pickup location</label>
-                                    <input type="text" name="pickupLocation" class="form-control"
-                                           maxlength="150" required placeholder="Where should the driver pick you up?" />
+                                <label class="form-label">Your pickup location</label>
+                                <div class="input-icon">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <input type="text" name="pickupLocation" class="form-control" maxlength="150"
+                                           required placeholder="Where should the driver pick you up?" />
                                 </div>
-                                <button class="btn btn-primary btn-sm">Send Request</button>
+                                <button class="btn btn-primary btn-sm mt-3" data-loading-text="Sending…">
+                                    <i class="bi bi-send me-1"></i>Send Request
+                                </button>
                             </form>
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mt-3 mb-0">This ride is not accepting requests.</div>
+                    }
                 }
                 else
                 {
-                    <div class="alert alert-warning mt-3">This ride is not accepting requests.</div>
+                    var pillCls = myRequest.Status switch
+                    {
+                        UniConnect.Models.RideRequestStatus.Accepted => "uc-pill-green",
+                        UniConnect.Models.RideRequestStatus.Rejected => "uc-pill-red",
+                        UniConnect.Models.RideRequestStatus.Pending => "uc-pill-amber",
+                        _ => "uc-pill-grey"
+                    };
+                    <div class="rd-request-status">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-semibold">Your request</span>
+                            <span class="uc-pill @pillCls">@myRequest.Status</span>
+                        </div>
+                        <p class="mb-2 small text-muted"><i class="bi bi-geo-alt"></i> Pickup: @myRequest.PickupLocation</p>
+                        @if (myRequest.Status == UniConnect.Models.RideRequestStatus.Pending
+                           || myRequest.Status == UniConnect.Models.RideRequestStatus.Accepted)
+                        {
+                            <form asp-action="CancelRequest" asp-route-requestId="@myRequest.Id" method="post"
+                                  data-confirm="Cancel your seat request?">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle me-1"></i>Cancel Request</button>
+                            </form>
+                        }
+                    </div>
                 }
             }
-            else
-            {
-                <div class="alert alert-info mt-3">
-                    Your request status:
-                    <strong>@myRequest.Status</strong>
-                    (pickup: @myRequest.PickupLocation)
-                    @if (myRequest.Status == UniConnect.Models.RideRequestStatus.Pending
-                   || myRequest.Status == UniConnect.Models.RideRequestStatus.Accepted)
-                    {
-                        <form asp-action="CancelRequest" asp-route-requestId="@myRequest.Id"
-                              method="post" class="d-inline ms-2">
-                            @Html.AntiForgeryToken()
-                            <button class="btn btn-outline-danger btn-sm">Cancel Request</button>
-                        </form>
-                    }
-                </div>
-            }
-        }
+        </div>
     </div>
 
-    @* ---------- REQUEST LIST (driver sees & manages; UC-05) ---------- *@
+    @* ── Driver: request management ── *@
     @if (isDriver)
     {
-        <div class="col-md-6">
-            <h5>Ride Requests</h5>
-            @{
-                var requests = Model.Requests
-                .Where(r => r.Status != UniConnect.Models.RideRequestStatus.Cancelled)
-                .OrderBy(r => r.RequestedAt).ToList();
-            }
-            @if (!requests.Any())
-            {
-                <p class="text-muted">No requests yet.</p>
-            }
-            else
-            {
-                <ul class="list-group">
-                    @foreach (var req in requests)
-                    {
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>@req.Passenger?.FullName</strong><br />
-                                    <small class="text-muted">Pickup: @req.PickupLocation</small>
+        var requests = Model.Requests
+            .Where(r => r.Status != UniConnect.Models.RideRequestStatus.Cancelled)
+            .OrderBy(r => r.RequestedAt).ToList();
+        var pendingCount = requests.Count(r => r.Status == UniConnect.Models.RideRequestStatus.Pending);
+        <div class="col-lg-6">
+            <div class="rd-panel">
+                <h2 class="rd-panel-title">
+                    <i class="bi bi-inbox"></i> Ride Requests
+                    @if (pendingCount > 0) { <span class="rd-pending-badge">@pendingCount pending</span> }
+                </h2>
+                @if (!requests.Any())
+                {
+                    <div class="rd-empty-req"><i class="bi bi-inbox"></i> No requests yet.</div>
+                }
+                else
+                {
+                    <ul class="rd-req-list">
+                        @foreach (var req in requests)
+                        {
+                            <li class="rd-req">
+                                <div class="rd-req-info">
+                                    <strong>@req.Passenger?.FullName</strong>
+                                    <small><i class="bi bi-geo-alt"></i> @req.PickupLocation</small>
                                 </div>
-                                <div class="text-end">
+                                <div class="rd-req-action">
                                     @if (req.Status == UniConnect.Models.RideRequestStatus.Pending)
                                     {
-                                        <form asp-action="AcceptRequest" asp-route-requestId="@req.Id"
-                                              method="post" class="d-inline">
+                                        <form asp-action="AcceptRequest" asp-route-requestId="@req.Id" method="post" class="d-inline" data-loading>
                                             @Html.AntiForgeryToken()
-                                            <button class="btn btn-success btn-sm">Accept</button>
+                                            <button class="btn btn-success btn-sm" title="Accept"><i class="bi bi-check-lg"></i></button>
                                         </form>
-                                        <form asp-action="RejectRequest" asp-route-requestId="@req.Id"
-                                              method="post" class="d-inline">
+                                        <form asp-action="RejectRequest" asp-route-requestId="@req.Id" method="post" class="d-inline" data-loading>
                                             @Html.AntiForgeryToken()
-                                            <button class="btn btn-outline-danger btn-sm">Reject</button>
+                                            <button class="btn btn-outline-danger btn-sm" title="Reject"><i class="bi bi-x-lg"></i></button>
                                         </form>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary">@req.Status</span>
+                                        var c = req.Status switch
+                                        {
+                                            UniConnect.Models.RideRequestStatus.Accepted => "uc-pill-green",
+                                            UniConnect.Models.RideRequestStatus.Rejected => "uc-pill-red",
+                                            _ => "uc-pill-grey"
+                                        };
+                                        <span class="uc-pill @c">@req.Status</span>
                                     }
                                 </div>
-                            </div>
-                        </li>
-                    }
-                </ul>
-            }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
         </div>
     }
 </div>
 
-<p class="mt-3">
-    <a asp-action="Index" class="btn btn-link">← Back to rides</a>
-</p>
-
 @section Scripts {
-    <!-- Leaflet CSS + JS from CDN (free, no API key) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // Build the list of points to plot, from server-side data.
-        const points = [];
-
-        @if (Model.DepartureLat.HasValue && Model.DepartureLng.HasValue)
-        {
-            <text>
-                points.push({
-                    lat: @Model.DepartureLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    lng: @Model.DepartureLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    label: 'Departure: @Html.Raw(Json.Serialize(Model.DepartureLocation))'.replace(/^"|"$/g,''),
-                    color: 'green'
-                });
-            </text>
-        }
-
-        @if (Model.DestinationLat.HasValue && Model.DestinationLng.HasValue)
-        {
-            <text>
-                points.push({
-                    lat: @Model.DestinationLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    lng: @Model.DestinationLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    label: 'Destination: @Html.Raw(Json.Serialize(Model.Destination))'.replace(/^"|"$/g,''),
-                    color: 'red'
-                });
-            </text>
-        }
-
-        @* Accepted pickups — only the driver needs to see all of them *@
-        @if (isDriver)
-        {
-            foreach (var req in Model.Requests.Where(r =>
-                r.Status == UniConnect.Models.RideRequestStatus.Accepted
-                && r.PickupLat.HasValue && r.PickupLng.HasValue))
-            {
-                <text>
-                        points.push({
-                            lat: @req.PickupLat!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                            lng: @req.PickupLng!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                            label: 'Pickup: @Html.Raw(Json.Serialize(req.Passenger != null ? req.Passenger.FullName : "Passenger"))'.replace(/^"|"$/g,''),
-                            color: 'blue'
-                        });
-                </text>
-            }
-        }
-
-        // Initialize the map
-        const map = L.map('rideMap');
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
-
-        if (points.length > 0) {
-            const markers = [];
-            points.forEach(p => {
-                const icon = L.icon({
-                    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${p.color}.png`,
-                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-                });
-                const m = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(p.label);
-                markers.push(m);
-            });
-            // Fit the map to show all points
-            const group = L.featureGroup(markers);
-            map.fitBounds(group.getBounds().pad(0.3));
-        } else {
-            // No coordinates available — show a default view (Beirut) with a note
-            map.setView([33.8938, 35.5018], 12);
-            L.popup()
-                .setLatLng([33.8938, 35.5018])
-                .setContent('Map location not available for this ride yet.')
-                .openOn(map);
-        }
-    </script>
+    <script src="~/js/pages/ride-details.js" asp-append-version="true"></script>
 }

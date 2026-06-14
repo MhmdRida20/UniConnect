@@ -3,100 +3,121 @@
     ViewData["Title"] = "My Rides";
     var driving = ViewBag.DrivingRides as List<UniConnect.Models.Ride>
                   ?? new List<UniConnect.Models.Ride>();
+    var requested = Model.ToList();
 }
 
-<h2>My Rides</h2>
-
-@if (TempData["Success"] != null) {
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null) {
-    <div class="alert alert-danger">@TempData["Error"]</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/my-rides.css" asp-append-version="true" />
 }
 
-<h4 class="mt-4">Rides I'm Driving</h4>
-@if (!driving.Any())
-{
-    <p class="text-muted">You haven't offered any rides yet.</p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Route</th>
-                <th>Departs</th>
-                <th>Seats</th>
-                <th>Requests</th>
-                <th>Status</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var r in driving)
-            {
-                var pending = r.Requests.Count(
-                    x => x.Status == UniConnect.Models.RideRequestStatus.Pending);
-                <tr>
-                    <td>@r.DepartureLocation → @r.Destination</td>
-                    <td>@r.DepartureTime.ToString("MMM dd · HH:mm")</td>
-                    <td>@r.AvailableSeats / @r.TotalSeats</td>
-                    <td>
-                        @if (pending > 0)
+<div class="mr-head">
+    <div>
+        <h1>My Rides</h1>
+        <p class="text-muted mb-0">Trips you're driving and seats you've requested.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Offer a Ride</a>
+</div>
+
+@if (TempData["Success"] != null) { <div class="alert alert-success uc-flash">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger uc-flash">@TempData["Error"]</div> }
+
+@* ── Tabs ── *@
+<div class="mr-tabs" role="tablist">
+    <button class="mr-tab active" data-tab="driving" role="tab" aria-selected="true">
+        <i class="bi bi-steering-wheel"></i> Driving <span class="mr-tab-count">@driving.Count</span>
+    </button>
+    <button class="mr-tab" data-tab="requested" role="tab" aria-selected="false">
+        <i class="bi bi-hand-thumbs-up"></i> Requested <span class="mr-tab-count">@requested.Count</span>
+    </button>
+</div>
+
+@* ── Driving ── *@
+<section class="mr-panel" data-panel="driving">
+    @if (!driving.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-car-front"></i></span>
+            <h5>No rides offered yet</h5>
+            <p>When you offer a ride, it'll appear here so you can manage requests.</p>
+            <a class="btn btn-primary mt-3" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Offer your first ride</a>
+        </div>
+    }
+    else
+    {
+        <div class="uc-table-card">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr><th>Route</th><th>Departs</th><th>Seats</th><th>Requests</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in driving)
                         {
-                            <span class="badge bg-warning text-dark">@pending pending</span>
+                            var pending = r.Requests.Count(x => x.Status == UniConnect.Models.RideRequestStatus.Pending);
+                            <tr>
+                                <td><span class="mr-route">@r.DepartureLocation <i class="bi bi-arrow-right"></i> @r.Destination</span></td>
+                                <td class="text-nowrap">@r.DepartureTime.ToString("MMM dd · HH:mm")</td>
+                                <td>@r.AvailableSeats / @r.TotalSeats</td>
+                                <td>
+                                    @if (pending > 0) { <span class="uc-pill uc-pill-amber">@pending pending</span> }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                                <td><span class="uc-pill uc-pill-grey">@r.Status</span></td>
+                                <td class="text-end"><a asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">Manage</a></td>
+                            </tr>
                         }
-                        else { <span class="text-muted">—</span> }
-                    </td>
-                    <td><span class="badge bg-secondary">@r.Status</span></td>
-                    <td><a asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">Manage</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</section>
 
-<h4 class="mt-5">Rides I've Requested</h4>
-@if (!Model.Any())
-{
-    <p class="text-muted">You haven't requested any rides yet.</p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Route</th>
-                <th>Driver</th>
-                <th>Departs</th>
-                <th>Pickup</th>
-                <th>Status</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var rr in Model)
-            {
-                <tr>
-                    <td>@rr.Ride?.DepartureLocation → @rr.Ride?.Destination</td>
-                    <td>@rr.Ride?.Driver?.FullName</td>
-                    <td>@rr.Ride?.DepartureTime.ToString("MMM dd · HH:mm")</td>
-                    <td>@rr.PickupLocation</td>
-                    <td>
-                        @{
+@* ── Requested ── *@
+<section class="mr-panel hidden" data-panel="requested">
+    @if (!requested.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-hand-thumbs-up"></i></span>
+            <h5>No ride requests yet</h5>
+            <p>Browse available rides and request a seat — your requests will show up here.</p>
+            <a class="btn btn-primary mt-3" asp-action="Index"><i class="bi bi-search me-1"></i>Browse rides</a>
+        </div>
+    }
+    else
+    {
+        <div class="uc-table-card">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr><th>Route</th><th>Driver</th><th>Departs</th><th>Pickup</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rr in requested)
+                        {
                             var cls = rr.Status switch
                             {
-                                UniConnect.Models.RideRequestStatus.Accepted => "bg-success",
-                                UniConnect.Models.RideRequestStatus.Rejected => "bg-danger",
-                                UniConnect.Models.RideRequestStatus.Pending  => "bg-warning text-dark",
-                                _ => "bg-secondary"
+                                UniConnect.Models.RideRequestStatus.Accepted => "uc-pill-green",
+                                UniConnect.Models.RideRequestStatus.Rejected => "uc-pill-red",
+                                UniConnect.Models.RideRequestStatus.Pending => "uc-pill-amber",
+                                _ => "uc-pill-grey"
                             };
+                            <tr>
+                                <td><span class="mr-route">@rr.Ride?.DepartureLocation <i class="bi bi-arrow-right"></i> @rr.Ride?.Destination</span></td>
+                                <td>@rr.Ride?.Driver?.FullName</td>
+                                <td class="text-nowrap">@rr.Ride?.DepartureTime.ToString("MMM dd · HH:mm")</td>
+                                <td>@rr.PickupLocation</td>
+                                <td><span class="uc-pill @cls">@rr.Status</span></td>
+                                <td class="text-end"><a asp-action="Details" asp-route-id="@rr.RideId" class="btn btn-sm btn-outline-primary">View</a></td>
+                            </tr>
                         }
-                        <span class="badge @cls">@rr.Status</span>
-                    </td>
-                    <td><a asp-action="Details" asp-route-id="@rr.RideId" class="btn btn-sm btn-outline-primary">View</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script src="~/js/pages/my-rides.js" asp-append-version="true"></script>
 }

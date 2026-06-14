@@ -1,22 +1,502 @@
+/* ==========================================================================
+   UniConnect — Global Design System
+   A cohesive, green-themed foundation layered on top of Bootstrap 5.
+   Restyles Bootstrap primitives + provides reusable .uc-* components.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design tokens
+   -------------------------------------------------------------------------- */
+:root {
+    /* Brand greens */
+    --uc-primary:        #16a34a;  /* green-600  — main brand */
+    --uc-primary-dark:   #15803d;  /* green-700 */
+    --uc-primary-darker: #166534;  /* green-800 */
+    --uc-primary-deep:   #14532d;  /* green-900 */
+    --uc-primary-light:  #22c55e;  /* green-500 */
+    --uc-primary-soft:   #dcfce7;  /* green-100 */
+    --uc-primary-tint:   #f0fdf4;  /* green-50  */
+    --uc-accent:         #0d9488;  /* teal-600  — secondary accent */
+    --uc-accent-soft:    #ccfbf1;
+
+    /* Neutrals */
+    --uc-text:        #0f172a;
+    --uc-text-soft:   #334155;
+    --uc-muted:       #64748b;
+    --uc-border:      #e2e8f0;
+    --uc-border-soft: #eef2f6;
+    --uc-bg:          #f6f9f7;   /* faint green-grey page background */
+    --uc-surface:     #ffffff;
+
+    /* Status colours */
+    --uc-success: #16a34a;
+    --uc-warning: #d97706;
+    --uc-danger:  #dc2626;
+    --uc-info:    #0d9488;
+
+    /* Radii */
+    --uc-radius-sm: 8px;
+    --uc-radius:    14px;
+    --uc-radius-lg: 20px;
+    --uc-radius-pill: 999px;
+
+    /* Shadows */
+    --uc-shadow-xs: 0 1px 2px rgba(15, 23, 42, .05);
+    --uc-shadow:    0 1px 3px rgba(15, 23, 42, .08), 0 1px 2px rgba(15, 23, 42, .04);
+    --uc-shadow-md: 0 4px 14px rgba(15, 23, 42, .09);
+    --uc-shadow-lg: 0 12px 34px rgba(15, 23, 42, .13);
+    --uc-shadow-green: 0 6px 20px rgba(22, 163, 74, .28);
+
+    /* Motion */
+    --uc-transition: .2s cubic-bezier(.4, 0, .2, 1);
+
+    /* Map Bootstrap CSS vars to the green brand */
+    --bs-primary:      #16a34a;
+    --bs-primary-rgb:  22, 163, 74;
+    --bs-link-color:   #15803d;
+    --bs-link-hover-color: #14532d;
+}
+
+/* --------------------------------------------------------------------------
+   2. Base / typography
+   -------------------------------------------------------------------------- */
 html {
-  font-size: 14px;
+    font-size: 15px;
+    position: relative;
+    min-height: 100%;
+    scroll-behavior: smooth;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html { font-size: 16px; }
 }
 
 body {
-  margin-bottom: 60px;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--uc-bg);
+    color: var(--uc-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--uc-text);
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+a {
+    color: var(--uc-primary-dark);
+    text-decoration: none;
+    transition: color var(--uc-transition);
+}
+a:hover { color: var(--uc-primary-deep); }
+
+::selection {
+    background: var(--uc-primary-soft);
+    color: var(--uc-primary-deep);
+}
+
+/* Tidy default page wrapper spacing */
+main[role="main"] { padding-bottom: 2rem; }
+
+/* --------------------------------------------------------------------------
+   3. Focus visibility (accessible, green ring)
+   -------------------------------------------------------------------------- */
+.btn:focus, .btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus, .form-select:focus,
+.form-check-input:focus,
+a:focus-visible, button:focus-visible {
+    box-shadow: 0 0 0 .2rem rgba(22, 163, 74, .25) !important;
+    outline: none;
+}
+
+/* --------------------------------------------------------------------------
+   4. Navbar
+   -------------------------------------------------------------------------- */
+.uc-navbar {
+    background: rgba(255, 255, 255, .85);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--uc-border);
+    box-shadow: none;
+    transition: box-shadow var(--uc-transition), background var(--uc-transition);
+    padding-top: .55rem;
+    padding-bottom: .55rem;
+}
+.uc-navbar.is-scrolled {
+    box-shadow: 0 4px 20px rgba(15, 23, 42, .07);
+    background: rgba(255, 255, 255, .95);
+}
+
+.uc-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -.03em;
+    color: var(--uc-text) !important;
+}
+.uc-brand:hover { color: var(--uc-primary-dark) !important; }
+.uc-brand-mark {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--uc-primary-light), var(--uc-primary-dark));
+    color: #fff;
+    font-size: 1.05rem;
+    box-shadow: var(--uc-shadow-green);
+}
+.uc-brand span b { color: var(--uc-primary); }
+
+.uc-navbar .nav-link {
+    position: relative;
+    color: var(--uc-text-soft) !important;
+    font-weight: 550;
+    font-size: .94rem;
+    padding: .5rem .85rem !important;
+    border-radius: var(--uc-radius-sm);
+    transition: color var(--uc-transition), background var(--uc-transition);
+}
+.uc-navbar .nav-link:hover {
+    color: var(--uc-primary-dark) !important;
+    background: var(--uc-primary-tint);
+}
+.uc-navbar .nav-link.active {
+    color: var(--uc-primary-dark) !important;
+    font-weight: 700;
+}
+.uc-navbar .nav-link.active::after {
+    content: '';
+    position: absolute;
+    left: .85rem; right: .85rem; bottom: .15rem;
+    height: 2px; border-radius: 2px;
+    background: var(--uc-primary);
+}
+.uc-navbar .navbar-toggler {
+    border: 1px solid var(--uc-border);
+    padding: .35rem .55rem;
+}
+
+/* --------------------------------------------------------------------------
+   5. Buttons (Bootstrap overrides + .uc-btn)
+   -------------------------------------------------------------------------- */
+.btn {
+    --bs-btn-font-weight: 600;
+    border-radius: var(--uc-radius-sm);
+    font-weight: 600;
+    letter-spacing: -.01em;
+    transition: transform .08s ease, box-shadow var(--uc-transition),
+                background var(--uc-transition), border-color var(--uc-transition), color var(--uc-transition);
+}
+.btn:active { transform: translateY(1px) scale(.99); }
+
+.btn-primary {
+    --bs-btn-bg: var(--uc-primary);
+    --bs-btn-border-color: var(--uc-primary);
+    --bs-btn-hover-bg: var(--uc-primary-dark);
+    --bs-btn-hover-border-color: var(--uc-primary-dark);
+    --bs-btn-active-bg: var(--uc-primary-darker);
+    --bs-btn-active-border-color: var(--uc-primary-darker);
+    --bs-btn-disabled-bg: var(--uc-primary);
+    --bs-btn-disabled-border-color: var(--uc-primary);
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .25);
+}
+.btn-primary:hover { box-shadow: var(--uc-shadow-green); }
+
+.btn-outline-primary {
+    --bs-btn-color: var(--uc-primary-dark);
+    --bs-btn-border-color: #bbf7d0;
+    --bs-btn-hover-bg: var(--uc-primary);
+    --bs-btn-hover-border-color: var(--uc-primary);
+    --bs-btn-active-bg: var(--uc-primary-dark);
+    --bs-btn-active-border-color: var(--uc-primary-dark);
+}
+
+.btn-success {
+    --bs-btn-bg: var(--uc-primary);
+    --bs-btn-border-color: var(--uc-primary);
+    --bs-btn-hover-bg: var(--uc-primary-dark);
+    --bs-btn-hover-border-color: var(--uc-primary-dark);
+}
+
+.btn-link { color: var(--uc-primary-dark); }
+.btn-link:hover { color: var(--uc-primary-deep); }
+
+/* Soft (tonal) green button */
+.uc-btn-soft {
+    background: var(--uc-primary-soft);
+    color: var(--uc-primary-darker);
+    border: 1px solid transparent;
+}
+.uc-btn-soft:hover {
+    background: #bbf7d0;
+    color: var(--uc-primary-deep);
+}
+
+/* --------------------------------------------------------------------------
+   6. Cards
+   -------------------------------------------------------------------------- */
+.card {
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow);
+    background: var(--uc-surface);
+    transition: transform var(--uc-transition), box-shadow var(--uc-transition), border-color var(--uc-transition);
+}
+.card .card-footer {
+    border-top: 1px solid var(--uc-border-soft);
+    border-radius: 0 0 var(--uc-radius) var(--uc-radius) !important;
+}
+
+/* Lift-on-hover helper for interactive cards */
+.uc-hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--uc-shadow-lg);
+    border-color: #bbf7d0;
+}
+
+/* --------------------------------------------------------------------------
+   7. Forms
+   -------------------------------------------------------------------------- */
+.form-label {
+    font-weight: 600;
+    font-size: .85rem;
+    color: var(--uc-text-soft);
+    margin-bottom: .35rem;
+}
+.form-control, .form-select {
+    border: 1.5px solid var(--uc-border);
+    border-radius: var(--uc-radius-sm);
+    padding: .6rem .85rem;
+    font-size: .92rem;
+    color: var(--uc-text);
+    background-color: var(--uc-surface);
+    transition: border-color var(--uc-transition), box-shadow var(--uc-transition);
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--uc-primary);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, .14) !important;
+}
+.form-control::placeholder { color: #94a3b8; }
+.form-text { color: var(--uc-muted); font-size: .8rem; }
+
+/* Validation text */
+.text-danger, .field-validation-error { color: var(--uc-danger) !important; font-size: .82rem; }
+.input-validation-error {
+    border-color: var(--uc-danger) !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, .12) !important;
+}
+
+/* A polished form panel */
+.uc-form-card {
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius-lg);
+    box-shadow: var(--uc-shadow-md);
+    padding: 1.75rem;
+}
+@media (min-width: 768px) {
+    .uc-form-card { padding: 2.25rem; }
+}
+
+/* --------------------------------------------------------------------------
+   8. Badges & pills
+   -------------------------------------------------------------------------- */
+.badge { font-weight: 600; letter-spacing: .01em; }
+.bg-primary  { background-color: var(--uc-primary) !important; }
+.bg-success  { background-color: var(--uc-primary) !important; }
+.text-primary { color: var(--uc-primary-dark) !important; }
+
+.uc-pill {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .25rem .7rem;
+    border-radius: var(--uc-radius-pill);
+    font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.uc-pill-green  { background: var(--uc-primary-soft); color: var(--uc-primary-darker); }
+.uc-pill-amber  { background: #fef3c7; color: #92400e; }
+.uc-pill-red    { background: #fee2e2; color: #991b1b; }
+.uc-pill-blue   { background: var(--uc-accent-soft); color: #115e59; }
+.uc-pill-grey   { background: #e2e8f0; color: #475569; }
+.uc-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* --------------------------------------------------------------------------
+   9. Alerts (also used by the JS toast system)
+   -------------------------------------------------------------------------- */
+.alert {
+    border: 1px solid transparent;
+    border-radius: var(--uc-radius);
+    font-size: .9rem;
+    display: flex; align-items: flex-start; gap: .6rem;
+    box-shadow: var(--uc-shadow-xs);
+}
+.alert::before {
+    font-family: 'bootstrap-icons';
+    font-size: 1.05rem; line-height: 1.4;
+    flex-shrink: 0;
+}
+.alert-success { background: var(--uc-primary-tint); border-color: #bbf7d0; color: var(--uc-primary-deep); }
+.alert-success::before { content: '\F26B'; color: var(--uc-primary); }      /* check-circle */
+.alert-danger  { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.alert-danger::before  { content: '\F623'; color: var(--uc-danger); }        /* x-circle */
+.alert-warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.alert-warning::before { content: '\F33A'; color: var(--uc-warning); }       /* exclamation-triangle */
+.alert-info    { background: #f0fdfa; border-color: var(--uc-accent-soft); color: #115e59; }
+.alert-info::before    { content: '\F431'; color: var(--uc-accent); }        /* info-circle */
+
+/* Toast stack injected by site.js */
+.uc-toast-stack {
+    position: fixed; top: 1rem; right: 1rem; z-index: 1080;
+    display: flex; flex-direction: column; gap: .6rem;
+    max-width: min(360px, calc(100vw - 2rem));
+}
+.uc-toast {
+    animation: ucToastIn .35s cubic-bezier(.4, 0, .2, 1) both;
+    margin: 0;
+}
+.uc-toast.is-leaving { animation: ucToastOut .3s ease forwards; }
+@keyframes ucToastIn  { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes ucToastOut { to { opacity: 0; transform: translateX(24px); height: 0; padding-top: 0; padding-bottom: 0; margin: 0; } }
+
+/* --------------------------------------------------------------------------
+   10. Tables
+   -------------------------------------------------------------------------- */
+.uc-table-card {
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow);
+    overflow: hidden;
+}
+.uc-table-card .table { margin: 0; }
+.table > :not(caption) > * > * { padding: .85rem 1rem; }
+.table thead th {
+    background: var(--uc-primary-tint);
+    color: var(--uc-primary-darker);
+    font-size: .74rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    border-bottom: 1px solid var(--uc-border);
+    white-space: nowrap;
+}
+.table tbody td { vertical-align: middle; border-color: var(--uc-border-soft); }
+.table.table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-bg-type: #fbfdfb;
+}
+.table-hover > tbody > tr:hover > * { --bs-table-bg-state: var(--uc-primary-tint); }
+
+/* --------------------------------------------------------------------------
+   11. Hero / section primitives (reusable across pages)
+   -------------------------------------------------------------------------- */
+.uc-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 2.75rem 2rem 4.5rem;
+    margin: 0 -12px 0;
+    border-radius: 0 0 28px 28px;
+    background: linear-gradient(135deg, var(--uc-primary-deep) 0%, var(--uc-primary-darker) 45%, var(--uc-primary) 100%);
+    color: #fff;
+}
+.uc-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, .07) 1.5px, transparent 1.5px);
+    background-size: 26px 26px;
+    pointer-events: none;
+}
+.uc-hero-inner { position: relative; z-index: 1; }
+.uc-eyebrow {
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: rgba(255, 255, 255, .6);
+    margin: 0 0 .5rem;
+    display: inline-flex; align-items: center; gap: .4rem;
+}
+.uc-hero-title {
+    font-size: clamp(1.7rem, 3.6vw, 2.5rem);
+    font-weight: 800; letter-spacing: -.03em;
+    color: #fff; margin: 0 0 .5rem; line-height: 1.12;
+}
+.uc-hero-sub { font-size: .95rem; color: rgba(255, 255, 255, .72); margin: 0; max-width: 60ch; }
+
+/* Section heading */
+.uc-section-head { margin-bottom: 1.25rem; }
+.uc-section-head h2,
+.uc-section-head h3 { margin: 0; }
+.uc-section-sub { color: var(--uc-muted); font-size: .9rem; margin: .2rem 0 0; }
+
+/* Empty state */
+.uc-empty {
+    text-align: center; padding: 3.5rem 1.5rem;
+    background: var(--uc-surface); border: 1px dashed var(--uc-border);
+    border-radius: var(--uc-radius); box-shadow: var(--uc-shadow-xs);
+}
+.uc-empty-icon {
+    font-size: 2.6rem; color: var(--uc-primary);
+    opacity: .5; margin-bottom: .6rem; display: block;
+}
+.uc-empty h5 { font-weight: 800; margin-bottom: .35rem; }
+.uc-empty p  { font-size: .9rem; color: var(--uc-muted); max-width: 400px; margin: 0 auto; }
+
+/* --------------------------------------------------------------------------
+   12. Footer
+   -------------------------------------------------------------------------- */
+.uc-footer {
+    flex-shrink: 0;
+    background: var(--uc-surface);
+    border-top: 1px solid var(--uc-border);
+    color: var(--uc-muted);
+    font-size: .88rem;
+    padding: 1.5rem 0;
+    margin-top: 2rem;
+}
+.uc-footer a { color: var(--uc-primary-dark); font-weight: 600; }
+.uc-footer a:hover { color: var(--uc-primary-deep); }
+
+/* --------------------------------------------------------------------------
+   13. Scroll-to-top button
+   -------------------------------------------------------------------------- */
+.uc-totop {
+    position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 1050;
+    width: 44px; height: 44px; border: none; border-radius: 50%;
+    background: var(--uc-primary); color: #fff; font-size: 1.2rem;
+    box-shadow: var(--uc-shadow-green);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0; visibility: hidden;
+    transform: translateY(12px) scale(.9);
+    transition: opacity var(--uc-transition), transform var(--uc-transition), visibility var(--uc-transition), background var(--uc-transition);
+}
+.uc-totop.is-visible { opacity: 1; visibility: visible; transform: none; }
+.uc-totop:hover { background: var(--uc-primary-dark); }
+
+/* --------------------------------------------------------------------------
+   14. Utilities & animations
+   -------------------------------------------------------------------------- */
+.hidden { display: none !important; }
+.uc-mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+/* Reveal-on-scroll (toggled by site.js) */
+.uc-reveal { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s ease; }
+.uc-reveal.is-visible { opacity: 1; transform: none; }
+
+@keyframes ucCardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.uc-animate-in { animation: ucCardIn .45s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+    }
 }

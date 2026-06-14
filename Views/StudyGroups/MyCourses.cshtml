@@ -1,45 +1,197 @@
 @model IEnumerable<UniConnect.Models.Course>
+
+@* ─────────────────────────────────────────────────────────────────────────────
+   Views/StudyGroups/MyCourses.cshtml
+   The authenticated student's enrolled courses with live search, department
+   filtering, and links to study groups.
+───────────────────────────────────────────────────────────────────────────── *@
+
 @{
     ViewData["Title"] = "My Courses";
+
+    var courses = Model.ToList();
+    var totalCredits = courses.Sum(c => c.Credits);
+
+    string GetDeptCode(string? code)
+    {
+        code ??= "";
+        if (code.StartsWith("CSC")) return "cs";
+        if (code.StartsWith("MAT")) return "math";
+        if (code.StartsWith("PHY")) return "physics";
+        return "eng";
+    }
+    string GetDeptLabel(string? code) => GetDeptCode(code) switch
+    {
+        "cs" => "Computer Science",
+        "math" => "Mathematics",
+        "physics" => "Physics",
+        _ => "English & Writing"
+    };
+
+    var departments = courses
+        .Select(c => new { code = GetDeptCode(c.CourseCode), label = GetDeptLabel(c.CourseCode) })
+        .DistinctBy(d => d.code)
+        .OrderBy(d => d.label)
+        .ToList();
 }
 
-<h2>My Registered Courses</h2>
-<p class="text-muted">These courses come from your university enrollment record.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/my-courses.css" asp-append-version="true" />
+}
 
-@if (!Model.Any())
-{
-    <div class="alert alert-warning">
-        You have no registered courses. Contact the administrator.
+<div class="mc-page">
+
+    @* ── HERO ── *@
+    <div class="mc-hero">
+        <div class="mc-hero-inner">
+            <p class="mc-eyebrow"><i class="bi bi-mortarboard-fill"></i>Fall 2026 &middot; UniConnect</p>
+            <h1 class="mc-hero-title">My Courses</h1>
+            <p class="mc-hero-sub">
+                You're enrolled in
+                <strong>@courses.Count course@(courses.Count == 1 ? "" : "s")</strong> &mdash;
+                <strong>@totalCredits credits</strong> total.
+            </p>
+        </div>
     </div>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Course Code</th>
-                <th>Course Name</th>
-                <th>Instructor</th>
-                <th>Credits</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var c in Model)
-            {
-                <tr>
-                    <td>@c.CourseCode</td>
-                    <td>@c.CourseName</td>
-                    <td>@c.InstructorName</td>
-                    <td>@c.Credits</td>
-                    <td>
-                        <a asp-action="Index" asp-route-courseCode="@c.CourseCode"
-                           class="btn btn-sm btn-outline-primary">
-                            Study Groups
-                        </a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+
+    <div class="container-fluid px-0">
+
+        @* ── STATS ── *@
+        <div class="mc-stats mb-4">
+            <div class="row g-3 mx-0">
+                <div class="col-6 col-lg-3">
+                    <div class="mc-stat">
+                        <div class="mc-stat-icon" style="background:#dcfce7;color:#15803d;"><i class="bi bi-journals"></i></div>
+                        <div>
+                            <p class="mc-stat-label">Courses</p>
+                            <p class="mc-stat-val" id="visibleCount">@courses.Count</p>
+                            <p class="mc-stat-sub">enrolled this term</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="mc-stat">
+                        <div class="mc-stat-icon" style="background:#ccfbf1;color:#0f766e;"><i class="bi bi-award-fill"></i></div>
+                        <div>
+                            <p class="mc-stat-label">Credits</p>
+                            <p class="mc-stat-val">@totalCredits</p>
+                            <p class="mc-stat-sub">total this semester</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="mc-stat">
+                        <div class="mc-stat-icon" style="background:#ecfccb;color:#3f6212;"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+                        <div>
+                            <p class="mc-stat-label">Departments</p>
+                            <p class="mc-stat-val">@departments.Count</p>
+                            <p class="mc-stat-sub">across your schedule</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="mc-stat">
+                        <div class="mc-stat-icon" style="background:#fef3c7;color:#b45309;"><i class="bi bi-calendar3"></i></div>
+                        <div>
+                            <p class="mc-stat-label">Semester</p>
+                            <p class="mc-stat-val" style="font-size:1.1rem;">Fall '26</p>
+                            <p class="mc-stat-sub">active enrolment</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ── CONTROLS ── *@
+        <div class="mc-controls mb-3">
+            <div class="row align-items-center gy-2 gx-3">
+                <div class="col-md-6">
+                    <div class="mc-search-wrap">
+                        <i class="bi bi-search mc-search-icon"></i>
+                        <input id="ucSearch" type="text" class="mc-search"
+                               placeholder="Search by name, code, or instructor…"
+                               autocomplete="off" spellcheck="false" aria-label="Search courses" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mc-chips" role="group" aria-label="Filter by department">
+                        <button class="mc-chip active" data-dept="" type="button" aria-pressed="true">All</button>
+                        @foreach (var dept in departments)
+                        {
+                            <button class="mc-chip" data-dept="@dept.code" type="button" aria-pressed="false">@dept.label</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="mc-results-label mb-3" id="resultsLabel">
+            Showing <strong id="visibleNum">@courses.Count</strong>
+            of @courses.Count course@(courses.Count == 1 ? "" : "s")
+        </p>
+
+        @* ── COURSE GRID ── *@
+        @if (!courses.Any())
+        {
+            <div class="mc-empty">
+                <span class="mc-empty-icon"><i class="bi bi-book"></i></span>
+                <h5>No courses found</h5>
+                <p>You aren't enrolled in any courses this semester. Contact your academic office to get registered.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-3" id="courseGrid">
+                @{ int cardIdx = 0; }
+                @foreach (var course in courses)
+                {
+                    var deptCode = GetDeptCode(course.CourseCode);
+                    var deptLabel = GetDeptLabel(course.CourseCode);
+                    var animDelay = cardIdx * 65;
+                    var searchKey = ((course.CourseCode ?? "") + " " + (course.CourseName ?? "") + " "
+                                    + (course.InstructorName ?? "")).ToLower();
+                    cardIdx++;
+
+                    <div class="col-12 col-sm-6 col-xl-4 course-col" data-dept="@deptCode" data-search="@searchKey">
+                        <div class="mc-card dept-@deptCode" style="animation-delay:@(animDelay)ms">
+                            <div class="mc-stripe" aria-hidden="true"></div>
+                            <div class="mc-card-body">
+                                <span class="mc-watermark" aria-hidden="true">@course.CourseCode</span>
+                                <div class="d-flex align-items-start justify-content-between mb-3">
+                                    <span class="mc-dept-badge"><span class="dot" aria-hidden="true"></span>@deptLabel</span>
+                                    <span class="mc-credits-pill">@course.Credits cr</span>
+                                </div>
+                                <span class="mc-code">@course.CourseCode</span>
+                                <h5 class="mc-name">@course.CourseName</h5>
+                                @if (!string.IsNullOrWhiteSpace(course.InstructorName))
+                                {
+                                    <p class="mc-instructor"><i class="bi bi-person-circle" aria-hidden="true"></i>@course.InstructorName</p>
+                                }
+                            </div>
+                            <div class="mc-card-footer-bar">
+                                <span class="mc-foot-label"><i class="bi bi-people" aria-hidden="true"></i>Study groups available</span>
+                                <a asp-controller="StudyGroups" asp-action="Index" asp-route-courseCode="@course.CourseCode"
+                                   class="mc-cta" title="Browse study groups for @course.CourseName">
+                                    Browse <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div id="emptySearch" class="mc-empty hidden mt-3">
+                <span class="mc-empty-icon"><i class="bi bi-search"></i></span>
+                <h5>No results</h5>
+                <p>No courses match your search. Try a different keyword or clear the department filter.</p>
+                <button class="btn btn-sm btn-outline-primary mt-3" id="clearFilters" type="button">
+                    <i class="bi bi-x-circle me-1"></i>Clear filters
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/my-courses.js" asp-append-version="true"></script>
 }

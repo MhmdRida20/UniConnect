@@ -1,0 +1,66 @@
+/* ==========================================================================
+   Shared styling for create/edit form pages (Study Group + Ride)
+   ========================================================================== */
+
+.form-page { max-width: 1000px; margin: 0 auto; padding-top: 1.5rem; }
+
+.form-back {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .85rem; font-weight: 600; color: var(--uc-muted);
+    margin-bottom: 1rem;
+}
+.form-back:hover { color: var(--uc-primary-dark); }
+
+.form-page-head {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.form-page-ico {
+    width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: #fff;
+    background: linear-gradient(135deg, var(--uc-primary-light), var(--uc-primary-dark));
+    box-shadow: var(--uc-shadow-green);
+}
+.form-page-head h1 { font-size: 1.6rem; margin: 0; }
+.form-page-head p { color: var(--uc-muted); margin: .15rem 0 0; font-size: .92rem; }
+
+/* Input with a leading icon */
+.input-icon { position: relative; }
+.input-icon i {
+    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
+    color: var(--uc-muted); pointer-events: none;
+}
+.input-icon .form-control { padding-left: 2.4rem; }
+
+/* ── Tips aside ── */
+.form-aside {
+    background: linear-gradient(160deg, var(--uc-primary-tint), #fff);
+    border: 1px solid #bbf7d0;
+    border-radius: var(--uc-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--uc-shadow-xs);
+    position: sticky; top: 5.5rem;
+}
+.form-aside h2 {
+    font-size: 1.05rem; margin: 0 0 1rem;
+    display: flex; align-items: center; gap: .5rem;
+    color: var(--uc-primary-darker);
+}
+.form-aside h2 i { color: var(--uc-warning); }
+.form-aside ul { list-style: none; padding: 0; margin: 0; }
+.form-aside li {
+    position: relative; padding-left: 1.6rem; margin-bottom: .85rem;
+    font-size: .88rem; color: var(--uc-text-soft); line-height: 1.5;
+}
+.form-aside li::before {
+    content: '\F26A'; /* bi check-lg */
+    font-family: 'bootstrap-icons';
+    position: absolute; left: 0; top: -1px;
+    color: var(--uc-primary); font-weight: bold;
+}
+.form-aside li strong { color: var(--uc-text); }
+
+@media (max-width: 991.98px) {
+    .form-aside { position: static; margin-top: .5rem; }
+}

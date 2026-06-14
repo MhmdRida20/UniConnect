@@ -1,6 +1,57 @@
-﻿@{
+@{
     ViewData["Title"] = "Privacy Policy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/static-page.css" asp-append-version="true" />
+}
+
+<div class="static-page">
+    <div class="static-head">
+        <span class="static-ico"><i class="bi bi-shield-lock-fill"></i></span>
+        <div>
+            <h1>Privacy Policy</h1>
+            <p>Last updated June 2026</p>
+        </div>
+    </div>
+
+    <article class="static-card">
+        <p class="lead">
+            UniConnect helps students connect through study groups and shared rides. We take your
+            privacy seriously and only use your information to make those features work.
+        </p>
+
+        <h2><i class="bi bi-person-badge"></i> Information we use</h2>
+        <p>
+            Your name, university ID, and course enrolment come from your institution's records.
+            We use them to show your courses, match you with the right study groups, and display
+            your name to classmates in groups and rides you join.
+        </p>
+
+        <h2><i class="bi bi-geo-alt"></i> Location &amp; rides</h2>
+        <p>
+            When you offer or request a ride, the pickup and destination you enter are shown to the
+            relevant driver and passengers so the trip can be coordinated. This information is only
+            visible to people involved in that ride.
+        </p>
+
+        <h2><i class="bi bi-chat-dots"></i> Messages</h2>
+        <p>
+            Messages you post in a study group are visible to that group's approved members. Please
+            keep conversations respectful and relevant to your studies.
+        </p>
+
+        <h2><i class="bi bi-lock"></i> Keeping data safe</h2>
+        <p>
+            Access is protected by your university account, and we never share your personal details
+            with third parties for advertising. For questions about your data, contact your academic
+            office.
+        </p>
+
+        <div class="static-note">
+            <i class="bi bi-info-circle"></i>
+            This is a sample policy for the UniConnect student project and should be replaced with
+            your institution's official terms before any real deployment.
+        </div>
+    </article>
+</div>
