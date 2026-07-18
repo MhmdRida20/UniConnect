@@ -1,0 +1,102 @@
+@model IEnumerable<UniConnect.Models.University>
+@{
+    ViewData["Title"] = "Universities";
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var universities = Model.ToList();
+    var enabledCounts = ViewBag.EnabledCounts as Dictionary<string, int> ?? new();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="text-muted mb-0">@universities.Count universit@(universities.Count == 1 ? "y" : "ies") on the platform</p>
+    <a asp-action="Create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add University</a>
+</div>
+
+@if (!universities.Any())
+{
+    <div class="uc-empty">
+        <span class="uc-empty-icon"><i class="bi bi-bank"></i></span>
+        <h5>No universities yet</h5>
+        <p>Add the first university to get started.</p>
+        <a class="btn btn-primary mt-2" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Add University</a>
+    </div>
+}
+else
+{
+    <div class="st-table">
+        <div class="st-table-head au-grid">
+            <span>University</span>
+            <span>Code</span>
+            <span>Data Source</span>
+            <span>Services Enabled</span>
+            <span>Status</span>
+            <span></span>
+        </div>
+        @foreach (var u in universities)
+        {
+            var enabled = enabledCounts.TryGetValue(u.Code, out var c) ? c : 0;
+            <div class="st-table-row au-grid" style="cursor:default">
+                <span class="st-title-cell">@u.Name</span>
+                <span><code>@u.Code</code></span>
+                <span>
+                    <span class="uc-pill uc-pill-green"><i class="bi bi-cloud-check"></i>Live API</span>
+                    @if (u.LastSyncStatus == "Success")
+                    {
+                        <small class="d-block text-muted mt-1">
+                            <i class="bi bi-check-circle text-success"></i> Synced @u.LastSyncAt?.ToString("MMM dd, HH:mm")
+                        </small>
+                    }
+                    else if (u.LastSyncStatus == "Failed")
+                    {
+                        <small class="d-block text-danger mt-1" title="@u.LastSyncError">
+                            <i class="bi bi-exclamation-triangle"></i> Sync failed @u.LastSyncAt?.ToString("MMM dd, HH:mm")
+                        </small>
+                    }
+                    else
+                    {
+                        <small class="d-block text-muted mt-1">Never synced yet</small>
+                    }
+                </span>
+                <span>@enabled service@(enabled == 1 ? "" : "s")</span>
+                <span>
+                    @if (u.IsActive)
+                    {
+                        <span class="uc-pill uc-pill-green">Active</span>
+                    }
+                    else
+                    {
+                        <span class="uc-pill uc-pill-grey">Inactive</span>
+                    }
+                </span>
+                <div class="d-flex gap-2 justify-content-end">
+                    <form asp-action="SyncNow" asp-route-code="@u.Code" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-secondary btn-sm" title="Sync Now">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                    </form>
+                    <a asp-action="Services" asp-route-code="@u.Code" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-toggles"></i> Services
+                    </a>
+                    <form asp-action="ToggleActive" asp-route-code="@u.Code" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-secondary btn-sm" title="@(u.IsActive ? "Deactivate" : "Activate")">
+                            <i class="bi @(u.IsActive ? "bi-pause-fill" : "bi-play-fill")"></i>
+                        </button>
+                    </form>
+                    <form asp-action="Delete" asp-route-code="@u.Code" method="post" class="d-inline"
+                          data-confirm="Permanently delete @u.Name and all its courses, students, and enabled services? This can't be undone.">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-danger btn-sm" title="Delete university">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}

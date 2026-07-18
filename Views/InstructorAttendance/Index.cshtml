@@ -1,0 +1,58 @@
+@model IEnumerable<UniConnect.Models.AttendanceSession>
+@{
+    ViewData["Title"] = "My Attendance Sessions";
+    var sessions = Model.ToList();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+}
+
+<div class="attendance-header uc-hero">
+    <div class="uc-hero-inner d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+        <div>
+            <p class="uc-eyebrow"><i class="bi bi-qr-code"></i>Smart Attendance</p>
+            <h1 class="uc-hero-title mb-1">My Sessions</h1>
+            <p class="uc-hero-sub">@sessions.Count session@(sessions.Count == 1 ? "" : "s") created</p>
+        </div>
+        <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Create Session</a>
+    </div>
+</div>
+
+<div class="attendance-body">
+    @if (!sessions.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-qr-code"></i></span>
+            <h5>No sessions yet</h5>
+            <p>Create a session to generate a QR code for your class.</p>
+            <a class="btn btn-primary mt-2" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Create Session</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var s in sessions)
+            {
+                var present = s.Records.Count(r => r.Status == UniConnect.Models.AttendanceStatus.Present);
+                var late = s.Records.Count(r => r.Status == UniConnect.Models.AttendanceStatus.Late);
+                var absent = s.Records.Count(r => r.Status == UniConnect.Models.AttendanceStatus.Absent);
+                <div class="col-md-6 col-lg-4">
+                    <a class="attendance-session-card" asp-action="Details" asp-route-id="@s.Id">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <strong>@s.CourseName</strong>
+                            <span class="uc-pill status-@s.Status.ToString().ToLower()">@s.Status</span>
+                        </div>
+                        <p class="club-card-meta mb-2"><i class="bi bi-tag"></i>@s.CourseCode</p>
+                        <p class="club-card-meta mb-2"><i class="bi bi-calendar-event"></i>@s.StartTime.ToString("MMM dd, yyyy · HH:mm")</p>
+                        <p class="attendance-counts">
+                            <span class="text-success">@present present</span> ·
+                            <span class="text-warning">@late late</span> ·
+                            <span class="text-muted">@absent absent</span>
+                        </p>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,306 @@
+@model UniConnect.Models.Club
+@{
+    ViewData["Title"] = Model.ClubName;
+    var isMember = (bool)ViewBag.IsMember;
+    var isOfficer = (bool)ViewBag.IsOfficer;
+    var isPresident = (bool)ViewBag.IsPresident;
+    var currentId = ViewBag.CurrentUserId as string;
+    var myStatus = ViewBag.MyMembershipStatus as UniConnect.Models.ClubMembershipStatus?;
+    var isPending = myStatus == UniConnect.Models.ClubMembershipStatus.Pending;
+    var approvedCount = (int)ViewBag.ApprovedCount;
+    var pendingRequests = Model.Members.Where(m => m.Status == UniConnect.Models.ClubMembershipStatus.Pending)
+                                        .OrderBy(m => m.JoinedAt).ToList();
+    var approvedMembers = Model.Members.Where(m => m.Status == UniConnect.Models.ClubMembershipStatus.Approved)
+                                        .OrderBy(m => m.Role).ToList();
+    var isInactive = Model.Status == UniConnect.Models.ClubStatus.Inactive;
+
+    string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 1 ? parts[0][..1].ToUpper() : (parts[0][..1] + parts[^1][..1]).ToUpper();
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/clubs.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to clubs</a>
+
+<div class="club-detail-head">
+    <div class="club-detail-logo">
+        @if (!string.IsNullOrWhiteSpace(Model.LogoPath))
+        {
+            <img src="@Model.LogoPath" alt="" />
+        }
+        else
+        {
+            <i class="bi bi-flag-fill"></i>
+        }
+    </div>
+    <div class="club-detail-info">
+        <h1>@Model.ClubName</h1>
+        <p class="club-card-meta mb-0">
+            <span class="uc-pill uc-pill-green">@Model.Category</span>
+            <span class="mx-1">·</span>
+            <i class="bi bi-people"></i>@approvedCount member@(approvedCount == 1 ? "" : "s")@(Model.MaxMembers.HasValue ? $" / {Model.MaxMembers}" : "")
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <p class="club-detail-desc">@Model.Description</p>
+        }
+    </div>
+    <div class="club-detail-action">
+        @if (!isMember && !isPending)
+        {
+            <form asp-action="Join" asp-route-id="@Model.Id" method="post" data-loading>
+                @Html.AntiForgeryToken()
+                <button class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Request to Join</button>
+            </form>
+        }
+        else if (isPending)
+        {
+            <div class="d-flex flex-column align-items-end gap-2">
+                <span class="uc-pill uc-pill-amber"><i class="bi bi-hourglass-split"></i>Pending approval</span>
+                <form asp-action="Leave" asp-route-id="@Model.Id" method="post" data-confirm="Withdraw your request?">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-secondary btn-sm">Withdraw</button>
+                </form>
+            </div>
+        }
+        else if (!isPresident)
+        {
+            <form asp-action="Leave" asp-route-id="@Model.Id" method="post" data-confirm="Leave this club?">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-danger"><i class="bi bi-box-arrow-left me-1"></i>Leave Club</button>
+            </form>
+        }
+        else
+        {
+            <span class="uc-pill uc-pill-green"><i class="bi bi-star-fill"></i>You're the President</span>
+        }
+    </div>
+</div>
+
+@if (isInactive)
+{
+    <div class="alert alert-secondary uc-flash">
+        <i class="bi bi-moon-stars"></i> This club has been marked <strong>inactive</strong> due to no recent activity.
+    </div>
+}
+
+<div class="club-tabs" id="clubTabs" data-club-id="@Model.Id"
+     data-current-name="@Model.Members.FirstOrDefault(m => m.UserId == currentId)?.User?.FullName"
+     data-current-user-id="@currentId"
+     data-is-member="@(isMember ? "true" : "false")"
+     data-post-url="@Url.Action("PostMessage", "Clubs")">
+    <button type="button" class="club-tab active" data-tab="announcements"><i class="bi bi-megaphone"></i> Announcements</button>
+    <button type="button" class="club-tab" data-tab="events"><i class="bi bi-calendar-event"></i> Events</button>
+    <button type="button" class="club-tab" data-tab="chat">
+        <i class="bi bi-chat-dots"></i> Chat
+        <span class="club-tab-badge hidden" id="clubChatBadge">0</span>
+    </button>
+    <button type="button" class="club-tab" data-tab="members"><i class="bi bi-people"></i> Members</button>
+</div>
+
+<div class="club-panel" data-panel="announcements">
+    @if (isOfficer)
+    {
+        <form asp-action="PostAnnouncement" asp-route-clubId="@Model.Id" method="post" class="club-inline-form mb-3" data-loading>
+            @Html.AntiForgeryToken()
+            <input type="text" name="title" class="form-control mb-2" placeholder="Announcement title" required maxlength="150" />
+            <textarea name="content" class="form-control mb-2" rows="2" placeholder="What's the announcement?" required maxlength="2000"></textarea>
+            <button class="btn btn-primary btn-sm"><i class="bi bi-megaphone me-1"></i>Post Announcement</button>
+        </form>
+    }
+
+    @if (!Model.Announcements.Any())
+    {
+        <p class="text-muted small">No announcements yet.</p>
+    }
+    else
+    {
+        @foreach (var a in Model.Announcements)
+        {
+            <div class="club-announcement">
+                <div class="d-flex justify-content-between align-items-start">
+                    <strong>@a.Title</strong>
+                    <span class="text-muted small">@a.CreatedAt.ToString("MMM dd, HH:mm")</span>
+                </div>
+                <p class="mb-1">@a.Content</p>
+                <span class="text-muted small"><i class="bi bi-person-badge"></i> @a.Author?.FullName</span>
+            </div>
+        }
+    }
+</div>
+
+<div class="club-panel hidden" data-panel="events">
+    @if (isOfficer)
+    {
+        <a asp-action="CreateEvent" asp-route-clubId="@Model.Id" class="btn btn-primary btn-sm mb-3">
+            <i class="bi bi-plus-lg me-1"></i>Create Event
+        </a>
+    }
+
+    @if (!Model.Events.Any())
+    {
+        <p class="text-muted small">No upcoming events.</p>
+    }
+    else
+    {
+        @foreach (var e in Model.Events)
+        {
+            var myRsvp = e.Rsvps.FirstOrDefault(r => r.UserId == currentId)?.RsvpStatus;
+            var attending = e.Rsvps.Count(r => r.RsvpStatus == UniConnect.Models.RsvpStatus.Attending);
+            var maybe = e.Rsvps.Count(r => r.RsvpStatus == UniConnect.Models.RsvpStatus.Maybe);
+            <div class="club-event">
+                <div class="club-event-head">
+                    <strong>@e.Title</strong>
+                    <span class="text-muted small">@e.EventDateTime.ToString("MMM dd, yyyy · HH:mm")</span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(e.Description))
+                {
+                    <p class="mb-1">@e.Description</p>
+                }
+                <p class="club-card-meta mb-2">
+                    <i class="bi bi-geo-alt"></i>@e.Location
+                    <span class="mx-1">·</span>
+                    <i class="bi bi-people"></i>@attending attending, @maybe maybe@(e.MaxAttendees.HasValue ? $" (max {e.MaxAttendees})" : "")
+                </p>
+                @if (isMember)
+                {
+                    <form asp-action="Rsvp" method="post" class="club-rsvp-form" data-loading>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="eventId" value="@e.Id" />
+                        <div class="btn-group btn-group-sm">
+                            <button type="submit" name="status" value="Attending" class="btn @(myRsvp == UniConnect.Models.RsvpStatus.Attending ? "btn-success" : "btn-outline-success")">Attending</button>
+                            <button type="submit" name="status" value="Maybe" class="btn @(myRsvp == UniConnect.Models.RsvpStatus.Maybe ? "btn-warning" : "btn-outline-warning")">Maybe</button>
+                            <button type="submit" name="status" value="NotAttending" class="btn @(myRsvp == UniConnect.Models.RsvpStatus.NotAttending ? "btn-danger" : "btn-outline-danger")">Not Attending</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        }
+    }
+</div>
+
+<div class="club-panel hidden" data-panel="chat">
+    @if (isMember)
+    {
+        <div id="clubChatMessages" class="club-chat-messages">
+            @foreach (var m in Model.Messages)
+            {
+                <div class="ticket-msg @(m.SenderId == currentId ? "is-me" : "")">
+                    <div class="ticket-msg-head">
+                        <strong>@m.Sender?.FullName</strong>
+                        <span class="ticket-msg-time">@m.SentAt.ToString("MMM dd, HH:mm")</span>
+                    </div>
+                    <p>@m.Content</p>
+                </div>
+            }
+        </div>
+        <form id="clubChatForm" class="club-inline-form mt-2">
+            @Html.AntiForgeryToken()
+            <input type="text" id="clubChatInput" class="form-control" placeholder="Type a message…" maxlength="1000" autocomplete="off" />
+            <button type="submit" class="btn btn-primary btn-sm mt-2"><i class="bi bi-send me-1"></i>Send</button>
+        </form>
+    }
+    else
+    {
+        <p class="text-muted small">Only club members can view and send chat messages.</p>
+    }
+</div>
+
+<div class="club-panel hidden" data-panel="members">
+    @if (isOfficer && pendingRequests.Any())
+    {
+        <h3 class="club-panel-subtitle">Join Requests <span class="uc-pill uc-pill-amber">@pendingRequests.Count</span></h3>
+        @foreach (var m in pendingRequests)
+        {
+            <div class="club-member-row">
+                <span class="sgd-avatar">@Initials(m.User?.FullName)</span>
+                <div class="sgd-member-info"><strong>@m.User?.FullName</strong><small>Requested @m.JoinedAt.ToString("MMM dd")</small></div>
+                <div class="d-flex gap-2 ms-auto">
+                    <form asp-action="ApproveMember" asp-route-memberId="@m.Id" method="post" data-loading>
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i></button>
+                    </form>
+                    <form asp-action="RejectMember" asp-route-memberId="@m.Id" method="post" data-confirm="Reject this request?">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-x-lg"></i></button>
+                    </form>
+                </div>
+            </div>
+        }
+        <hr />
+    }
+
+    <h3 class="club-panel-subtitle">Members</h3>
+    @foreach (var m in approvedMembers)
+    {
+        var isOwn = m.UserId == currentId;
+        <div class="club-member-row">
+            <span class="sgd-avatar">@Initials(m.User?.FullName)</span>
+            <div class="sgd-member-info"><strong>@m.User?.FullName @(isOwn ? "(You)" : "")</strong><small>@m.Role</small></div>
+            @if (m.Role == UniConnect.Models.ClubRole.President)
+            {
+                <span class="uc-pill uc-pill-green ms-auto"><i class="bi bi-star-fill"></i>President</span>
+            }
+            else if (isPresident)
+            {
+                <div class="d-flex gap-2 ms-auto">
+                    <form asp-action="TransferLeadership" asp-route-memberId="@m.Id" method="post"
+                          data-confirm="Make @(m.User?.FullName ?? "this member") the new President?">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-secondary btn-sm" title="Make President"><i class="bi bi-star"></i></button>
+                    </form>
+
+                    @if (m.Role == UniConnect.Models.ClubRole.Member)
+                    {
+                        <form asp-action="ChangeRole" asp-route-memberId="@m.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="newRole" value="Officer" />
+                            <button class="btn btn-outline-secondary btn-sm" title="Promote to Officer"><i class="bi bi-arrow-up-circle"></i> Officer</button>
+                        </form>
+                    }
+                    else if (m.Role == UniConnect.Models.ClubRole.Officer)
+                    {
+                        <form asp-action="ChangeRole" asp-route-memberId="@m.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="newRole" value="VicePresident" />
+                            <button class="btn btn-outline-secondary btn-sm" title="Promote to Vice President"><i class="bi bi-arrow-up-circle"></i> VP</button>
+                        </form>
+                        <form asp-action="ChangeRole" asp-route-memberId="@m.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="newRole" value="Member" />
+                            <button class="btn btn-outline-secondary btn-sm" title="Demote to Member"><i class="bi bi-arrow-down-circle"></i> Member</button>
+                        </form>
+                    }
+                    else if (m.Role == UniConnect.Models.ClubRole.VicePresident)
+                    {
+                        <form asp-action="ChangeRole" asp-route-memberId="@m.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="newRole" value="Officer" />
+                            <button class="btn btn-outline-secondary btn-sm" title="Demote to Officer"><i class="bi bi-arrow-down-circle"></i> Officer</button>
+                        </form>
+                    }
+
+                    <form asp-action="RemoveMember" asp-route-memberId="@m.Id" method="post" data-confirm="Remove @(m.User?.FullName ?? "this member")?">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-danger btn-sm" title="Remove"><i class="bi bi-person-dash"></i></button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <span class="uc-pill uc-pill-grey ms-auto">@m.Role</span>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pages/club-details.js" asp-append-version="true"></script>
+}

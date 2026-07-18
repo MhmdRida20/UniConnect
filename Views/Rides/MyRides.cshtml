@@ -18,8 +18,7 @@
     <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Offer a Ride</a>
 </div>
 
-@if (TempData["Success"] != null) { <div class="alert alert-success uc-flash">@TempData["Success"]</div> }
-@if (TempData["Error"] != null) { <div class="alert alert-danger uc-flash">@TempData["Error"]</div> }
+
 
 @* ── Tabs ── *@
 <div class="mr-tabs" role="tablist">
@@ -59,8 +58,14 @@
                                 <td class="text-nowrap">@r.DepartureTime.ToString("MMM dd · HH:mm")</td>
                                 <td>@r.AvailableSeats / @r.TotalSeats</td>
                                 <td>
-                                    @if (pending > 0) { <span class="uc-pill uc-pill-amber">@pending pending</span> }
-                                    else { <span class="text-muted">—</span> }
+                                    @if (pending > 0)
+                                    {
+                                        <span class="uc-pill uc-pill-amber">@pending pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
                                 </td>
                                 <td><span class="uc-pill uc-pill-grey">@r.Status</span></td>
                                 <td class="text-end"><a asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">Manage</a></td>

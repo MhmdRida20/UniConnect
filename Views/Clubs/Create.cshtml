@@ -1,0 +1,79 @@
+@model UniConnect.ViewModels.ClubCreateVM
+@{
+    ViewData["Title"] = "Register a Club";
+    var showDuplicateWarning = ViewBag.DuplicateWarning is true;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/clubs.css" asp-append-version="true" />
+}
+
+<div class="form-page">
+    <a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to clubs</a>
+
+    <div class="form-page-head">
+        <span class="form-page-ico"><i class="bi bi-flag"></i></span>
+        <div>
+            <h1>Register a Club</h1>
+            <p class="text-muted">You'll become the club's President.</p>
+        </div>
+    </div>
+
+    <div class="uc-form-card">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" data-loading>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            @if (showDuplicateWarning)
+            {
+                <div class="alert alert-warning d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <div>
+                        <strong>A club with this name already exists.</strong>
+                        <p class="mb-2">Check the clubs list first — if this is genuinely a different club, you can register it anyway.</p>
+                        <input type="hidden" name="ConfirmDuplicate" value="true" />
+                        <button type="submit" class="btn btn-sm btn-warning" formnovalidate>Register anyway</button>
+                    </div>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="ClubName" class="form-label"></label>
+                <input asp-for="ClubName" class="form-control" placeholder="e.g. Tech Innovation Club" />
+                <span asp-validation-for="ClubName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="What does this club do?"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Category" class="form-label"></label>
+                <select asp-for="Category" class="form-select" asp-items="Html.GetEnumSelectList<UniConnect.Models.ClubCategory>()"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Logo" class="form-label">Logo <span class="text-muted fw-normal">(optional, max 2 MB)</span></label>
+                <input asp-for="Logo" type="file" class="form-control" accept=".png,.jpg,.jpeg" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MaxMembers" class="form-label"></label>
+                <input asp-for="MaxMembers" type="number" class="form-control" placeholder="Leave blank for unlimited" />
+                <span asp-validation-for="MaxMembers" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100" data-loading-text="Registering…">
+                <i class="bi bi-plus-lg me-1"></i>Register Club
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
+}

@@ -2,8 +2,14 @@
    Study Groups — index list
    ========================================================================== */
 
-.sg-header { padding-bottom: 2.5rem; margin-bottom: 0; }
-.sg-body { margin-top: 1.25rem; }
+.sg-header {
+    padding-bottom: 2.5rem;
+    margin-bottom: 0;
+}
+
+.sg-body {
+    margin-top: 1.25rem;
+}
 
 /* ── Controls bar ── */
 .sg-controls {
@@ -14,57 +20,132 @@
     padding: 1.1rem 1.25rem;
     margin-bottom: 1rem;
 }
-.sg-search-wrap { position: relative; }
-.sg-search-wrap i {
-    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
-    color: var(--uc-muted); pointer-events: none;
-}
-.sg-search-wrap .form-control { padding-left: 2.4rem; }
 
-.sg-results { font-size: .82rem; color: var(--uc-muted); margin: .25rem 0 1rem; }
+.sg-search-wrap {
+    position: relative;
+}
+
+    .sg-search-wrap i {
+        position: absolute;
+        left: .85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--uc-muted);
+        pointer-events: none;
+    }
+
+    .sg-search-wrap .form-control {
+        padding-left: 2.4rem;
+    }
+
+.sg-results {
+    font-size: .82rem;
+    color: var(--uc-muted);
+    margin: .25rem 0 1rem;
+}
 
 /* ── Cards ── */
 .sg-card {
     padding: 1.35rem;
-    display: flex; flex-direction: column; height: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     animation: ucCardIn .45s ease both;
 }
+
 .sg-card-top {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: .5rem; margin-bottom: .85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-bottom: .85rem;
 }
-.sg-card-title { font-size: 1.1rem; margin: 0 0 .15rem; line-height: 1.3; }
-.sg-card-course { font-size: .82rem; color: var(--uc-primary-dark); font-weight: 600; margin: 0 0 .6rem; }
+
+.sg-card-title {
+    font-size: 1.1rem;
+    margin: 0 0 .15rem;
+    line-height: 1.3;
+}
+
+.sg-card-course {
+    font-size: .82rem;
+    color: var(--uc-primary-dark);
+    font-weight: 600;
+    margin: 0 0 .6rem;
+}
+
 .sg-card-desc {
-    font-size: .87rem; color: var(--uc-muted); margin: 0 0 1rem;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    font-size: .87rem;
+    color: var(--uc-muted);
+    margin: 0 0 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     min-height: 2.5em;
 }
 
 /* Capacity progress */
 .sg-progress {
-    height: 7px; border-radius: 99px; background: var(--uc-border-soft);
-    overflow: hidden; margin-bottom: .6rem;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--uc-border-soft);
+    overflow: hidden;
+    margin-bottom: .6rem;
 }
+
 .sg-progress-bar {
-    height: 100%; border-radius: 99px;
+    height: 100%;
+    border-radius: 99px;
     background: linear-gradient(90deg, var(--uc-primary-light), var(--uc-primary-dark));
     transition: width .6s cubic-bezier(.4, 0, .2, 1);
 }
 
 .sg-card-meta {
-    display: flex; justify-content: space-between; gap: .5rem;
-    font-size: .78rem; color: var(--uc-muted); margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    font-size: .78rem;
+    color: var(--uc-muted);
+    margin-bottom: 1rem;
 }
-.sg-card-meta i { color: var(--uc-primary); margin-right: .2rem; }
-.sg-card-meta span {
-    display: inline-flex; align-items: center; gap: .15rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+
+    .sg-card-meta i {
+        color: var(--uc-primary);
+        margin-right: .2rem;
+    }
+
+    .sg-card-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: .15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
 .sg-card-foot {
     margin-top: auto;
-    display: flex; align-items: center;
+    display: flex;
+    align-items: center;
     padding-top: .25rem;
 }
-.sg-card-foot .uc-pill { gap: .25rem; }
+
+    .sg-card-foot .uc-pill {
+        gap: .25rem;
+    }
+
+/* ── Live update banner (shown only while actively searching) ── */
+.sg-update-banner {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: .65rem .9rem;
+    border-radius: var(--uc-radius-sm, 8px);
+    font-size: .85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}

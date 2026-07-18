@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Enter Attendance Token";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+}
+
+<div class="attendance-scan-page">
+    <div class="attendance-scan-card">
+        <span class="attendance-scan-icon"><i class="bi bi-keyboard"></i></span>
+        <h1>Enter Attendance Token</h1>
+        <p class="text-muted mb-3">Ask your instructor for the token shown below the QR code.</p>
+
+        <div id="locationStatus" class="attendance-location-status">
+            <i class="bi bi-geo-alt"></i> Getting your location…
+        </div>
+
+        <form id="attendanceSubmitForm" asp-controller="Attendance" asp-action="Submit" method="post" data-loading>
+            @Html.AntiForgeryToken()
+            <input type="text" name="token" class="form-control mb-2" placeholder="Attendance token" required autocomplete="off" />
+            <input type="hidden" name="lat" id="latInput" />
+            <input type="hidden" name="lng" id="lngInput" />
+            <input type="hidden" name="deviceFingerprint" id="deviceFingerprintInput" />
+            <button type="submit" class="btn btn-primary w-100 mt-2" id="confirmBtn" disabled data-loading-text="Submitting…">
+                <i class="bi bi-check-circle me-1"></i>Submit Attendance
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/attendance-submit.js" asp-append-version="true"></script>
+}

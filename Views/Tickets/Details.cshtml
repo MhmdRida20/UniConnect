@@ -1,0 +1,83 @@
+@model UniConnect.Models.Ticket
+@{
+    ViewData["Title"] = Model.Title;
+    var canReply = true; // students can always reply, even to closed tickets (reopens it)
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/tickets.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="form-back mb-2 d-inline-block"><i class="bi bi-arrow-left"></i> Back to my tickets</a>
+
+<div class="ticket-detail-card">
+    <div class="ticket-detail-head">
+        <div>
+            <span class="uc-pill status-@Model.Status.ToString().ToLower() mb-2">@Model.Status</span>
+            <h1>@Model.Title</h1>
+            <p class="ticket-row-meta">
+                <i class="bi bi-tag"></i>@Model.Category?.Name
+                <span class="mx-1">·</span>
+                <span class="ticket-priority-tag priority-@Model.Priority.ToString().ToLower()">@Model.Priority priority</span>
+                <span class="mx-1">·</span>
+                <i class="bi bi-calendar-event"></i>Submitted @Model.CreatedAt.ToString("MMM dd, yyyy · HH:mm")
+            </p>
+        </div>
+    </div>
+
+    <div class="ticket-detail-body">
+        <p>@Model.Description</p>
+        @if (!string.IsNullOrWhiteSpace(Model.AttachmentPath))
+        {
+            <a class="ticket-attachment" href="@Model.AttachmentPath" target="_blank">
+                <i class="bi bi-paperclip"></i>@Model.AttachmentFileName
+            </a>
+        }
+    </div>
+
+    @if (Model.AssignedStaff is not null)
+    {
+        <p class="ticket-row-meta px-3 pb-2"><i class="bi bi-person-badge"></i>Handled by @Model.AssignedStaff.FullName (@Model.Category?.Name)</p>
+    }
+</div>
+
+<div class="ticket-history" id="ticketHistory" data-ticket-id="@Model.Id" data-current-user-id="@ViewBag.CurrentUserId">
+    <h2 class="ticket-history-title"><i class="bi bi-clock-history"></i> History</h2>
+
+    @foreach (var r in Model.Responses)
+    {
+        var isMe = r.ResponderId == (string)ViewBag.CurrentUserId;
+        var isStaffReply = r.Responder?.Department is not null;
+        <div class="ticket-msg @(isMe ? "is-me" : "") @(isStaffReply ? "is-staff" : "")">
+            <div class="ticket-msg-head">
+                <strong>@r.Responder?.FullName</strong>
+                @if (isStaffReply) { <span class="uc-pill uc-pill-green">Staff</span> }
+                <span class="ticket-msg-time">@r.CreatedAt.ToString("MMM dd, HH:mm")</span>
+            </div>
+            <p>@r.Content</p>
+            @if (r.NewStatus.HasValue)
+            {
+                <p class="ticket-status-change"><i class="bi bi-arrow-repeat"></i> Status changed to <strong>@r.NewStatus</strong></p>
+            }
+        </div>
+    }
+</div>
+
+@if (canReply)
+{
+    <div class="ticket-reply-box">
+        <form asp-action="Reply" asp-route-id="@Model.Id" method="post" data-loading>
+            @Html.AntiForgeryToken()
+            <textarea name="content" class="form-control" rows="3" required
+                      placeholder="@(Model.Status == UniConnect.Models.TicketStatus.Closed ? "Add a follow-up (this will reopen the ticket)…" : "Add a reply or extra detail…")"></textarea>
+            <button class="btn btn-primary btn-sm mt-2" data-loading-text="Sending…">
+                <i class="bi bi-send me-1"></i>Send
+            </button>
+        </form>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pages/ticket-details.js" asp-append-version="true"></script>
+}

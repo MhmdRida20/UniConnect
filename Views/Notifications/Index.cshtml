@@ -1,0 +1,42 @@
+@model IEnumerable<UniConnect.Models.Notification>
+@{
+    ViewData["Title"] = "Notifications";
+    var notifications = Model.ToList();
+}
+
+<div class="uc-hero" style="padding:1.5rem 0;">
+    <div class="uc-hero-inner">
+        <p class="uc-eyebrow"><i class="bi bi-bell"></i>Notifications</p>
+        <h1 class="uc-hero-title mb-0" style="font-size:1.6rem;">My Notifications</h1>
+    </div>
+</div>
+
+<div class="container" style="padding-top:1rem;">
+    @if (!notifications.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-bell-slash"></i></span>
+            <h5>No notifications yet</h5>
+            <p>System updates that affect you — like being removed from a study group — will show up here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-2" style="max-width:640px;">
+            @foreach (var n in notifications)
+            {
+                <div class="uc-form-card" style="padding:1rem 1.2rem;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <strong>@n.Title</strong>
+                        <span class="text-muted small">@n.CreatedAt.ToString("MMM dd, HH:mm")</span>
+                    </div>
+                    <p class="mb-1 mt-1" style="font-size:.9rem;">@n.Message</p>
+                    @if (!string.IsNullOrWhiteSpace(n.Link))
+                    {
+                        <a href="@n.Link" class="small">View →</a>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

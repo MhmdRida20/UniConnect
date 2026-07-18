@@ -6,7 +6,12 @@
     var approved = (int)ViewBag.ApprovedCount;
     var currentId = ViewBag.CurrentUserId as string;
     var isFull = Model.Status == UniConnect.Models.StudyGroupStatus.Full;
+    var isInactive = Model.Status == UniConnect.Models.StudyGroupStatus.Inactive;
+    var myStatus = ViewBag.MyMembershipStatus as UniConnect.Models.MembershipStatus?;
+    var isPending = myStatus == UniConnect.Models.MembershipStatus.Pending;
     var currentName = Model.Members.FirstOrDefault(m => m.UserId == currentId)?.User?.FullName ?? "";
+    var pendingRequests = Model.Members.Where(m => m.Status == UniConnect.Models.MembershipStatus.Pending)
+                                        .OrderBy(m => m.JoinedAt).ToList();
 
     string Initials(string? name)
     {
@@ -21,8 +26,7 @@
     <link rel="stylesheet" href="~/css/pages/study-group-details.css" asp-append-version="true" />
 }
 
-@if (TempData["Success"] != null) { <div class="alert alert-success uc-flash">@TempData["Success"]</div> }
-@if (TempData["Error"] != null) { <div class="alert alert-danger uc-flash">@TempData["Error"]</div> }
+
 
 <a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to study groups</a>
 
@@ -41,14 +45,25 @@
         </p>
     </div>
     <div class="sgd-header-action">
-        @if (!isMember)
+        @if (!isMember && !isPending)
         {
             <form asp-action="Join" asp-route-id="@Model.Id" method="post" data-loading>
                 @Html.AntiForgeryToken()
-                <button class="btn btn-primary btn-lg" @(isFull ? "disabled" : "") data-loading-text="Joining…">
-                    <i class="bi bi-plus-circle me-1"></i>@(isFull ? "Group Full" : "Join Group")
+                <button class="btn btn-primary btn-lg" @(isFull ? "disabled" : "") data-loading-text="Sending request…">
+                    <i class="bi bi-plus-circle me-1"></i>@(isFull ? "Group Full" : "Request to Join")
                 </button>
             </form>
+        }
+        else if (isPending)
+        {
+            <div class="d-flex flex-column align-items-end gap-2">
+                <span class="uc-pill uc-pill-amber"><i class="bi bi-hourglass-split"></i>Request pending approval</span>
+                <form asp-action="Leave" asp-route-id="@Model.Id" method="post"
+                      data-confirm="Withdraw your request to join this group?">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Withdraw request</button>
+                </form>
+            </div>
         }
         else if (!isCreator)
         {
@@ -64,6 +79,14 @@
         }
     </div>
 </div>
+
+@if (isInactive)
+{
+    <div class="alert alert-secondary uc-flash">
+        <i class="bi bi-moon-stars"></i> This group has been marked <strong>inactive</strong> due to no recent activity.
+        @(isMember ? "Send a message or approve a member to bring it back." : "")
+    </div>
+}
 
 <div class="row g-4 sgd-body">
     @* ── Left: info + chat ── *@
@@ -95,6 +118,8 @@
         <div class="sgd-panel sgd-chat-panel"
              data-group-id="@Model.Id"
              data-current-name="@currentName"
+             data-current-user-id="@currentId"
+             data-is-creator="@(isCreator ? "true" : "false")"
              data-post-url="@Url.Action("PostMessage", "StudyGroups", new { id = Model.Id })">
             <h2 class="sgd-panel-title">
                 <i class="bi bi-chat-dots"></i> Group Chat
@@ -147,6 +172,38 @@
 
     @* ── Right: members ── *@
     <div class="col-lg-4">
+        @if (isCreator && pendingRequests.Any())
+        {
+            <div class="sgd-panel sgd-pending">
+                <h2 class="sgd-panel-title">
+                    <i class="bi bi-person-plus"></i> Join Requests <span class="sgd-count sgd-count-amber">@pendingRequests.Count</span>
+                </h2>
+                <ul class="sgd-member-list" id="pendingList">
+                    @foreach (var m in pendingRequests)
+                    {
+                        <li class="sgd-member">
+                            <span class="sgd-avatar">@Initials(m.User?.FullName)</span>
+                            <div class="sgd-member-info">
+                                <strong>@m.User?.FullName</strong>
+                                <small>Requested @m.JoinedAt.ToString("MMM dd, HH:mm")</small>
+                            </div>
+                            <div class="sgd-pending-actions">
+                                <form asp-action="ApproveMember" asp-route-memberId="@m.Id" method="post" class="d-inline" data-loading>
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-success btn-sm" title="Approve"><i class="bi bi-check-lg"></i></button>
+                                </form>
+                                <form asp-action="RejectMember" asp-route-memberId="@m.Id" method="post" class="d-inline"
+                                      data-confirm="Reject @(m.User?.FullName ?? "this student")'s request?">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-outline-danger btn-sm" title="Reject"><i class="bi bi-x-lg"></i></button>
+                                </form>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
         <div class="sgd-panel sgd-members">
             <h2 class="sgd-panel-title"><i class="bi bi-people"></i> Members <span class="sgd-count">@approved</span></h2>
             <ul class="sgd-member-list">
@@ -163,6 +220,21 @@
                         {
                             <span class="uc-pill uc-pill-green ms-auto"><i class="bi bi-star-fill"></i>Creator</span>
                         }
+                        else if (isCreator)
+                        {
+                            <div class="sgd-member-actions ms-auto">
+                                <form asp-action="TransferLeadership" asp-route-memberId="@m.Id" method="post" class="d-inline"
+                                      data-confirm="Make @(m.User?.FullName ?? "this member") the new group leader? You'll no longer be the creator.">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-outline-secondary btn-sm" title="Make group leader"><i class="bi bi-star"></i></button>
+                                </form>
+                                <form asp-action="RemoveMember" asp-route-memberId="@m.Id" method="post" class="d-inline"
+                                      data-confirm="Remove @(m.User?.FullName ?? "this member") from the group?">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-outline-danger btn-sm" title="Remove member"><i class="bi bi-person-dash"></i></button>
+                                </form>
+                            </div>
+                        }
                     </li>
                 }
             </ul>
@@ -171,9 +243,6 @@
 </div>
 
 @section Scripts {
-    @if (isMember)
-    {
-        <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
-        <script src="~/js/pages/study-group-details.js" asp-append-version="true"></script>
-    }
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pages/study-group-details.js" asp-append-version="true"></script>
 }

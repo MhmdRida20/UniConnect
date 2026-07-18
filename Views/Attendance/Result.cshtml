@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Attendance Result";
+    var success = ViewBag.Success as bool? ?? false;
+    var message = ViewBag.Message as string ?? "";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+}
+
+<div class="attendance-scan-page">
+    <div class="attendance-scan-card">
+        <span class="attendance-scan-icon @(success ? "is-success" : "is-error")">
+            <i class="bi @(success ? "bi-check-circle-fill" : "bi-x-circle-fill")"></i>
+        </span>
+        <h1>@(success ? "You're checked in!" : "Couldn't submit attendance")</h1>
+        <p class="@(success ? "text-success" : "text-danger")">@message</p>
+
+        <a class="btn btn-primary mt-2" asp-action="MyAttendance">View My Attendance</a>
+        <a class="btn btn-outline-secondary mt-2" asp-controller="Home" asp-action="Index">Back to Home</a>
+    </div>
+</div>

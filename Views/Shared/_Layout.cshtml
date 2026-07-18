@@ -1,9 +1,28 @@
+@using Microsoft.AspNetCore.Identity
+@using UniConnect.Models
+@using UniConnect.Services
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IServiceCatalogService ServiceCatalog
 @{
     var routeData = ViewContext.RouteData.Values;
     var currentController = routeData["controller"]?.ToString();
     var currentAction = routeData["action"]?.ToString();
     string NavActive(string controller, string? action = null) =>
         (currentController == controller && (action == null || currentAction == action)) ? "active" : "";
+
+    // Only show nav items for services the current user's university has
+    // actually enabled (Front Design doc: nav is filtered by "enabled
+    // services for the university"). Anonymous visitors still see everything,
+    // since there's no university context to filter by until they log in.
+    var enabledServices = new List<string>();
+    if (SignInManager.IsSignedIn(User))
+    {
+        var navUser = await UserManager.GetUserAsync(User);
+        if (navUser is not null)
+            enabledServices = await ServiceCatalog.GetEnabledServiceCodesAsync(navUser.UniversityCode);
+    }
+    bool ShowNav(string serviceCode) => !SignInManager.IsSignedIn(User) || enabledServices.Contains(serviceCode);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -40,21 +59,67 @@
                                 <i class="bi bi-house-door me-1"></i>Home
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link @NavActive("StudyGroups", "Index")" asp-controller="StudyGroups" asp-action="Index">
-                                <i class="bi bi-people me-1"></i>Study Groups
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @NavActive("StudyGroups", "MyCourses")" asp-controller="StudyGroups" asp-action="MyCourses">
-                                <i class="bi bi-journal-bookmark me-1"></i>My Courses
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @NavActive("Rides")" asp-controller="Rides" asp-action="Index">
-                                <i class="bi bi-car-front me-1"></i>Rides
-                            </a>
-                        </li>
+                        @if (ShowNav(ServiceCodes.StudyGroups))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("StudyGroups", "Index")" asp-controller="StudyGroups" asp-action="Index">
+                                    <i class="bi bi-people me-1"></i>Study Groups
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("StudyGroups", "MyCourses")" asp-controller="StudyGroups" asp-action="MyCourses">
+                                    <i class="bi bi-journal-bookmark me-1"></i>My Courses
+                                </a>
+                            </li>
+                        }
+                        @if (ShowNav(ServiceCodes.RideSharing))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("Rides")" asp-controller="Rides" asp-action="Index">
+                                    <i class="bi bi-car-front me-1"></i>Rides
+                                </a>
+                            </li>
+                        }
+                        @if (ShowNav(ServiceCodes.Tickets))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("Tickets")" asp-controller="Tickets" asp-action="Index">
+                                    <i class="bi bi-ticket-detailed me-1"></i>My Tickets
+                                </a>
+                            </li>
+                        }
+                        @if (ShowNav(ServiceCodes.Clubs))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("Clubs")" asp-controller="Clubs" asp-action="Index">
+                                    <i class="bi bi-flag me-1"></i>Clubs
+                                </a>
+                            </li>
+                        }
+                        @if (ShowNav(ServiceCodes.Attendance) && User.IsInRole("Instructor"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("InstructorAttendance")" asp-controller="InstructorAttendance" asp-action="Index">
+                                    <i class="bi bi-qr-code me-1"></i>My Sessions
+                                </a>
+                            </li>
+                        }
+                        @if (ShowNav(ServiceCodes.Attendance) && !User.IsInRole("Instructor"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("Attendance")" asp-controller="Attendance" asp-action="MyAttendance">
+                                    <i class="bi bi-qr-code me-1"></i>My Attendance
+                                </a>
+                            </li>
+                        }
+                        @if (ShowNav(ServiceCodes.Internships) && !User.IsInRole("Company") && !User.IsInRole("Instructor"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("Internships")" asp-controller="Internships" asp-action="Index">
+                                    <i class="bi bi-briefcase me-1"></i>Internships
+                                </a>
+                            </li>
+                        }
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
@@ -64,6 +129,14 @@
 
     <main role="main">
         <div class="container">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success uc-flash">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger uc-flash">@TempData["Error"]</div>
+            }
             @RenderBody()
         </div>
     </main>
@@ -81,6 +154,8 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/global-notifications.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

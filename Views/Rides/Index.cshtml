@@ -5,9 +5,30 @@
                      ?? new List<UniConnect.Models.RideRequest>();
     var rides = Model.ToList();
     var totalSeats = rides.Sum(r => r.AvailableSeats);
+
+    // Points for the "all rides" overview map — one marker per ride at its
+    // departure point (falls back to skipping the ride if it was never geocoded).
+    var rideMapPoints = rides
+        .Where(r => r.DepartureLat.HasValue && r.DepartureLng.HasValue)
+        .Select(r => new
+        {
+            id = r.Id,
+            lat = r.DepartureLat!.Value,
+            lng = r.DepartureLng!.Value,
+            from = r.DepartureLocation,
+            to = r.Destination,
+            driver = r.Driver?.FullName ?? "Driver",
+            time = r.DepartureTime.ToString("ddd, MMM dd · HH:mm"),
+            seats = r.AvailableSeats,
+            totalSeats = r.TotalSeats,
+            vehicle = r.VehicleType,
+            url = Url.Action("Details", "Rides", new { id = r.Id })
+        })
+        .ToList();
 }
 
 @section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="~/css/pages/rides.css" asp-append-version="true" />
 }
 
@@ -27,21 +48,50 @@
 </div>
 
 <div class="rides-body">
-    @if (TempData["Success"] != null) { <div class="alert alert-success uc-flash">@TempData["Success"]</div> }
-    @if (TempData["Error"] != null) { <div class="alert alert-danger uc-flash">@TempData["Error"]</div> }
-
     @if (rides.Any())
     {
         <div class="rides-controls">
-            <div class="sg-search-wrap">
-                <i class="bi bi-search"></i>
-                <input id="rideSearch" type="text" class="form-control"
-                       placeholder="Search by origin, destination, vehicle, or driver…"
-                       autocomplete="off" aria-label="Search rides" />
+            <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center justify-content-between">
+                <div class="sg-search-wrap flex-grow-1">
+                    <i class="bi bi-search"></i>
+                    <input id="rideSearch" type="text" class="form-control"
+                           placeholder="Search by origin, destination, vehicle, or driver…"
+                           autocomplete="off" aria-label="Search rides" />
+                </div>
+                <div class="rides-view-toggle" role="group" aria-label="Switch view">
+                    <button type="button" class="rides-view-btn is-active" id="rideViewListBtn">
+                        <i class="bi bi-list-ul"></i> List
+                    </button>
+                    <button type="button" class="rides-view-btn" id="rideViewMapBtn">
+                        <i class="bi bi-map"></i> Map
+                    </button>
+                </div>
             </div>
-            <p class="sg-results mb-0" id="rideResults">Showing <strong>@rides.Count</strong> of @rides.Count ride@(rides.Count == 1 ? "" : "s")</p>
+            <p class="sg-results mb-0 mt-2" id="rideResults">Showing <strong>@rides.Count</strong> of @rides.Count ride@(rides.Count == 1 ? "" : "s")</p>
         </div>
     }
+
+    @* ── Live update banner (Phase 4 fix) — shown instead of an auto-reload
+         when the user is actively typing in the search box, so we never yank
+         them out of what they're doing. ── *@
+    <div id="rideListUpdateBanner" class="rides-update-banner hidden">
+        <i class="bi bi-arrow-repeat"></i> New rides are available.
+        <button type="button" id="rideListRefreshBtn" class="btn btn-sm btn-primary ms-2">Refresh</button>
+    </div>
+
+    @* ── Map view (hidden by default; toggled by rides.js) ── *@
+    <div id="rideMapView" class="rides-map-wrap hidden">
+        <div id="rideMap" class="rides-map"></div>
+        @if (rides.Count > rideMapPoints.Count)
+        {
+            <p class="rides-map-note">
+                <i class="bi bi-info-circle"></i>
+                @(rides.Count - rideMapPoints.Count) ride@(rides.Count - rideMapPoints.Count == 1 ? "" : "s")
+                could not be located on the map and @(rides.Count - rideMapPoints.Count == 1 ? "is" : "are") shown in the list only.
+            </p>
+        }
+    </div>
+    <script type="application/json" id="rideMapData">@Html.Raw(Json.Serialize(rideMapPoints))</script>
 
     @if (!rides.Any())
     {
@@ -54,76 +104,82 @@
     }
     else
     {
-        <div class="row g-3" id="rideGrid">
-            @{ var idx = 0; }
-            @foreach (var r in rides)
-            {
-                var alreadyRequested = myRequests.Any(
+        <div id="rideListView">
+            <div class="row g-3" id="rideGrid">
+                @{
+                    var idx = 0;
+                }
+                @foreach (var r in rides)
+                {
+                    var alreadyRequested = myRequests.Any(
                     rr => rr.RideId == r.Id
-                       && (rr.Status == UniConnect.Models.RideRequestStatus.Pending
-                        || rr.Status == UniConnect.Models.RideRequestStatus.Accepted));
-                var soon = r.DepartureTime <= DateTime.Now.AddHours(6) && r.DepartureTime >= DateTime.Now;
-                var searchKey = ((r.DepartureLocation ?? "") + " " + (r.Destination ?? "") + " "
-                                + (r.VehicleType ?? "") + " " + (r.Driver?.FullName ?? "")).ToLower();
-                <div class="col-12 col-sm-6 col-xl-4 ride-col" data-search="@searchKey">
-                    <div class="ride-card uc-card uc-hover-lift" style="animation-delay:@(idx * 60)ms">
-                        <div class="ride-card-head">
-                            <span class="ride-vehicle"><i class="bi bi-car-front"></i>@r.VehicleType</span>
-                            @if (soon)
-                            {
-                                <span class="uc-pill uc-pill-amber"><i class="bi bi-clock-fill"></i>Soon</span>
-                            }
-                            @if (alreadyRequested)
-                            {
-                                <span class="uc-pill uc-pill-blue"><i class="bi bi-check2"></i>Requested</span>
-                            }
-                        </div>
-
-                        <div class="ride-route">
-                            <div class="ride-route-line" aria-hidden="true">
-                                <span class="ride-dot ride-dot-start"></span>
-                                <span class="ride-dash"></span>
-                                <span class="ride-dot ride-dot-end"></span>
-                            </div>
-                            <div class="ride-route-text">
-                                <div class="ride-stop"><span class="ride-stop-label">From</span><strong>@r.DepartureLocation</strong></div>
-                                <div class="ride-stop"><span class="ride-stop-label">To</span><strong>@r.Destination</strong></div>
-                            </div>
-                        </div>
-
-                        <div class="ride-meta">
-                            <span><i class="bi bi-calendar-event"></i> @r.DepartureTime.ToString("ddd, MMM dd · HH:mm")</span>
-                            <span><i class="bi bi-person-badge"></i> @r.Driver?.FullName</span>
-                        </div>
-
-                        <div class="ride-seats">
-                            <span class="ride-seats-label"><i class="bi bi-people-fill"></i> Seats</span>
-                            <span class="ride-seats-pips">
-                                @for (var s = 0; s < r.TotalSeats; s++)
+                    && (rr.Status == UniConnect.Models.RideRequestStatus.Pending
+                    || rr.Status == UniConnect.Models.RideRequestStatus.Accepted));
+                    var soon = r.DepartureTime <= DateTime.Now.AddHours(6) && r.DepartureTime >= DateTime.Now;
+                    var searchKey = ((r.DepartureLocation ?? "") + " " + (r.Destination ?? "") + " "
+                    + (r.VehicleType ?? "") + " " + (r.Driver?.FullName ?? "")).ToLower();
+                    <div class="col-12 col-sm-6 col-xl-4 ride-col" data-search="@searchKey">
+                        <div class="ride-card uc-card uc-hover-lift" style="animation-delay:@(idx * 60)ms">
+                            <div class="ride-card-head">
+                                <span class="ride-vehicle"><i class="bi bi-car-front"></i>@r.VehicleType</span>
+                                @if (soon)
                                 {
-                                    <span class="ride-pip @(s < r.AvailableSeats ? "is-open" : "")"></span>
+                                    <span class="uc-pill uc-pill-amber"><i class="bi bi-clock-fill"></i>Soon</span>
                                 }
-                            </span>
-                            <span class="ride-seats-count">@r.AvailableSeats / @r.TotalSeats</span>
+                                @if (alreadyRequested)
+                                {
+                                    <span class="uc-pill uc-pill-blue"><i class="bi bi-check2"></i>Requested</span>
+                                }
+                            </div>
+
+                            <div class="ride-route">
+                                <div class="ride-route-line" aria-hidden="true">
+                                    <span class="ride-dot ride-dot-start"></span>
+                                    <span class="ride-dash"></span>
+                                    <span class="ride-dot ride-dot-end"></span>
+                                </div>
+                                <div class="ride-route-text">
+                                    <div class="ride-stop"><span class="ride-stop-label">From</span><strong>@r.DepartureLocation</strong></div>
+                                    <div class="ride-stop"><span class="ride-stop-label">To</span><strong>@r.Destination</strong></div>
+                                </div>
+                            </div>
+
+                            <div class="ride-meta">
+                                <span><i class="bi bi-calendar-event"></i> @r.DepartureTime.ToString("ddd, MMM dd · HH:mm")</span>
+                                <span><i class="bi bi-person-badge"></i> @r.Driver?.FullName</span>
+                            </div>
+
+                            <div class="ride-seats">
+                                <span class="ride-seats-label"><i class="bi bi-people-fill"></i> Seats</span>
+                                <span class="ride-seats-pips">
+                                    @for (var s = 0; s < r.TotalSeats; s++)
+                                    {
+                                        <span class="ride-pip @(s < r.AvailableSeats ? "is-open" : "")"></span>
+                                    }
+                                </span>
+                                <span class="ride-seats-count">@r.AvailableSeats / @r.TotalSeats</span>
+                            </div>
+
+                            <a asp-action="Details" asp-route-id="@r.Id" class="btn btn-primary btn-sm w-100 mt-auto">
+                                <i class="bi bi-eye me-1"></i>View ride
+                            </a>
                         </div>
-
-                        <a asp-action="Details" asp-route-id="@r.Id" class="btn btn-primary btn-sm w-100 mt-auto">
-                            <i class="bi bi-eye me-1"></i>View ride
-                        </a>
                     </div>
-                </div>
-                idx++;
-            }
-        </div>
+                    idx++;
+                }
+            </div>
 
-        <div id="rideEmpty" class="uc-empty mt-3 hidden">
-            <span class="uc-empty-icon"><i class="bi bi-search"></i></span>
-            <h5>No matches</h5>
-            <p>No rides match your search. Try a different keyword.</p>
+            <div id="rideEmpty" class="uc-empty mt-3 hidden">
+                <span class="uc-empty-icon"><i class="bi bi-search"></i></span>
+                <h5>No matches</h5>
+                <p>No rides match your search. Try a different keyword.</p>
+            </div>
         </div>
     }
 </div>
 
 @section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/pages/rides.js" asp-append-version="true"></script>
 }

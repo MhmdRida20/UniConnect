@@ -16,33 +16,58 @@
     var mapPoints = new List<object>();
     if (Model.DepartureLat.HasValue && Model.DepartureLng.HasValue)
     {
-        mapPoints.Add(new { lat = Model.DepartureLat.Value, lng = Model.DepartureLng.Value,
-            label = "Departure: " + Model.DepartureLocation, color = "green" });
+        mapPoints.Add(new
+        {
+            lat = Model.DepartureLat.Value,
+            lng = Model.DepartureLng.Value,
+            label = "Departure (meeting point): " + Model.DepartureLocation,
+            color = "green"
+        });
     }
     if (Model.DestinationLat.HasValue && Model.DestinationLng.HasValue)
     {
-        mapPoints.Add(new { lat = Model.DestinationLat.Value, lng = Model.DestinationLng.Value,
-            label = "Destination: " + Model.Destination, color = "red" });
+        mapPoints.Add(new
+        {
+            lat = Model.DestinationLat.Value,
+            lng = Model.DestinationLng.Value,
+            label = "Destination: " + Model.Destination,
+            color = "red"
+        });
     }
     if (isDriver)
     {
+        // Pending requests show as amber pins (so the driver can see where
+        // someone wants picking up *before* deciding to accept) — accepted
+        // ones show as blue, matching the legend.
         foreach (var req in Model.Requests.Where(r =>
-            r.Status == UniConnect.Models.RideRequestStatus.Accepted
+            (r.Status == UniConnect.Models.RideRequestStatus.Pending
+             || r.Status == UniConnect.Models.RideRequestStatus.Accepted)
             && r.PickupLat.HasValue && r.PickupLng.HasValue))
         {
-            mapPoints.Add(new { lat = req.PickupLat!.Value, lng = req.PickupLng!.Value,
-                label = "Pickup: " + (req.Passenger?.FullName ?? "Passenger"), color = "blue" });
+            var isPending = req.Status == UniConnect.Models.RideRequestStatus.Pending;
+            mapPoints.Add(new
+            {
+                lat = req.PickupLat!.Value,
+                lng = req.PickupLng!.Value,
+                label = (isPending ? "Pickup request (pending): " : "Pickup (accepted): ") + (req.Passenger?.FullName ?? "Passenger"),
+                color = isPending ? "gold" : "blue"
+            });
         }
     }
+
+    // Phase 4 — who's allowed to see/send live location for this ride:
+    // the driver (sends) or a passenger with an accepted request (receives).
+    var isAcceptedPassenger = myRequest != null && myRequest.Status == UniConnect.Models.RideRequestStatus.Accepted;
+    var canTrack = isDriver || isAcceptedPassenger;
 }
 
 @section Styles {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="~/css/pages/ride-details.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/ride-tracking.css" asp-append-version="true" />
 }
 
-@if (TempData["Success"] != null) { <div class="alert alert-success uc-flash">@TempData["Success"]</div> }
-@if (TempData["Error"] != null) { <div class="alert alert-danger uc-flash">@TempData["Error"]</div> }
+
 
 <a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to rides</a>
 
@@ -67,12 +92,39 @@
 <div class="rd-map-wrap">
     <div id="rideMap" class="rd-map"></div>
     <div class="rd-map-legend">
-        <span><span class="rd-leg rd-leg-green"></span>Departure</span>
+        <span><span class="rd-leg rd-leg-green"></span>Departure (meeting point)</span>
         <span><span class="rd-leg rd-leg-red"></span>Destination</span>
-        @if (isDriver) { <span><span class="rd-leg rd-leg-blue"></span>Pickups</span> }
+        @if (isDriver)
+        {
+            <span><span class="rd-leg rd-leg-gold"></span>Pending pickup request</span>
+            <span><span class="rd-leg rd-leg-blue"></span>Accepted pickup</span>
+        }
+        @if (canTrack)
+        {
+            <span><span class="rd-leg rd-leg-orange"></span>Driver's live location (moving)</span>
+        }
     </div>
+    @if (canTrack)
+    {
+        <span class="rd-live-badge" id="rideLiveBadge" data-state="off">
+            <span class="rd-live-dot"></span> <span id="rideLiveBadgeText">Not tracking</span>
+        </span>
+    }
 </div>
 <script type="application/json" id="rideMapData">@Html.Raw(Json.Serialize(mapPoints))</script>
+
+<form id="rideTrackingAntiForgery">@Html.AntiForgeryToken()</form>
+<div id="rideTrackingConfig"
+     data-ride-id="@Model.Id"
+     data-is-driver="@(isDriver ? "true" : "false")"
+     data-can-track="@(canTrack ? "true" : "false")"
+     data-current-user-id="@ViewBag.CurrentUserId"
+     data-trip-started="@(Model.TripStartedAt.HasValue ? "true" : "false")"
+     data-ride-status="@Model.Status"
+     data-last-lat="@(Model.LastLat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+     data-last-lng="@(Model.LastLng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+     data-update-url="@Url.Action("UpdateLocation", "Rides")"
+     style="display:none"></div>
 
 <div class="row g-4 mt-1">
     @* ── Ride info + controls ── *@
@@ -94,8 +146,24 @@
             @if (isDriver)
             {
                 @if (Model.Status == UniConnect.Models.RideStatus.Active
-                   || Model.Status == UniConnect.Models.RideStatus.Full)
+               || Model.Status == UniConnect.Models.RideStatus.Full)
                 {
+                    @if (!Model.TripStartedAt.HasValue)
+                    {
+                        <div class="rd-actions">
+                            <form asp-action="StartTrip" asp-route-id="@Model.Id" method="post" class="d-inline" data-loading>
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-primary btn-sm"><i class="bi bi-play-circle me-1"></i>Start Trip</button>
+                            </form>
+                        </div>
+                        <p class="rd-pin-hint"><i class="bi bi-info-circle"></i> Starting the trip shares your live location with accepted passengers and stops new requests.</p>
+                    }
+                    else
+                    {
+                        <div class="rd-trip-live-note">
+                            <i class="bi bi-broadcast"></i> Trip in progress — your location is being shared.
+                        </div>
+                    }
                     <div class="rd-actions">
                         <form asp-action="CompleteRide" asp-route-id="@Model.Id" method="post" class="d-inline" data-loading>
                             @Html.AntiForgeryToken()
@@ -123,9 +191,17 @@
                                 <label class="form-label">Your pickup location</label>
                                 <div class="input-icon">
                                     <i class="bi bi-geo-alt"></i>
-                                    <input type="text" name="pickupLocation" class="form-control" maxlength="150"
+                                    <input type="text" name="pickupLocation" id="pickupLocationInput" class="form-control" maxlength="150"
                                            required placeholder="Where should the driver pick you up?" />
                                 </div>
+                                <small class="geo-status" id="pickupGeoStatus"></small>
+                                <button type="button" class="ride-my-location-btn" id="useMyLocationPickupBtn">
+                                    <i class="bi bi-crosshair"></i> Use my current location
+                                </button>
+                                <p class="rd-pin-hint"><i class="bi bi-info-circle"></i> Or click the map below to drop your exact pickup pin.</p>
+                                <div id="pickupPinMap" class="rd-pickup-map"></div>
+                                <input type="hidden" name="pickupLat" id="pickupLatInput" />
+                                <input type="hidden" name="pickupLng" id="pickupLngInput" />
                                 <button class="btn btn-primary btn-sm mt-3" data-loading-text="Sending…">
                                     <i class="bi bi-send me-1"></i>Send Request
                                 </button>
@@ -152,8 +228,12 @@
                             <span class="uc-pill @pillCls">@myRequest.Status</span>
                         </div>
                         <p class="mb-2 small text-muted"><i class="bi bi-geo-alt"></i> Pickup: @myRequest.PickupLocation</p>
+                        @if (myRequest.Status == UniConnect.Models.RideRequestStatus.Accepted)
+                        {
+                            <p class="mb-2 small text-muted"><i class="bi bi-broadcast"></i> Live tracking status is shown above the map once your driver starts the trip.</p>
+                        }
                         @if (myRequest.Status == UniConnect.Models.RideRequestStatus.Pending
-                           || myRequest.Status == UniConnect.Models.RideRequestStatus.Accepted)
+                       || myRequest.Status == UniConnect.Models.RideRequestStatus.Accepted)
                         {
                             <form asp-action="CancelRequest" asp-route-requestId="@myRequest.Id" method="post"
                                   data-confirm="Cancel your seat request?">
@@ -171,14 +251,17 @@
     @if (isDriver)
     {
         var requests = Model.Requests
-            .Where(r => r.Status != UniConnect.Models.RideRequestStatus.Cancelled)
-            .OrderBy(r => r.RequestedAt).ToList();
+        .Where(r => r.Status != UniConnect.Models.RideRequestStatus.Cancelled)
+        .OrderBy(r => r.RequestedAt).ToList();
         var pendingCount = requests.Count(r => r.Status == UniConnect.Models.RideRequestStatus.Pending);
         <div class="col-lg-6">
             <div class="rd-panel">
                 <h2 class="rd-panel-title">
                     <i class="bi bi-inbox"></i> Ride Requests
-                    @if (pendingCount > 0) { <span class="rd-pending-badge">@pendingCount pending</span> }
+                    @if (pendingCount > 0)
+                    {
+                        <span class="rd-pending-badge">@pendingCount pending</span>
+                    }
                 </h2>
                 @if (!requests.Any())
                 {
@@ -228,5 +311,7 @@
 
 @section Scripts {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/pages/ride-details.js" asp-append-version="true"></script>
+    <script src="~/js/pages/ride-tracking.js" asp-append-version="true"></script>
 }

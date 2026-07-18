@@ -4,7 +4,9 @@
 }
 
 @section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/ride-create.css" asp-append-version="true" />
 }
 
 <div class="form-page">
@@ -33,6 +35,7 @@
                             <input asp-for="DepartureLocation" class="form-control" placeholder="e.g. Hamra, Beirut" autofocus />
                         </div>
                         <span asp-validation-for="DepartureLocation" class="text-danger"></span>
+                        <small class="geo-status" id="depGeoStatus"></small>
                     </div>
 
                     <div class="mb-3">
@@ -42,6 +45,35 @@
                             <input asp-for="Destination" class="form-control" placeholder="e.g. University Main Gate" />
                         </div>
                         <span asp-validation-for="Destination" class="text-danger"></span>
+                        <small class="geo-status" id="destGeoStatus"></small>
+                    </div>
+
+                    @* ── Map pin picker (Phase 2) ──────────────────────────────
+                       Typing an address above still works, but dropping a pin
+                       here is more accurate — it sets the exact map location
+                       instead of relying on geocoding to guess it. *@
+                    <div class="mb-3">
+                        <label class="form-label">Pin exact locations on the map <span class="text-muted fw-normal">(recommended)</span></label>
+                        <div class="ride-pin-toggle" role="group" aria-label="Choose which pin to place">
+                            <button type="button" class="ride-pin-btn is-active" id="pinModeDeparture" data-mode="departure">
+                                <span class="ride-pin-dot ride-pin-dot-green"></span> Set Departure
+                                <i class="bi bi-check2-circle ride-pin-check" id="pinCheckDeparture"></i>
+                            </button>
+                            <button type="button" class="ride-pin-btn" id="pinModeDestination" data-mode="destination">
+                                <span class="ride-pin-dot ride-pin-dot-red"></span> Set Destination
+                                <i class="bi bi-check2-circle ride-pin-check" id="pinCheckDestination"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="ride-my-location-btn" id="useMyLocationBtn">
+                            <i class="bi bi-crosshair"></i> Use my current location as departure
+                        </button>
+                        <div id="rideCreateMap" class="ride-create-map"></div>
+                        <p class="ride-pin-hint"><i class="bi bi-info-circle"></i> Click the map to drop the active pin. You can drag a pin to fine-tune it. The departure pin is the <strong>meeting point</strong> passengers plan around — it doesn't need to be your exact location right this second, just where you'll actually be when the ride leaves.</p>
+
+                        <input type="hidden" asp-for="DepartureLat" id="DepartureLat" />
+                        <input type="hidden" asp-for="DepartureLng" id="DepartureLng" />
+                        <input type="hidden" asp-for="DestinationLat" id="DestinationLat" />
+                        <input type="hidden" asp-for="DestinationLng" id="DestinationLng" />
                     </div>
 
                     <div class="mb-3">
@@ -105,5 +137,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
+    <script src="~/js/pages/ride-create.js" asp-append-version="true"></script>
 }

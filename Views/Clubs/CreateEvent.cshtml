@@ -1,0 +1,67 @@
+@model UniConnect.ViewModels.ClubEventCreateVM
+@{
+    var club = ViewBag.Club as UniConnect.Models.Club;
+    ViewData["Title"] = "Create Event";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
+}
+
+<div class="form-page">
+    <a asp-action="Details" asp-route-id="@club?.Id" class="form-back"><i class="bi bi-arrow-left"></i> Back to @club?.ClubName</a>
+
+    <div class="form-page-head">
+        <span class="form-page-ico"><i class="bi bi-calendar-event"></i></span>
+        <div>
+            <h1>Create Event</h1>
+            <p class="text-muted">For @club?.ClubName</p>
+        </div>
+    </div>
+
+    <div class="uc-form-card">
+        <form asp-action="CreateEvent" asp-route-clubId="@club?.Id" method="post" data-loading>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" placeholder="e.g. Intro to AI Workshop" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="EventDateTime" class="form-label"></label>
+                <input asp-for="EventDateTime" class="form-control" />
+                <span asp-validation-for="EventDateTime" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Location" class="form-label"></label>
+                <input asp-for="Location" class="form-control" placeholder="e.g. Main Auditorium" />
+                <span asp-validation-for="Location" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MaxAttendees" class="form-label"></label>
+                <input asp-for="MaxAttendees" type="number" class="form-control" placeholder="Leave blank for unlimited" />
+                <span asp-validation-for="MaxAttendees" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100" data-loading-text="Creating…">
+                <i class="bi bi-plus-lg me-1"></i>Create Event
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
+}

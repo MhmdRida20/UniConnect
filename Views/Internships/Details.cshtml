@@ -1,0 +1,156 @@
+@model UniConnect.Models.Internship
+@{
+    ViewData["Title"] = Model.Title;
+    var score = (int)ViewBag.Score;
+    var courseDataAvailable = (bool)ViewBag.CourseDataAvailable;
+    var existingApplication = ViewBag.ExistingApplication as UniConnect.Models.InternshipApplication;
+    var positionsFilled = (bool)ViewBag.PositionsFilled;
+    var deadlinePassed = (bool)ViewBag.DeadlinePassed;
+    var hasCv = ViewBag.HasCv is true;
+    var skillCount = (int)(ViewBag.SkillCount ?? 0);
+    var mailtoSubject = Uri.EscapeDataString($"Application for {Model.Title}");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/internships.css" asp-append-version="true" />
+}
+
+<div class="container" style="padding-top:1.5rem; max-width:760px;">
+    <a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to internships</a>
+
+    <div class="uc-form-card">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <h1 class="mb-1" style="font-size:1.4rem;">@Model.Title</h1>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-building"></i> @Model.ExternalEmployerName
+                    <span class="uc-pill uc-pill-grey ms-1">Posted by @Model.Company?.CompanyName</span>
+                </p>
+            </div>
+            <span class="match-badge match-@(score >= 70 ? "high" : score >= 40 ? "mid" : "low") fs-6">
+                @score% match
+            </span>
+        </div>
+
+        @if (!courseDataAvailable)
+        {
+            <small class="text-muted d-block mt-1"><i class="bi bi-exclamation-circle"></i> Partial score — course data unavailable right now.</small>
+        }
+
+        <hr />
+        <p>@Model.Description</p>
+
+        <div class="row g-3 mb-3">
+            <div class="col-sm-6"><strong>Location:</strong> @Model.Location</div>
+            <div class="col-sm-6"><strong>Duration:</strong> @(Model.DurationWeeks.HasValue ? Model.DurationWeeks + " weeks" : "Not specified")</div>
+            <div class="col-sm-6"><strong>Deadline:</strong> @Model.ApplicationDeadline.ToString("MMM dd, yyyy")</div>
+            <div class="col-sm-6"><strong>Positions:</strong> @Model.NumberOfPositions</div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.RequiredSkills))
+        {
+            <p><strong>Required skills:</strong> @Model.RequiredSkills</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.RecommendedCourses))
+        {
+            <p><strong>Recommended courses:</strong> @Model.RecommendedCourses</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.RelevantMajors))
+        {
+            <p><strong>Relevant majors:</strong> @Model.RelevantMajors</p>
+        }
+
+        <hr />
+
+        @if (Model.PostingMode == UniConnect.Models.InternshipPostingMode.ListingOnly)
+        {
+            <div class="alert alert-secondary uc-flash mb-3">
+                <i class="bi bi-box-arrow-up-right"></i> This employer handles applications directly — UniConnect
+                doesn't track your application status for this listing.
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                @if (!string.IsNullOrWhiteSpace(Model.ExternalApplyUrl))
+                {
+                    <a href="@Model.ExternalApplyUrl" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Apply on Employer's Website
+                    </a>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ExternalApplyEmail))
+                {
+                    <div>
+                        <a href="mailto:@Model.ExternalApplyEmail?subject=@mailtoSubject" class="btn btn-outline-primary">
+                            <i class="bi bi-envelope me-1"></i>Apply by Email
+                        </a>
+                        <div class="mt-1">
+                            <small class="text-muted">
+                                No email app open automatically? Send to
+                                <span class="fw-semibold" id="applyEmailText">@Model.ExternalApplyEmail</span>
+                                <button type="button" class="btn btn-link btn-sm p-0 ms-1" id="copyEmailBtn" title="Copy email address">
+                                    <i class="bi bi-clipboard"></i> Copy
+                                </button>
+                            </small>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (existingApplication is not null)
+        {
+            <div class="alert alert-secondary uc-flash">
+                <i class="bi bi-check-circle"></i> You applied on @existingApplication.AppliedAt.ToString("MMM dd, yyyy") —
+                status: <strong>@existingApplication.Status</strong>
+            </div>
+        }
+        else if (deadlinePassed)
+        {
+            <div class="alert alert-secondary uc-flash"><i class="bi bi-calendar-x"></i> The application deadline has passed.</div>
+        }
+        else if (positionsFilled)
+        {
+            <div class="alert alert-secondary uc-flash"><i class="bi bi-people-fill"></i> All positions for this internship have been filled.</div>
+        }
+        else
+        {
+            @if (!hasCv || skillCount == 0)
+            {
+                <div class="alert alert-warning uc-flash mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    @if (!hasCv && skillCount == 0)
+                    {
+                        <text>Your profile has no CV and no skills listed yet — the employer won't see either if you apply now.</text>
+                    }
+                    else if (!hasCv)
+                    {
+                        <text>You haven't uploaded a CV yet — it won't be included if the employer receives your application.</text>
+                    }
+                    else
+                    {
+                        <text>You haven't added any skills yet — this may lower your matching score.</text>
+                    }
+                    <a asp-controller="CareerProfile" asp-action="Index" class="alert-link">Update your Career Profile</a> first, or apply anyway below.
+                </div>
+            }
+            <form asp-action="Apply" method="post" data-loading>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="internshipId" value="@Model.Id" />
+                <label class="form-label">Cover message (optional)</label>
+                <textarea name="coverMessage" class="form-control mb-2" rows="3" placeholder="Why are you a good fit?"></textarea>
+                <button class="btn btn-primary"><i class="bi bi-send me-1"></i>Apply</button>
+            </form>
+        }
+    </div>
+</div>
+
+<script>
+    (function () {
+        const btn = document.getElementById('copyEmailBtn');
+        const text = document.getElementById('applyEmailText');
+        if (!btn || !text) return;
+        btn.addEventListener('click', () => {
+            navigator.clipboard.writeText(text.textContent.trim()).then(() => {
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
+                setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'; }, 2000);
+            });
+        });
+    })();
+</script>

@@ -1,0 +1,61 @@
+/* ==========================================================================
+   Internship and Career Matching
+   ========================================================================== */
+
+/* ── Skill chips (Career Profile) ── */
+.skill-chip {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: var(--uc-primary-tint); color: var(--uc-primary-darker);
+    border: 1px solid var(--uc-primary-light); border-radius: 999px;
+    padding: .3rem .7rem .3rem .9rem; font-size: .85rem; font-weight: 600;
+}
+.skill-chip small { font-weight: 500; opacity: .75; }
+.skill-chip-remove {
+    background: none; border: none; color: var(--uc-primary-darker);
+    font-size: 1rem; line-height: 1; cursor: pointer; padding: 0 .2rem;
+}
+.skill-chip-remove:hover { color: var(--uc-danger); }
+
+/* ── Matching score badge ── */
+.match-badge {
+    display: inline-flex; align-items: center; padding: .25rem .6rem;
+    border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap;
+}
+.match-high { background: #dcfce7; color: #15803d; }
+.match-mid  { background: #fef3c7; color: #92400e; }
+.match-low  { background: #f1f5f9; color: #64748b; }
+
+/* ── Internship cards (browse list) ── */
+.internship-card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); padding: 1rem;
+    transition: box-shadow var(--uc-transition), transform var(--uc-transition);
+    height: 100%;
+}
+.internship-card:hover { box-shadow: var(--uc-shadow-md); transform: translateY(-2px); color: inherit; }
+.internship-card-company { font-size: .85rem; color: var(--uc-text-soft); margin: .4rem 0 .2rem; }
+.internship-card-meta { font-size: .8rem; color: var(--uc-muted); margin: 0 0 .2rem; }
+
+/* ── Application status pills ── */
+.status-submitted   { background: #dbeafe; color: #1d4ed8; }
+.status-underreview  { background: #fef3c7; color: #92400e; }
+.status-shortlisted  { background: #ede9fe; color: #6d28d9; }
+.status-accepted     { background: #dcfce7; color: #15803d; }
+.status-rejected     { background: #fee2e2; color: #b91c1c; }
+.status-withdrawn    { background: #f1f5f9; color: #64748b; }
+
+/* ── Company dashboard cards ── */
+.internship-post-card {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); padding: 1rem 1.2rem; margin-bottom: .8rem;
+}
+.applicant-card {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius-sm); padding: .9rem 1.1rem; margin-bottom: .7rem;
+}
+.applicant-skills { display: flex; flex-wrap: wrap; gap: .3rem; margin: .4rem 0; }
+.applicant-skill-tag {
+    background: var(--uc-bg); border: 1px solid var(--uc-border-soft);
+    border-radius: 999px; padding: .15rem .55rem; font-size: .74rem; color: var(--uc-text-soft);
+}

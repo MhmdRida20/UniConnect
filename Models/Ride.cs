@@ -18,6 +18,16 @@ namespace UniConnect.Models
     {
         public int Id { get; set; }
 
+        // Which university this ride belongs to — without this, a ride could
+        // theoretically be visible/joinable across universities if two
+        // students happened to share a driver/passenger relationship data
+        // path. Added because Rides was the one service that never had this
+        // scoping, unlike Study Groups/Clubs/Tickets.
+        [Required]
+        [StringLength(20)]
+        public string UniversityCode { get; set; } = string.Empty;
+        public virtual University? University { get; set; }
+
         // The driver who created the ride (FK to ApplicationUser.Id)
         [Required]
         public string DriverId { get; set; } = string.Empty;
@@ -52,6 +62,13 @@ namespace UniConnect.Models
 
         public RideStatus Status { get; set; } = RideStatus.Active;
 
+        // Edge Case: "Double seat reservation — two students request the
+        // last available seat simultaneously. The system shall allow only
+        // the first confirmed acceptance." Same concurrency-token mechanism
+        // as StudyGroup.RowVersion.
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
+
         [Display(Name = "Created On")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -66,5 +83,19 @@ namespace UniConnect.Models
 
         // Navigation: requests made for this ride
         public virtual ICollection<RideRequest> Requests { get; set; } = new List<RideRequest>();
+
+        // ── Live tracking (Phase 4) ──────────────────────────────────────
+        // Set when the driver hits "Start Trip". Requests are no longer
+        // accepted once a trip has started (see RidesController.RequestRide).
+        public DateTime? TripStartedAt { get; set; }
+
+        // Last known driver position, updated on every location push while the
+        // trip is in progress. Persisted (not just broadcast) so a passenger
+        // who opens/reloads the page after the driver already started sees the
+        // last known position immediately, instead of a blank map until the
+        // next update arrives.
+        public double? LastLat { get; set; }
+        public double? LastLng { get; set; }
+        public DateTime? LastLocationAt { get; set; }
     }
 }

@@ -18,6 +18,13 @@ namespace UniConnect.Models
         public string UniversityId { get; set; } = string.Empty;
         public virtual Student? Student { get; set; }
 
+        // Which university's course catalog CourseCode refers to — always the
+        // same as the student's own UniversityCode, but stored explicitly so
+        // the FK to Course (a composite key) is unambiguous.
+        [Required]
+        [StringLength(20)]
+        public string UniversityCode { get; set; } = string.Empty;
+
         [Required]
         [StringLength(10)]
         public string CourseCode { get; set; } = string.Empty;

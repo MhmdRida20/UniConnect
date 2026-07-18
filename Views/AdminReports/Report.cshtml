@@ -1,0 +1,110 @@
+@model UniConnect.ViewModels.ReportResultVM
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var universities = ViewBag.Universities as List<UniConnect.Models.University> ?? new();
+    var showUniversityFilter = ViewBag.Type as string != "Internships" && ViewBag.Type as string != "Notifications";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/reports.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to reports</a>
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <h2 class="mb-0">@Model.Title</h2>
+    <a asp-action="Export" asp-route-type="@ViewBag.Type" asp-route-from="@ViewBag.From" asp-route-to="@ViewBag.To"
+       asp-route-universityCode="@ViewBag.UniversityCode" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-download me-1"></i>Export CSV
+    </a>
+</div>
+
+<form method="get" class="d-flex flex-wrap gap-2 mb-3">
+    <input type="hidden" name="type" value="@ViewBag.Type" />
+    <div>
+        <label class="form-label small mb-0">From</label>
+        <input type="date" name="from" class="form-control form-control-sm" value="@(((DateTime?)ViewBag.From)?.ToString("yyyy-MM-dd"))" />
+    </div>
+    <div>
+        <label class="form-label small mb-0">To</label>
+        <input type="date" name="to" class="form-control form-control-sm" value="@(((DateTime?)ViewBag.To)?.ToString("yyyy-MM-dd"))" />
+    </div>
+    @if (showUniversityFilter)
+    {
+        <div>
+            <label class="form-label small mb-0">University</label>
+            <select name="universityCode" class="form-select form-select-sm">
+                <option value="">All</option>
+                @foreach (var u in universities)
+                {
+                    if (u.Code == ViewBag.UniversityCode as string)
+                    {
+                        <option value="@u.Code" selected>@u.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@u.Code">@u.Name</option>
+                    }
+                }
+            </select>
+        </div>
+    }
+    <div class="align-self-end">
+        <button class="btn btn-outline-secondary btn-sm">Apply</button>
+    </div>
+</form>
+
+@if (Model.Truncated)
+{
+    <div class="alert alert-warning uc-flash">
+        <i class="bi bi-exclamation-triangle"></i> This report has a lot of matching data — showing the most recent rows only.
+        Narrow your date range or filters for a complete view.
+    </div>
+}
+
+<div class="report-summary-grid mb-3">
+    @foreach (var (label, value) in Model.Summary)
+    {
+        <div class="report-summary-card">
+            <strong>@value</strong>
+            <span>@label</span>
+        </div>
+    }
+</div>
+
+@if (!Model.Rows.Any())
+{
+    <div class="uc-empty">
+        <span class="uc-empty-icon"><i class="bi bi-clipboard-data"></i></span>
+        <h5>No data for this period</h5>
+        <p>Try widening the date range or clearing filters.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-hover report-table">
+            <thead>
+                <tr>
+                    @foreach (var h in Model.ColumnHeaders)
+                    {
+                        <th>@h</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        @foreach (var cell in row)
+                        {
+                            <td>@cell</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

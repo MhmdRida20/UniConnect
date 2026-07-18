@@ -1,0 +1,134 @@
+/* ==========================================================================
+   Create Ride — map pin picker (Phase 2)
+   ========================================================================== */
+
+.ride-pin-toggle {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .6rem;
+    flex-wrap: wrap;
+}
+
+.ride-pin-btn {
+    flex: 1;
+    min-width: 160px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    border: 1px solid var(--uc-border);
+    background: var(--uc-surface);
+    border-radius: var(--uc-radius-sm);
+    padding: .55rem .8rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--uc-text-soft);
+    cursor: pointer;
+    transition: border-color var(--uc-transition), box-shadow var(--uc-transition), color var(--uc-transition);
+}
+
+    .ride-pin-btn:hover {
+        border-color: var(--uc-primary-light);
+    }
+
+    .ride-pin-btn.is-active {
+        border-color: var(--uc-primary);
+        color: var(--uc-primary-darker);
+        box-shadow: 0 0 0 3px var(--uc-primary-soft);
+        background: var(--uc-primary-tint);
+    }
+
+.ride-pin-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ride-pin-dot-green {
+    background: #16a34a;
+}
+
+.ride-pin-dot-red {
+    background: #dc2626;
+}
+
+.ride-pin-check {
+    opacity: 0;
+    color: var(--uc-primary);
+    transition: opacity var(--uc-transition);
+}
+
+    .ride-pin-check.is-set {
+        opacity: 1;
+    }
+
+.ride-create-map {
+    width: 100%;
+    height: 320px;
+    border-radius: var(--uc-radius);
+    border: 1px solid var(--uc-border);
+    box-shadow: var(--uc-shadow-xs);
+    z-index: 0;
+}
+
+.ride-pin-hint {
+    margin: .55rem 0 0;
+    font-size: .78rem;
+    color: var(--uc-muted);
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+/* ── Geocoding status messages (Phase 3) ── */
+.geo-status {
+    display: block;
+    margin-top: .35rem;
+    font-size: .78rem;
+    min-height: 1.1em;
+    color: var(--uc-muted);
+}
+
+.geo-status-loading {
+    color: var(--uc-muted);
+}
+
+.geo-status-ok {
+    color: var(--uc-primary-dark);
+}
+
+.geo-status-warn {
+    color: var(--uc-warning);
+}
+
+/* ── "Use my current location" button ── */
+.ride-my-location-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    border: 1px dashed var(--uc-primary-light);
+    background: var(--uc-primary-tint);
+    color: var(--uc-primary-darker);
+    border-radius: var(--uc-radius-sm);
+    padding: .45rem .8rem;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: .6rem;
+    transition: background var(--uc-transition), border-color var(--uc-transition);
+}
+
+    .ride-my-location-btn:hover {
+        background: var(--uc-primary-soft);
+        border-color: var(--uc-primary);
+    }
+
+    .ride-my-location-btn:disabled {
+        opacity: .6;
+        cursor: default;
+    }
+
+    .ride-my-location-btn i {
+        color: var(--uc-primary);
+    }

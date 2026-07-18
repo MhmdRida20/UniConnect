@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using UniConnect.Data;
+using UniConnect.Hubs;
 using UniConnect.Models;
 using UniConnect.ViewModels;
 using UniConnect.Services;
@@ -17,20 +19,33 @@ namespace UniConnect.Controllers
     ///   plus ride status tracking (FR-13) and cancellation (FR-14)
     /// </summary>
     [Authorize]
+    [UniConnect.Filters.RequireService(UniConnect.Models.ServiceCodes.RideSharing)]
     public class RidesController : Controller
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IGeocodingService _geocoder;
+        private readonly IHubContext<RideTrackingHub> _trackingHub;
+        private readonly UniConnect.Services.AuditLogService _auditLog;
 
         public RidesController(ApplicationDbContext db,
                                UserManager<ApplicationUser> userManager,
-                               IGeocodingService geocoder)
+                               IGeocodingService geocoder,
+                               IHubContext<RideTrackingHub> trackingHub,
+                               UniConnect.Services.AuditLogService auditLog)
         {
             _db = db;
             _userManager = userManager;
             _geocoder = geocoder;
+            _trackingHub = trackingHub;
+            _auditLog = auditLog;
         }
+
+        // Notifies anyone currently viewing the Available Rides list that
+        // something changed (new ride posted, a ride filled up/got cancelled/
+        // completed, seats freed up, etc.) so their list can refresh live.
+        private Task BroadcastRideListChanged()
+            => _trackingHub.Clients.Group("rides-lobby").SendAsync("RideListChanged");
 
         // ---------- INDEX: browse available rides (FR-09) -------------------------
         public async Task<IActionResult> Index()
@@ -38,13 +53,15 @@ namespace UniConnect.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user is null) return Challenge();
 
-            // Show active rides that still have seats, created by OTHER students,
-            // and that haven't already departed.
+            // Show active rides that still have seats, created by OTHER students
+            // AT MY OWN UNIVERSITY, that haven't already departed.
             var rides = await _db.Rides
                 .Include(r => r.Driver)
-                .Where(r => r.Status == RideStatus.Active
+                .Where(r => r.UniversityCode == user.UniversityCode
+                            && r.Status == RideStatus.Active
                             && r.AvailableSeats > 0
                             && r.DriverId != user.Id
+                            && r.TripStartedAt == null
                             && r.DepartureTime > DateTime.Now)
                 .OrderBy(r => r.DepartureTime)
                 .ToListAsync();
@@ -87,6 +104,7 @@ namespace UniConnect.Controllers
 
             var ride = new Ride
             {
+                UniversityCode = user.UniversityCode,
                 DriverId = user.Id,
                 DepartureLocation = vm.DepartureLocation.Trim(),
                 Destination = vm.Destination.Trim(),
@@ -99,15 +117,44 @@ namespace UniConnect.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Geocode the addresses into coordinates for the map
-            var dep = await _geocoder.GeocodeAsync(ride.DepartureLocation);
-            if (dep.HasValue) { ride.DepartureLat = dep.Value.lat; ride.DepartureLng = dep.Value.lng; }
+            // Geocode the addresses into coordinates for the map.
+            // If the user dropped a pin on the map, those coordinates are
+            // authoritative (they came straight from the click, not a guess).
+            // We only fall back to text geocoding when no pin was set.
+            if (vm.DepartureLat.HasValue && vm.DepartureLng.HasValue)
+            {
+                ride.DepartureLat = vm.DepartureLat;
+                ride.DepartureLng = vm.DepartureLng;
+            }
+            else
+            {
+                var dep = await _geocoder.GeocodeAsync(ride.DepartureLocation);
+                if (dep.HasValue) { ride.DepartureLat = dep.Value.lat; ride.DepartureLng = dep.Value.lng; }
+            }
 
-            var dest = await _geocoder.GeocodeAsync(ride.Destination);
-            if (dest.HasValue) { ride.DestinationLat = dest.Value.lat; ride.DestinationLng = dest.Value.lng; }
+            if (vm.DestinationLat.HasValue && vm.DestinationLng.HasValue)
+            {
+                ride.DestinationLat = vm.DestinationLat;
+                ride.DestinationLng = vm.DestinationLng;
+            }
+            else
+            {
+                var dest = await _geocoder.GeocodeAsync(ride.Destination);
+                if (dest.HasValue) { ride.DestinationLat = dest.Value.lat; ride.DestinationLng = dest.Value.lng; }
+            }
 
             _db.Rides.Add(ride);
             await _db.SaveChangesAsync();
+
+            await _auditLog.LogAsync(
+                "RideCreated",
+                userId: user.Id,
+                universityCode: user.UniversityCode,
+                entityType: "Ride",
+                entityId: ride.Id.ToString(),
+                details: $"{ride.DepartureLocation} -> {ride.Destination}");
+
+            await BroadcastRideListChanged();
 
             TempData["Success"] = "Ride created successfully.";
             return RedirectToAction(nameof(Details), new { id = ride.Id });
@@ -126,6 +173,15 @@ namespace UniConnect.Controllers
 
             if (ride is null) return NotFound();
 
+            // Adapter/Integration Edge Cases: "Cross-university data leak" —
+            // never let a ride from another university be viewable, even by
+            // direct URL/ID guessing.
+            if (ride.UniversityCode != user.UniversityCode)
+            {
+                TempData["Error"] = "This ride doesn't belong to your university.";
+                return RedirectToAction(nameof(Index));
+            }
+
             ViewBag.IsDriver = ride.DriverId == user.Id;
             ViewBag.MyRequest = ride.Requests
                 .FirstOrDefault(rr => rr.PassengerId == user.Id
@@ -138,10 +194,22 @@ namespace UniConnect.Controllers
         // ---------- REQUEST RIDE (POST) — UC-04, FR-10, FR-11 ---------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RequestRide(int id, string pickupLocation)
+        public async Task<IActionResult> RequestRide(int id, string pickupLocation, double? pickupLat, double? pickupLng)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user is null) return Challenge();
+
+            // Edge Case: "Excessive ride requests — a student sends too many
+            // ride requests in a short period. The system shall apply
+            // request rate limits."
+            var rateLimitWindow = DateTime.UtcNow.AddMinutes(-10);
+            var recentRequestCount = await _db.RideRequests.CountAsync(
+                rr => rr.PassengerId == user.Id && rr.RequestedAt >= rateLimitWindow);
+            if (recentRequestCount >= 5)
+            {
+                TempData["Error"] = "You've sent a lot of ride requests recently — please wait a few minutes before requesting another.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
 
             if (string.IsNullOrWhiteSpace(pickupLocation))
             {
@@ -154,6 +222,13 @@ namespace UniConnect.Controllers
                 .FirstOrDefaultAsync(r => r.Id == id);
             if (ride is null) return NotFound();
 
+            // Same cross-university guard as Details.
+            if (ride.UniversityCode != user.UniversityCode)
+            {
+                TempData["Error"] = "This ride doesn't belong to your university.";
+                return RedirectToAction(nameof(Index));
+            }
+
             // Can't request your own ride
             if (ride.DriverId == user.Id)
             {
@@ -165,6 +240,13 @@ namespace UniConnect.Controllers
             if (ride.Status != RideStatus.Active || ride.AvailableSeats <= 0)
             {
                 TempData["Error"] = "This ride is no longer available.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            // Once the driver has hit "Start Trip", no new passengers can join.
+            if (ride.TripStartedAt.HasValue)
+            {
+                TempData["Error"] = "This ride has already started and can no longer accept requests.";
                 return RedirectToAction(nameof(Details), new { id });
             }
 
@@ -188,12 +270,30 @@ namespace UniConnect.Controllers
                 RequestedAt = DateTime.UtcNow
             };
 
-            // Geocode the pickup location for the map
-            var pick = await _geocoder.GeocodeAsync(newRequest.PickupLocation);
-            if (pick.HasValue) { newRequest.PickupLat = pick.Value.lat; newRequest.PickupLng = pick.Value.lng; }
+            // Geocode the pickup location for the map. A pin dropped directly on
+            // the map is authoritative; only fall back to text geocoding otherwise.
+            if (pickupLat.HasValue && pickupLng.HasValue)
+            {
+                newRequest.PickupLat = pickupLat;
+                newRequest.PickupLng = pickupLng;
+            }
+            else
+            {
+                var pick = await _geocoder.GeocodeAsync(newRequest.PickupLocation);
+                if (pick.HasValue) { newRequest.PickupLat = pick.Value.lat; newRequest.PickupLng = pick.Value.lng; }
+            }
 
             _db.RideRequests.Add(newRequest);
             await _db.SaveChangesAsync();
+
+            // Let the driver's already-open Details page see the new request
+            // live, without needing a refresh.
+            await _trackingHub.Clients.Group($"ride-{id}").SendAsync("NewRideRequest", new
+            {
+                requestId = newRequest.Id,
+                passengerName = user.FullName ?? "A student"
+            });
+            await BroadcastRideListChanged();
 
             TempData["Success"] = "Ride request sent to the driver.";
             return RedirectToAction(nameof(Details), new { id });
@@ -262,7 +362,39 @@ namespace UniConnect.Controllers
                 if (request.Ride.AvailableSeats == 0)
                     request.Ride.Status = RideStatus.Full;  // FR-13
 
-                await _db.SaveChangesAsync();
+                try
+                {
+                    await _db.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // Edge Case: "Double seat reservation" — the ride changed
+                    // (another request accepted, cancelled, etc.) between our
+                    // seat-count check and this save. Don't guess at the
+                    // outcome — ask the driver to re-check current seats.
+                    TempData["Error"] = "This ride changed while you were accepting that request — please check available seats and try again.";
+                    return RedirectToAction(nameof(Details), new { id = request.RideId });
+                }
+
+                // Tell anyone viewing this ride's page — specifically the affected
+                // passenger — that their status changed, so their already-open
+                // Details page can refresh itself instead of needing a manual
+                // reload to pick up live-tracking access (Phase 4).
+                await _trackingHub.Clients.Group($"ride-{request.RideId}").SendAsync("RequestStatusChanged", new
+                {
+                    passengerId = request.PassengerId,
+                    status = request.Status.ToString()
+                });
+                await BroadcastRideListChanged();
+
+                await _auditLog.LogAsync(
+                    "RideRequestAccepted",
+                    userId: user.Id,
+                    universityCode: user.UniversityCode,
+                    entityType: "RideRequest",
+                    entityId: request.Id.ToString(),
+                    details: $"Ride {request.RideId}, passenger {request.PassengerId}");
+
                 TempData["Success"] = "Request accepted.";
             }
 
@@ -294,6 +426,13 @@ namespace UniConnect.Controllers
             request.Status = RideRequestStatus.Rejected;
             await _db.SaveChangesAsync();
 
+            await _trackingHub.Clients.Group($"ride-{request.RideId}").SendAsync("RequestStatusChanged", new
+            {
+                passengerId = request.PassengerId,
+                status = request.Status.ToString()
+            });
+            await BroadcastRideListChanged();
+
             TempData["Success"] = "Request rejected.";
             return RedirectToAction(nameof(Details), new { id = request.RideId });
         }
@@ -323,6 +462,11 @@ namespace UniConnect.Controllers
             }
 
             await _db.SaveChangesAsync();
+
+            // Stop any live-tracking listeners — the trip is over.
+            await _trackingHub.Clients.Group($"ride-{id}").SendAsync("TripEnded", "cancelled");
+            await BroadcastRideListChanged();
+
             TempData["Success"] = "Ride cancelled. Affected passengers have been updated.";
             return RedirectToAction(nameof(MyRides));
         }
@@ -341,8 +485,107 @@ namespace UniConnect.Controllers
 
             ride.Status = RideStatus.Completed;
             await _db.SaveChangesAsync();
+
+            // Stop any live-tracking listeners — the trip is over.
+            await _trackingHub.Clients.Group($"ride-{id}").SendAsync("TripEnded", "completed");
+            await BroadcastRideListChanged();
+
             TempData["Success"] = "Ride marked as completed.";
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // ---------- REVERSE GEOCODE (AJAX) — used by the map pin pickers -----------
+        // Called from the browser when the user clicks/drags a pin on a map, so we
+        // can show a readable address in the text field. Purely cosmetic — the
+        // authoritative data is the lat/lng the pin was dropped at, not this text.
+        [HttpGet]
+        public async Task<IActionResult> ReverseGeocode(double lat, double lng)
+        {
+            var address = await _geocoder.ReverseGeocodeAsync(lat, lng);
+            return Json(new { address });
+        }
+
+        // ---------- FORWARD GEOCODE (AJAX) — live address preview (Phase 3) -------
+        // Called (debounced) while the user types an address, so we can show them
+        // where it resolved to on the map *before* they submit — instead of only
+        // finding out on the Details page afterwards.
+        [HttpGet]
+        public async Task<IActionResult> Geocode(string address)
+        {
+            if (string.IsNullOrWhiteSpace(address))
+                return Json(new { found = false });
+
+            var result = await _geocoder.GeocodeAsync(address);
+            if (result is null)
+                return Json(new { found = false });
+
+            return Json(new { found = true, lat = result.Value.lat, lng = result.Value.lng });
+        }
+
+        // ---------- START TRIP (POST) — Phase 4 live tracking ----------------------
+        // Marks the trip as started. From this point: no new requests are accepted
+        // (see RequestRide above), and the driver's browser begins streaming its
+        // location to accepted passengers via the RideTrackingHub.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StartTrip(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Challenge();
+
+            var ride = await _db.Rides.FirstOrDefaultAsync(r => r.Id == id);
+            if (ride is null) return NotFound();
+            if (ride.DriverId != user.Id) return Forbid();
+
+            if (ride.Status != RideStatus.Active && ride.Status != RideStatus.Full)
+            {
+                TempData["Error"] = "This ride can't be started right now.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (!ride.TripStartedAt.HasValue)
+            {
+                ride.TripStartedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+                await _trackingHub.Clients.Group($"ride-{id}").SendAsync("TripStarted");
+                await BroadcastRideListChanged();
+            }
+
+            TempData["Success"] = "Trip started — your location is now shared with accepted passengers.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // ---------- UPDATE LOCATION (AJAX, POST) — Phase 4 live tracking -----------
+        // Called repeatedly (every few seconds) by the driver's browser while a
+        // trip is in progress. Validates that the caller is actually the driver
+        // of this ride and that the trip has actually started, persists the last
+        // known position (so late-joining passengers see it immediately), then
+        // broadcasts it live to the ride's tracking group.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateLocation(int rideId, double lat, double lng)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
+            var ride = await _db.Rides.FirstOrDefaultAsync(r => r.Id == rideId);
+            if (ride is null) return NotFound();
+            if (ride.DriverId != user.Id) return Forbid();
+            if (!ride.TripStartedAt.HasValue) return BadRequest("Trip has not started.");
+
+            ride.LastLat = lat;
+            ride.LastLng = lng;
+            ride.LastLocationAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            await _trackingHub.Clients.Group($"ride-{rideId}").SendAsync("ReceiveLocation", new
+            {
+                lat,
+                lng,
+                at = ride.LastLocationAt
+            });
+
+            return Ok();
         }
 
         // ---------- MY RIDES: rides I'm driving + rides I requested ---------------

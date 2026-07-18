@@ -1,0 +1,92 @@
+@{
+    ViewData["Title"] = "Internships";
+    var scored = ViewBag.Scored as List<(UniConnect.Models.Internship Internship, int Score, bool CourseDataAvailable)> ?? new();
+    var suggestProfileUpdate = ViewBag.SuggestProfileUpdate is true;
+    var studentMajor = ViewBag.StudentMajor as string;
+    var myMajorOnly = ViewBag.MyMajorOnly is true;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/internships.css" asp-append-version="true" />
+}
+
+<div class="uc-hero" style="padding:1.5rem 0;">
+    <div class="uc-hero-inner d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+        <div>
+            <p class="uc-eyebrow"><i class="bi bi-briefcase"></i>Internships</p>
+            <h1 class="uc-hero-title mb-0" style="font-size:1.6rem;">Browse Internships</h1>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-light home-cta-light fw-bold" asp-controller="CareerProfile" asp-action="Index"><i class="bi bi-person-badge me-1"></i>My Profile</a>
+            <a class="btn btn-light home-cta-light fw-bold" asp-action="MyApplications"><i class="bi bi-send me-1"></i>My Applications</a>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="padding-top:1.25rem;">
+    <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <input type="text" name="skill" class="form-control" style="max-width:200px" placeholder="Skill" value="@ViewBag.SearchSkill" />
+        <input type="text" name="location" class="form-control" style="max-width:200px" placeholder="Location" value="@ViewBag.SearchLocation" />
+        <input type="number" name="maxDuration" class="form-control" style="max-width:160px" placeholder="Max weeks" value="@ViewBag.MaxDuration" />
+        @if (!string.IsNullOrWhiteSpace(studentMajor))
+        {
+            <div class="form-check d-flex align-items-center gap-1 mb-0">
+                <input type="checkbox" class="form-check-input" id="myMajorOnly" name="myMajorOnly" value="true" checked="@myMajorOnly" />
+                <label class="form-check-label" for="myMajorOnly">My major only (@studentMajor)</label>
+            </div>
+        }
+        <button class="btn btn-outline-secondary">Filter</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    </form>
+
+    @if (suggestProfileUpdate)
+    {
+        <div class="alert alert-warning uc-flash">
+            <i class="bi bi-lightbulb"></i> None of these internships closely match your profile yet.
+            <a asp-controller="CareerProfile" asp-action="Index">Add some skills or update your career interests</a> to get better matches.
+        </div>
+    }
+
+    @if (!scored.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-briefcase"></i></span>
+            <h5>No internships found</h5>
+            <p>Try adjusting your filters, or check back later for new postings.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var (internship, score, courseDataAvailable) in scored)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <a class="internship-card" asp-action="Details" asp-route-id="@internship.Id">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <strong>@internship.Title</strong>
+                            <span class="match-badge match-@(score >= 70 ? "high" : score >= 40 ? "mid" : "low")">
+                                @score% match
+                            </span>
+                        </div>
+                        <p class="internship-card-company"><i class="bi bi-building"></i> @internship.ExternalEmployerName</p>
+                        @if (internship.PostingMode == UniConnect.Models.InternshipPostingMode.ListingOnly)
+                        {
+                            <span class="uc-pill uc-pill-grey mb-1"><i class="bi bi-box-arrow-up-right"></i> Listing Only</span>
+                        }
+                        <p class="internship-card-meta">
+                            <i class="bi bi-geo-alt"></i>@internship.Location
+                            @if (internship.DurationWeeks.HasValue) { <text> · <i class="bi bi-clock"></i>@internship.DurationWeeks w</text> }
+                        </p>
+                        <p class="internship-card-meta">
+                            <i class="bi bi-calendar-x"></i>Apply by @internship.ApplicationDeadline.ToString("MMM dd, yyyy")
+                        </p>
+                        @if (!courseDataAvailable)
+                        {
+                            <small class="text-muted"><i class="bi bi-exclamation-circle"></i> Partial score — course data unavailable</small>
+                        }
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>

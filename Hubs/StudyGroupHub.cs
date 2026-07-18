@@ -24,5 +24,18 @@ namespace UniConnect.Hubs
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"group-{studyGroupId}");
         }
+
+        // "Lobby" group — joined by anyone viewing the Study Groups list, so a
+        // new group, a full group, or a status change can push a refresh
+        // instead of requiring a manual one.
+        public async Task JoinStudyGroupsLobby()
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, "study-groups-lobby");
+        }
+
+        public async Task LeaveStudyGroupsLobby()
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, "study-groups-lobby");
+        }
     }
 }

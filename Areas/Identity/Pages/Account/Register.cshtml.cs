@@ -54,8 +54,16 @@ namespace UniConnect.Areas.Identity.Pages.Account
         public string? ReturnUrl { get; set; }
         public IList<AuthenticationScheme> ExternalLogins { get; set; } = new List<AuthenticationScheme>();
 
+        // Populated on GET so the Register page can show a "Select University"
+        // dropdown (per the multi-university design — see Front Design doc).
+        public List<University> Universities { get; set; } = new();
+
         public class InputModel
         {
+            [Required]
+            [Display(Name = "University")]
+            public string UniversityCode { get; set; } = string.Empty;
+
             [Required]
             [Display(Name = "University ID")]
             [StringLength(20)]
@@ -81,16 +89,18 @@ namespace UniConnect.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            Universities = await _db.Universities.Where(u => u.IsActive).OrderBy(u => u.Name).ToListAsync();
         }
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            Universities = await _db.Universities.Where(u => u.IsActive).OrderBy(u => u.Name).ToListAsync();
 
             if (!ModelState.IsValid) return Page();
 
-            // ---------- Step 1: verify the University ID exists in mock data ---------
+            // ---------- Step 1: verify the University ID exists (synced student data) ---------
             // This is UC-01 / FR-06 — only registered university students can sign up.
             var student = await _db.Students
                 .FirstOrDefaultAsync(s => s.UniversityId == Input.UniversityId);
@@ -99,6 +109,16 @@ namespace UniConnect.Areas.Identity.Pages.Account
             {
                 ModelState.AddModelError(string.Empty,
                     "This University ID is not recognized. Please check with the registrar.");
+                return Page();
+            }
+
+            // Step 1b: the selected university must match the one this student
+            // actually belongs to (multi-tenant isolation — a student can't
+            // activate an account under the wrong university).
+            if (!string.Equals(student.UniversityCode, Input.UniversityCode, StringComparison.Ordinal))
+            {
+                ModelState.AddModelError(string.Empty,
+                    "This University ID does not belong to the selected university.");
                 return Page();
             }
 
@@ -125,7 +145,9 @@ namespace UniConnect.Areas.Identity.Pages.Account
             var user = new ApplicationUser
             {
                 UniversityId = student.UniversityId,
+                UniversityCode = student.UniversityCode,
                 FullName = student.FullName,
+                EmailConfirmed = false, // explicit: ownership isn't proven until they click the link we email them
             };
 
             await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -140,12 +162,24 @@ namespace UniConnect.Areas.Identity.Pages.Account
             }
 
             _logger.LogInformation("User created a new account: {Email}", Input.Email);
+            await _userManager.AddToRoleAsync(user, "Student");
 
-            // Optional: send the email confirmation. For local dev you can also skip this
-            // and use builder.Services.Configure<IdentityOptions>(o => o.SignIn.RequireConfirmedAccount = false)
-            // in Program.cs, then sign the user in directly.
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            return LocalRedirect(returnUrl);
+            // ---------- Step 5: email confirmation (proves the registrant actually
+            // controls this inbox — without this, anyone who merely KNOWS a
+            // student's ID + email on file could register as them) ----------
+            var userId = await _userManager.GetUserIdAsync(user);
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Page(
+                "/Account/ConfirmEmail",
+                pageHandler: null,
+                values: new { area = "Identity", userId, code, returnUrl },
+                protocol: Request.Scheme);
+
+            await _emailSender.SendEmailAsync(Input.Email, "Confirm your UniConnect account",
+                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl!)}'>clicking here</a>.");
+
+            return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl });
         }
 
         private IUserEmailStore<ApplicationUser> GetEmailStore()

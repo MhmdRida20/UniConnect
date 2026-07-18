@@ -19,6 +19,18 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="form-floating mb-3">
+                <select asp-for="Input.UniversityCode" class="form-select">
+                    <option value="">— Select your university —</option>
+                    @foreach (var u in Model.Universities)
+                    {
+                        <option value="@u.Code">@u.Name</option>
+                    }
+                </select>
+                <label asp-for="Input.UniversityCode"></label>
+                <span asp-validation-for="Input.UniversityCode" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
                 <input asp-for="Input.UniversityId" class="form-control" autocomplete="off"
                        placeholder="U2024001" />
                 <label asp-for="Input.UniversityId"></label>

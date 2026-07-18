@@ -1,0 +1,102 @@
+/* ==========================================================================
+   Web Portal shell — sidebar layout for staff/admin/company surfaces.
+   Distinct from the student mobile-style top-nav layout, but built on the
+   same design tokens (site.css) so it reads as the same product.
+   ========================================================================== */
+
+.portal-body { background: var(--uc-bg); margin: 0; }
+
+.portal-shell {
+    display: flex; min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.portal-sidebar {
+    width: 260px; flex-shrink: 0;
+    background: var(--uc-surface); border-right: 1px solid var(--uc-border);
+    display: flex; flex-direction: column;
+    padding: 1.25rem 1rem;
+    position: sticky; top: 0; height: 100vh;
+}
+
+.portal-brand {
+    display: flex; align-items: center; gap: .6rem;
+    text-decoration: none; color: var(--uc-text);
+    font-weight: 800; font-size: 1.05rem;
+    padding: .4rem .3rem 1.25rem;
+    border-bottom: 1px solid var(--uc-border-soft);
+    margin-bottom: 1rem;
+}
+.portal-brand b { color: var(--uc-primary); }
+.portal-brand small {
+    display: block; font-size: .62rem; font-weight: 700; letter-spacing: .08em;
+    color: var(--uc-muted); text-transform: uppercase; margin-top: 1px;
+}
+.portal-brand .uc-brand-mark {
+    width: 34px; height: 34px; border-radius: var(--uc-radius-sm);
+    background: var(--uc-primary); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.05rem; flex-shrink: 0;
+}
+
+.portal-nav { flex: 1; display: flex; flex-direction: column; gap: .15rem; }
+.portal-nav-label {
+    font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--uc-muted); margin: .3rem 0 .5rem .5rem;
+}
+.portal-nav-link {
+    display: flex; align-items: center; gap: .65rem;
+    padding: .6rem .7rem; border-radius: var(--uc-radius-sm);
+    color: var(--uc-text-soft); font-weight: 600; font-size: .9rem;
+    text-decoration: none; transition: background var(--uc-transition), color var(--uc-transition);
+    position: relative;
+}
+.portal-nav-link i { font-size: 1.05rem; width: 20px; text-align: center; color: var(--uc-muted); }
+.portal-nav-link:hover { background: var(--uc-bg); color: var(--uc-text); }
+.portal-nav-link.active {
+    background: var(--uc-primary-tint); color: var(--uc-primary-darker);
+}
+.portal-nav-link.active i { color: var(--uc-primary); }
+.portal-nav-link.disabled { opacity: .45; cursor: default; pointer-events: none; }
+
+.portal-nav-badge {
+    margin-left: auto; background: var(--uc-danger); color: #fff;
+    font-size: .68rem; font-weight: 700; border-radius: 99px;
+    padding: .1rem .45rem; min-width: 18px; text-align: center;
+}
+
+.portal-user {
+    display: flex; align-items: center; gap: .6rem;
+    border-top: 1px solid var(--uc-border-soft); padding-top: 1rem; margin-top: .5rem;
+}
+.portal-user-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: var(--uc-primary-soft); color: var(--uc-primary-darker);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; text-transform: uppercase;
+}
+.portal-user-info { min-width: 0; }
+.portal-user-info strong { display: block; font-size: .85rem; color: var(--uc-text); }
+.portal-user-info small { color: var(--uc-muted); font-size: .74rem; }
+.portal-logout { margin-top: .75rem; }
+
+/* ── Main area ── */
+.portal-main-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.portal-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.1rem 1.75rem; background: var(--uc-surface);
+    border-bottom: 1px solid var(--uc-border);
+    position: sticky; top: 0; z-index: 10;
+}
+.portal-topbar-title h1 {
+    font-size: 1.25rem; font-weight: 800; color: var(--uc-text); margin: 0;
+}
+
+.portal-main { flex: 1; padding: 1.75rem; }
+
+@media (max-width: 900px) {
+    .portal-sidebar { width: 210px; }
+    .portal-main { padding: 1.1rem; }
+    .portal-topbar { padding: .9rem 1.1rem; }
+}

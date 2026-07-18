@@ -1,4 +1,4 @@
-@model IEnumerable<UniConnect.Models.Course>
+@model IEnumerable<UniConnect.Adapters.UniversityCourseDto>
 
 @* ─────────────────────────────────────────────────────────────────────────────
    Views/StudyGroups/MyCourses.cshtml
@@ -142,14 +142,16 @@
         else
         {
             <div class="row g-3" id="courseGrid">
-                @{ int cardIdx = 0; }
+                @{
+                    int cardIdx = 0;
+                }
                 @foreach (var course in courses)
                 {
                     var deptCode = GetDeptCode(course.CourseCode);
                     var deptLabel = GetDeptLabel(course.CourseCode);
                     var animDelay = cardIdx * 65;
                     var searchKey = ((course.CourseCode ?? "") + " " + (course.CourseName ?? "") + " "
-                                    + (course.InstructorName ?? "")).ToLower();
+                    + (course.InstructorName ?? "")).ToLower();
                     cardIdx++;
 
                     <div class="col-12 col-sm-6 col-xl-4 course-col" data-dept="@deptCode" data-search="@searchKey">

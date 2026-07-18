@@ -1,0 +1,91 @@
+@model IEnumerable<UniConnect.Models.Club>
+@{
+    ViewData["Title"] = "Clubs & Organizations";
+    var clubs = Model.ToList();
+    var selectedCategory = ViewBag.SelectedCategory as string;
+    var categories = Enum.GetValues<UniConnect.Models.ClubCategory>();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/clubs.css" asp-append-version="true" />
+}
+
+<div class="clubs-header uc-hero">
+    <div class="uc-hero-inner d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+        <div>
+            <p class="uc-eyebrow"><i class="bi bi-flag-fill"></i>Student Life</p>
+            <h1 class="uc-hero-title mb-1">Clubs & Organizations</h1>
+            <p class="uc-hero-sub">@clubs.Count club@(clubs.Count == 1 ? "" : "s") at your university</p>
+        </div>
+        <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Register a Club</a>
+    </div>
+</div>
+
+<div class="clubs-body" id="clubsConfig">
+    <div class="clubs-filter-tabs">
+        <a class="clubs-filter-tab @(selectedCategory == null ? "active" : "")" asp-action="Index">All</a>
+        @foreach (var cat in categories)
+        {
+            <a class="clubs-filter-tab @(selectedCategory == cat.ToString() ? "active" : "")"
+               asp-action="Index" asp-route-category="@cat">@cat</a>
+        }
+    </div>
+
+    <div id="clubListUpdateBanner" class="clubs-update-banner hidden">
+        <i class="bi bi-arrow-repeat"></i> New club activity is available.
+        <button type="button" id="clubListRefreshBtn" class="btn btn-sm btn-primary ms-2">Refresh</button>
+    </div>
+
+    @if (!clubs.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-flag"></i></span>
+            <h5>No clubs yet</h5>
+            <p>Be the first to register a club or student organization.</p>
+            <a class="btn btn-primary mt-2" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Register a Club</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var c in clubs)
+            {
+                var approved = c.Members.Count(m => m.Status == UniConnect.Models.ClubMembershipStatus.Approved);
+                <div class="col-md-6 col-lg-4">
+                    <a class="club-card" asp-action="Details" asp-route-id="@c.Id">
+                        <div class="club-card-logo">
+                            @if (!string.IsNullOrWhiteSpace(c.LogoPath))
+                            {
+                                <img src="@c.LogoPath" alt="" />
+                            }
+                            else
+                            {
+                                <i class="bi bi-flag-fill"></i>
+                            }
+                        </div>
+                        <div class="club-card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <strong>@c.ClubName</strong>
+                                @if (c.Status == UniConnect.Models.ClubStatus.Inactive)
+                                {
+                                    <span class="uc-pill uc-pill-grey"><i class="bi bi-moon-stars"></i></span>
+                                }
+                            </div>
+                            <span class="uc-pill uc-pill-green mt-1">@c.Category</span>
+                            <p class="club-card-desc">@c.Description</p>
+                            <p class="club-card-meta">
+                                <i class="bi bi-people"></i>@approved member@(approved == 1 ? "" : "s")
+                                @if (c.MaxMembers.HasValue) { <text> / @c.MaxMembers</text> }
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pages/clubs.js" asp-append-version="true"></script>
+}

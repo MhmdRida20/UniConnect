@@ -1,0 +1,96 @@
+@model IEnumerable<UniConnect.Models.Service>
+@{
+    var university = ViewBag.University as UniConnect.Models.University;
+    ViewData["Title"] = "Services — " + university?.Name;
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var enabledCodes = ViewBag.EnabledCodes as List<string> ?? new();
+    var services = Model.ToList();
+    var syncedStudents = ViewBag.SyncedStudents as List<UniConnect.Models.Student>;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to universities</a>
+
+@if (syncedStudents is { Count: > 0 })
+{
+    <div class="au-synced-students mb-4">
+        <h3><i class="bi bi-cloud-check"></i> Students synced from the external API</h3>
+        <p class="text-muted small mb-2">
+            Pulled from this university's live API by the sync job (last synced:
+            @(university?.LastSyncAt?.ToString("MMM dd, HH:mm") ?? "never") — status: @(university?.LastSyncStatus ?? "unknown")).
+            Use any of these to test registration.
+        </p>
+        <div class="au-synced-student-list">
+            @foreach (var s in syncedStudents)
+            {
+                <div class="au-synced-student">
+                    <strong>@s.UniversityId</strong>
+                    <span>@s.FullName</span>
+                    <span class="text-muted">@s.UniversityEmail</span>
+                    @if (!string.IsNullOrWhiteSpace(s.Major))
+                    {
+                        <span class="uc-pill uc-pill-grey">@s.Major</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning uc-flash">
+        <i class="bi bi-exclamation-triangle"></i> No students synced yet — this university hasn't been synced successfully,
+        or its external API returned no enrollments. Try <strong>Sync Now</strong> from the Universities list.
+    </div>
+}
+
+<p class="text-muted mb-3">Choose which services <strong>@university?.Name</strong> has access to. Students and staff there will only see the ones turned on here.</p>
+
+<form asp-action="Services" asp-route-code="@university?.Code" method="post" data-loading>
+    @Html.AntiForgeryToken()
+
+    <div class="au-service-list">
+        @foreach (var s in services)
+        {
+            var isEnabled = enabledCodes.Contains(s.Code);
+            <label class="au-service-row @(!s.IsImplemented ? "is-disabled" : "")">
+                @if (s.IsImplemented && isEnabled)
+                {
+                    <input type="checkbox" name="enabledServiceCodes" value="@s.Code" checked="checked" />
+                }
+                else if (s.IsImplemented)
+                {
+                    <input type="checkbox" name="enabledServiceCodes" value="@s.Code" />
+                }
+                else
+                {
+                    <input type="checkbox" disabled />
+                }
+                <span class="au-service-icon"><i class="bi @(s.IconClass ?? "bi-app")"></i></span>
+                <div class="au-service-info">
+                    <strong>@s.Name</strong>
+                    <small>@s.Description</small>
+                </div>
+                @if (!s.IsImplemented)
+                {
+                    <span class="uc-pill uc-pill-grey ms-auto">Coming soon</span>
+                }
+                else if (isEnabled)
+                {
+                    <span class="uc-pill uc-pill-green ms-auto">Enabled</span>
+                }
+                else
+                {
+                    <span class="uc-pill uc-pill-grey ms-auto">Off</span>
+                }
+            </label>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3" data-loading-text="Saving…">
+        <i class="bi bi-check-lg me-1"></i>Save Changes
+    </button>
+</form>

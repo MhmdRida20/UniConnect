@@ -1,0 +1,69 @@
+@model IEnumerable<UniConnect.Models.Ticket>
+@{
+    ViewData["Title"] = "My Tickets";
+    var tickets = Model.ToList();
+    var openCount = tickets.Count(t => t.Status != UniConnect.Models.TicketStatus.Closed
+                                     && t.Status != UniConnect.Models.TicketStatus.Rejected
+                                     && t.Status != UniConnect.Models.TicketStatus.Resolved);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/tickets.css" asp-append-version="true" />
+}
+
+<div class="tickets-header uc-hero">
+    <div class="uc-hero-inner d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+        <div>
+            <p class="uc-eyebrow"><i class="bi bi-ticket-detailed-fill"></i>Support</p>
+            <h1 class="uc-hero-title mb-1">My Tickets</h1>
+            <p class="uc-hero-sub">@tickets.Count ticket@(tickets.Count == 1 ? "" : "s") · @openCount currently open</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Submit a Ticket</a>
+        </div>
+    </div>
+</div>
+
+<div class="tickets-body" id="ticketsConfig" data-current-user-id="@ViewBag.CurrentUserId">
+    @if (!tickets.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-ticket-detailed"></i></span>
+            <h5>No tickets yet</h5>
+            <p>Have an issue with IT, registration, or something else? Submit a ticket and track it here.</p>
+            <a class="btn btn-primary mt-2" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Submit a Ticket</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3" id="ticketList">
+            @foreach (var t in tickets)
+            {
+                <div class="col-12">
+                    <a class="ticket-row" asp-action="Details" asp-route-id="@t.Id">
+                        <span class="ticket-priority-bar priority-@t.Priority.ToString().ToLower()"></span>
+                        <div class="ticket-row-main">
+                            <div class="ticket-row-top">
+                                <strong>@t.Title</strong>
+                                <span class="uc-pill status-@t.Status.ToString().ToLower()">@t.Status</span>
+                            </div>
+                            <p class="ticket-row-meta">
+                                <i class="bi bi-tag"></i>@t.Category?.Name
+                                <span class="mx-1">·</span>
+                                <i class="bi bi-flag"></i>@t.Priority priority
+                                <span class="mx-1">·</span>
+                                <i class="bi bi-clock-history"></i>Updated @t.UpdatedAt.ToString("MMM dd, HH:mm")
+                            </p>
+                        </div>
+                        <i class="bi bi-chevron-right ticket-row-chevron"></i>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pages/tickets.js" asp-append-version="true"></script>
+}

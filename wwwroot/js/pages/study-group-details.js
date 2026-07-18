@@ -9,7 +9,7 @@
     const panel = document.querySelector('.sgd-chat-panel');
     if (!panel || typeof signalR === 'undefined') return;
 
-    const groupId = panel.dataset.groupId;
+    const groupId = parseInt(panel.dataset.groupId, 10);
     const currentName = panel.dataset.currentName || '';
     const postUrl = panel.dataset.postUrl;
 
@@ -72,6 +72,13 @@
 
     /* 2) Incoming messages */
     connection.on('ReceiveMessage', appendMessage);
+
+    /* 2b) Membership/leadership changes (join request, approve, reject, remove,
+       transfer leadership, leave, inactivity flip) — reload so everyone viewing
+       this group sees the new state without a manual refresh. */
+    connection.on('GroupUpdated', () => {
+        window.location.reload();
+    });
 
     /* 3) Connection lifecycle */
     connection.start()

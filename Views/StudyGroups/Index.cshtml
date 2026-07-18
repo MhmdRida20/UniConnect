@@ -31,15 +31,6 @@
 
 <div class="container-fluid px-0 sg-body">
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success uc-flash">@TempData["Success"]</div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger uc-flash">@TempData["Error"]</div>
-    }
-
     @* ── Controls ── *@
     <div class="sg-controls">
         <div class="row g-3 align-items-end">
@@ -83,22 +74,33 @@
     {
         <p class="sg-results" id="sgResults">Showing <strong>@groups.Count</strong> of @groups.Count group@(groups.Count == 1 ? "" : "s")</p>
 
+        <div id="sgListUpdateBanner" class="sg-update-banner hidden">
+            <i class="bi bi-arrow-repeat"></i> New study group activity is available.
+            <button type="button" id="sgListRefreshBtn" class="btn btn-sm btn-primary ms-2">Refresh</button>
+        </div>
+
         <div class="row g-3" id="sgGrid">
-            @{ var idx = 0; }
+            @{
+                var idx = 0;
+            }
             @foreach (var g in groups)
             {
                 var approved = g.Members.Count(m => m.Status == UniConnect.Models.MembershipStatus.Approved);
                 var isMine = g.Members.Any(m => m.UserId == currentUserId
-                                             && m.Status == UniConnect.Models.MembershipStatus.Approved);
+                && m.Status == UniConnect.Models.MembershipStatus.Approved);
                 var isFull = g.Status == UniConnect.Models.StudyGroupStatus.Full;
                 var pct = g.MaxMembers > 0 ? (int)Math.Round(100.0 * approved / g.MaxMembers) : 0;
                 var searchKey = ((g.GroupName ?? "") + " " + (g.Course?.CourseCode ?? "") + " "
-                                + (g.Course?.CourseName ?? "") + " " + (g.Creator?.FullName ?? "")).ToLower();
+                + (g.Course?.CourseName ?? "") + " " + (g.Creator?.FullName ?? "")).ToLower();
                 <div class="col-12 col-sm-6 col-xl-4 sg-col" data-search="@searchKey">
                     <div class="sg-card uc-card uc-hover-lift" style="animation-delay:@(idx * 60)ms">
                         <div class="sg-card-top">
                             <span class="uc-pill uc-pill-green"><span class="dot"></span>@g.Course?.CourseCode</span>
-                            @if (isFull)
+                            @if (g.Status == UniConnect.Models.StudyGroupStatus.Inactive)
+                            {
+                                <span class="uc-pill uc-pill-grey"><i class="bi bi-moon-stars"></i> Inactive</span>
+                            }
+                            else if (isFull)
                             {
                                 <span class="uc-pill uc-pill-amber">Full</span>
                             }
@@ -144,5 +146,6 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/pages/study-groups.js" asp-append-version="true"></script>
 }

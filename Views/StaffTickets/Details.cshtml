@@ -1,0 +1,174 @@
+@model UniConnect.Models.Ticket
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var colleagues = ViewBag.DepartmentColleagues as List<UniConnect.Models.ApplicationUser> ?? new();
+    var allCategories = ViewBag.AllCategories as List<UniConnect.Models.TicketCategory> ?? new();
+    var currentStaffId = ViewBag.CurrentStaffId as string;
+    var isTerminal = Model.Status == UniConnect.Models.TicketStatus.Closed
+                  || Model.Status == UniConnect.Models.TicketStatus.Rejected;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/tickets.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to queue</a>
+
+<div class="st-detail-grid">
+    <div class="st-detail-main">
+        <div class="ticket-detail-card">
+            <div class="ticket-detail-head">
+                <span class="uc-pill status-@Model.Status.ToString().ToLower() mb-2">@Model.Status</span>
+                @if (Model.IsEscalated)
+                {
+                    <span class="uc-pill uc-pill-amber mb-2" title="Open too long without a response"><i class="bi bi-exclamation-triangle-fill"></i> Escalated</span>
+                }
+                @if (Model.IsFlaggedOffensive)
+                {
+                    <span class="uc-pill uc-pill-grey mb-2"><i class="bi bi-flag-fill"></i> Flagged: Offensive Content</span>
+                }
+                <h1>@Model.Title</h1>
+                <p class="ticket-row-meta">
+                    <i class="bi bi-person"></i>@Model.Submitter?.FullName
+                    <span class="mx-1">·</span>
+                    <span class="ticket-priority-tag priority-@Model.Priority.ToString().ToLower()">@Model.Priority priority</span>
+                    <span class="mx-1">·</span>
+                    <i class="bi bi-calendar-event"></i>@Model.CreatedAt.ToString("MMM dd, yyyy · HH:mm")
+                </p>
+            </div>
+            <div class="ticket-detail-body">
+                <p>@Model.Description</p>
+                @if (!string.IsNullOrWhiteSpace(Model.AttachmentPath))
+                {
+                    <a class="ticket-attachment" href="@Model.AttachmentPath" target="_blank">
+                        <i class="bi bi-paperclip"></i>@Model.AttachmentFileName
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="ticket-history" id="ticketHistory" data-ticket-id="@Model.Id">
+            <h2 class="ticket-history-title"><i class="bi bi-clock-history"></i> History</h2>
+            @foreach (var r in Model.Responses)
+            {
+                var isStaffReply = r.Responder?.Department is not null;
+                <div class="ticket-msg @(isStaffReply ? "is-staff" : "")">
+                    <div class="ticket-msg-head">
+                        <strong>@r.Responder?.FullName</strong>
+                        @if (isStaffReply) { <span class="uc-pill uc-pill-green">Staff</span> }
+                        <span class="ticket-msg-time">@r.CreatedAt.ToString("MMM dd, HH:mm")</span>
+                    </div>
+                    <p>@r.Content</p>
+                    @if (r.NewStatus.HasValue)
+                    {
+                        <p class="ticket-status-change"><i class="bi bi-arrow-repeat"></i> Status changed to <strong>@r.NewStatus</strong></p>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (!isTerminal)
+        {
+            <div class="ticket-reply-box">
+                <form asp-action="Respond" asp-route-id="@Model.Id" method="post" data-loading>
+                    @Html.AntiForgeryToken()
+                    <textarea name="content" class="form-control mb-2" rows="3" required
+                              placeholder="Write a response…"></textarea>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <select name="newStatus" class="form-select form-select-sm" style="max-width:220px">
+                            <option value="">Keep status: @Model.Status</option>
+                            @foreach (var s in Enum.GetValues<UniConnect.Models.TicketStatus>())
+                            {
+                                if (s != Model.Status)
+                                {
+                                    <option value="@s">Change to @s</option>
+                                }
+                            }
+                        </select>
+                        <button class="btn btn-primary btn-sm" data-loading-text="Sending…">
+                            <i class="bi bi-send me-1"></i>Send Response
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+    </div>
+
+    <div class="st-detail-side">
+        <div class="st-side-card">
+            <h3>Assignment</h3>
+            @if (Model.AssignedStaff is null)
+            {
+                <p class="text-muted small mb-2">Nobody has picked this up yet.</p>
+                <form asp-action="PickUp" asp-route-id="@Model.Id" method="post" data-loading>
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-hand-index-thumb me-1"></i>Pick Up Ticket</button>
+                </form>
+            }
+            else
+            {
+                <p class="small mb-0">
+                    <i class="bi bi-person-badge"></i>
+                    <strong>@Model.AssignedStaff.FullName</strong>
+                    @if (Model.AssignedStaffId == currentStaffId) { <span class="text-muted">(you)</span> }
+                </p>
+            }
+        </div>
+
+        <div class="st-side-card">
+            <h3>Content Review</h3>
+            <form asp-action="ToggleOffensiveFlag" asp-route-id="@Model.Id" method="post"
+                  data-confirm="@(Model.IsFlaggedOffensive ? "Remove the offensive-content flag?" : "Flag this ticket's content as offensive?")">
+                @Html.AntiForgeryToken()
+                <button class="btn @(Model.IsFlaggedOffensive ? "btn-outline-secondary" : "btn-outline-danger") btn-sm w-100">
+                    <i class="bi bi-flag@(Model.IsFlaggedOffensive ? "" : "-fill") me-1"></i>
+                    @(Model.IsFlaggedOffensive ? "Remove Offensive Flag" : "Flag as Offensive")
+                </button>
+            </form>
+        </div>
+
+        @if (!isTerminal)
+        {
+            <div class="st-side-card">
+                <h3>Reassign</h3>
+                <form asp-action="Reassign" asp-route-id="@Model.Id" method="post" data-loading>
+                    @Html.AntiForgeryToken()
+                    <label class="form-label small">Department</label>
+                    <select name="newCategoryId" class="form-select form-select-sm mb-2">
+                        @foreach (var c in allCategories)
+                        {
+                            <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.Name</option>
+                        }
+                    </select>
+                    <label class="form-label small">Assign to</label>
+                    <select name="newStaffId" class="form-select form-select-sm mb-2">
+                        <option value="">— Leave unassigned —</option>
+                        @foreach (var c in colleagues)
+                        {
+                            <option value="@c.Id" selected="@(c.Id == Model.AssignedStaffId)">@c.FullName</option>
+                        }
+                    </select>
+                    <button class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-arrow-left-right me-1"></i>Reassign</button>
+                </form>
+            </div>
+
+            <div class="st-side-card st-side-danger">
+                <h3>Reject Ticket</h3>
+                <form asp-action="Reject" asp-route-id="@Model.Id" method="post"
+                      data-confirm="Reject this ticket? The student will be notified." data-loading>
+                    @Html.AntiForgeryToken()
+                    <textarea name="reason" class="form-control form-control-sm mb-2" rows="2" required
+                              placeholder="Reason for rejecting…"></textarea>
+                    <button class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-x-circle me-1"></i>Reject</button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pages/ticket-details.js" asp-append-version="true"></script>
+}

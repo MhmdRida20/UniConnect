@@ -1,0 +1,145 @@
+@model UniConnect.Models.AttendanceSession
+@{
+    ViewData["Title"] = Model.CourseName;
+    var roster = ViewBag.Roster as List<UniConnect.ViewModels.AttendanceRosterRow> ?? new();
+    var scanUrl = ViewBag.ScanUrl as string;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to my sessions</a>
+
+<div class="attendance-detail-grid">
+    <div class="attendance-main">
+        <div class="attendance-session-info">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <span class="uc-pill status-@Model.Status.ToString().ToLower()" id="sessionStatusPill">@Model.Status</span>
+                    <h1 class="mt-2 mb-1">@Model.CourseName</h1>
+                    <p class="club-card-meta mb-0">
+                        <i class="bi bi-tag"></i>@Model.CourseCode
+                        <span class="mx-1">·</span>
+                        <i class="bi bi-calendar-event"></i>@Model.StartTime.ToString("MMM dd, yyyy · HH:mm") – @Model.EndTime.ToString("HH:mm")
+                        <span class="mx-1">·</span>
+                        <i class="bi bi-geo-alt"></i>@Model.GpsRadiusMeters m radius
+                        <span class="mx-1">·</span>
+                        <i class="bi bi-hourglass-split"></i>@Model.GracePeriodMinutes min grace
+                    </p>
+                </div>
+                @if (Model.Status == UniConnect.Models.AttendanceSessionStatus.Active)
+                {
+                    <div class="d-flex gap-2">
+                        @if (Model.StartTime > DateTime.Now)
+                        {
+                            <a asp-action="EditSession" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                            <form asp-action="CancelSession" asp-route-id="@Model.Id" method="post" data-confirm="Cancel this session before it starts?">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-outline-danger btn-sm">Cancel</button>
+                            </form>
+                        }
+                        <form asp-action="CloseSession" asp-route-id="@Model.Id" method="post" data-confirm="Close this session now? Non-submitters will be marked Absent.">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-outline-secondary btn-sm">Close Now</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="attendance-counts-bar">
+            <div><strong id="countPresent">@ViewBag.PresentCount</strong><span>Present</span></div>
+            <div><strong id="countLate">@ViewBag.LateCount</strong><span>Late</span></div>
+            <div><strong id="countAbsent">@ViewBag.AbsentCount</strong><span>Absent</span></div>
+            <div><strong id="countPending">@ViewBag.PendingCount</strong><span>Pending</span></div>
+            <div class="is-suspicious"><strong id="countSuspicious">@ViewBag.SuspiciousCount</strong><span>Suspicious</span></div>
+        </div>
+
+        <div class="attendance-roster">
+            <h3 class="club-panel-subtitle">Roster</h3>
+            <div class="st-table">
+                <div class="st-table-head attendance-roster-grid">
+                    <span>Student</span>
+                    <span>Status</span>
+                    <span>Submitted</span>
+                    <span>Distance</span>
+                    <span></span>
+                </div>
+                @foreach (var row in roster)
+                {
+                    <div class="st-table-row attendance-roster-grid" style="cursor:default">
+                        <span>
+                            @row.FullName
+                            @if (row.Record?.IsSuspicious == true)
+                            {
+                                <i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="@row.Record.SuspiciousReason"></i>
+                            }
+                        </span>
+                        @if (row.Record is null)
+                        {
+                            <span class="uc-pill uc-pill-grey">Pending</span>
+                        }
+                        else
+                        {
+                            <span class="uc-pill status-@row.Record.Status.ToString().ToLower()">@row.Record.Status</span>
+                        }
+                        <span class="text-muted small">@(row.Record?.SubmittedAt?.ToString("HH:mm") ?? "—")</span>
+                        <span class="text-muted small">@(row.Record?.DistanceFromClassroom is { } d ? $"{Math.Round(d)} m" : "—")</span>
+                        @if (row.Record is not null)
+                        {
+                            <form asp-action="OverrideStatus" method="post" class="attendance-override-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="recordId" value="@row.Record.Id" />
+                                <select name="newStatus" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    @foreach (var s in Enum.GetValues<UniConnect.Models.AttendanceStatus>())
+                                    {
+                                        if (s == row.Record.Status)
+                                        {
+                                            <option value="@s" selected>@s</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@s">@s</option>
+                                        }
+                                    }
+                                </select>
+                            </form>
+                        }
+                        else
+                        {
+                            <span></span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="attendance-side">
+        <div class="st-side-card attendance-qr-card">
+            <h3>Scan to Check In</h3>
+            @if (Model.Status == UniConnect.Models.AttendanceSessionStatus.Active)
+            {
+                <div id="qrCanvas"></div>
+                <p class="text-muted small mt-2 mb-1">Or share this token for manual entry:</p>
+                <code class="attendance-token">@Model.QrToken</code>
+                <p class="text-muted small mt-2 mb-0">Expires @Model.QrExpiresAt.ToString("HH:mm")</p>
+            }
+            else
+            {
+                <p class="text-muted small">This session is @Model.Status.ToString().ToLower() — the QR code is no longer active.</p>
+            }
+        </div>
+    </div>
+</div>
+
+<div id="attendanceConfig" data-session-id="@Model.Id" data-scan-url="@scanUrl" hidden></div>
+
+@section Scripts {
+    <script src="https://unpkg.com/qrcode@1.5.0/build/qrcode.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pages/attendance-details.js" asp-append-version="true"></script>
+}

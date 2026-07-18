@@ -1,0 +1,84 @@
+@model IEnumerable<UniConnect.Models.Ticket>
+@{
+    ViewData["Title"] = "Tickets — " + ViewBag.Department;
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var tickets = Model.ToList();
+    var selectedStatus = ViewBag.SelectedStatus as string;
+
+    var tabs = new (string? Value, string Label)[]
+    {
+        (null, "All"),
+        (nameof(UniConnect.Models.TicketStatus.Open), "Open"),
+        (nameof(UniConnect.Models.TicketStatus.InProgress), "In Progress"),
+        (nameof(UniConnect.Models.TicketStatus.WaitingForStudent), "Waiting for Student"),
+        (nameof(UniConnect.Models.TicketStatus.Resolved), "Resolved"),
+        (nameof(UniConnect.Models.TicketStatus.Closed), "Closed"),
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/tickets.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
+}
+
+<div class="st-tabs" id="staffTicketsConfig" data-department="@ViewBag.Department">
+    @foreach (var (value, label) in tabs)
+    {
+        <a class="st-tab @(selectedStatus == value ? "active" : "")"
+           asp-action="Index" asp-route-status="@value">@label</a>
+    }
+</div>
+
+@if (!tickets.Any())
+{
+    <div class="uc-empty">
+        <span class="uc-empty-icon"><i class="bi bi-inboxes"></i></span>
+        <h5>No tickets here</h5>
+        <p>Nothing matches this filter right now — nice and clear.</p>
+    </div>
+}
+else
+{
+    <div class="st-table" id="staffTicketTable">
+        <div class="st-table-head">
+            <span>Priority</span>
+            <span>Title</span>
+            <span>Student</span>
+            <span>Status</span>
+            <span>Updated</span>
+            <span></span>
+        </div>
+        @foreach (var t in tickets)
+        {
+            <a class="st-table-row" asp-action="Details" asp-route-id="@t.Id">
+                <span class="ticket-priority-tag priority-@t.Priority.ToString().ToLower()">
+                    <i class="bi bi-flag-fill"></i>@t.Priority
+                </span>
+                <span class="st-title-cell">
+                    @t.Title
+                    @if (t.AssignedStaffId is null)
+                    {
+                        <span class="uc-pill uc-pill-amber ms-2">Unassigned</span>
+                    }
+                    @if (t.IsEscalated)
+                    {
+                        <span class="uc-pill uc-pill-amber ms-2" title="Open too long"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                    }
+                    @if (t.IsFlaggedOffensive)
+                    {
+                        <span class="uc-pill uc-pill-grey ms-2"><i class="bi bi-flag-fill"></i></span>
+                    }
+                </span>
+                <span>@t.Submitter?.FullName</span>
+                <span class="uc-pill status-@t.Status.ToString().ToLower()">@t.Status</span>
+                <span class="st-date-cell">@t.UpdatedAt.ToString("MMM dd, HH:mm")</span>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </a>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pages/staff-tickets.js" asp-append-version="true"></script>
+}

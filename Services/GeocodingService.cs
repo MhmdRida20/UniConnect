@@ -16,6 +16,14 @@ namespace UniConnect.Services
     public interface IGeocodingService
     {
         Task<(double lat, double lng)?> GeocodeAsync(string address);
+
+        /// <summary>
+        /// Converts map coordinates back into a human-readable address, used when
+        /// the user drops a pin directly on the map instead of typing an address.
+        /// Returns null if it can't be resolved — callers should fall back to
+        /// showing the raw coordinates rather than blocking the action.
+        /// </summary>
+        Task<string?> ReverseGeocodeAsync(double lat, double lng);
     }
 
     public class NominatimGeocodingService : IGeocodingService
@@ -73,6 +81,40 @@ namespace UniConnect.Services
             {
                 _logger.LogWarning(ex, "Geocoding threw for '{Address}'", address);
                 return null;  // fail gracefully — never block ride creation
+            }
+        }
+
+        public async Task<string?> ReverseGeocodeAsync(double lat, double lng)
+        {
+            try
+            {
+                var url = $"https://nominatim.openstreetmap.org/reverse" +
+                          $"?lat={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
+                          $"&lon={lng.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
+                          $"&format=json&zoom=18";
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.UserAgent.ParseAdd("UniConnect-StudentProject/1.0");
+
+                var resp = await _http.SendAsync(request);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Reverse geocoding failed for ({Lat},{Lng}): {Status}", lat, lng, resp.StatusCode);
+                    return null;
+                }
+
+                var json = await resp.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("display_name", out var nameProp))
+                    return nameProp.GetString();
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Reverse geocoding threw for ({Lat},{Lng})", lat, lng);
+                return null;
             }
         }
     }

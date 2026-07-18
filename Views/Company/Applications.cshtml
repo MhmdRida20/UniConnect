@@ -1,0 +1,116 @@
+@model IEnumerable<UniConnect.Models.InternshipApplication>
+@{
+    var internship = ViewBag.Internship as UniConnect.Models.Internship;
+    ViewData["Title"] = "Applications — " + internship?.Title;
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var profiles = ViewBag.Profiles as List<UniConnect.Models.CareerProfile> ?? new();
+    var skillsByUser = ViewBag.SkillsByUser as Dictionary<string, List<UniConnect.Models.StudentSkill>> ?? new();
+    var applications = Model.ToList();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/internships.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to my internships</a>
+<h2 class="mb-3">Applications for "@internship?.Title"</h2>
+
+@if (internship?.PostingMode == UniConnect.Models.InternshipPostingMode.FullApplication)
+{
+    var shortlisted = applications.Where(a => a.Status == UniConnect.Models.InternshipApplicationStatus.Shortlisted).ToList();
+    var notYetSentCount = shortlisted.Count(a => !a.SentToEmployerAt.HasValue);
+    var alreadySentCount = applications.Count(a => a.SentToEmployerAt.HasValue);
+    <div class="uc-form-card mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <strong>Forward to @internship.ExternalEmployerName</strong>
+            <p class="text-muted small mb-0">
+                @shortlisted.Count candidate@(shortlisted.Count == 1 ? "" : "s") currently marked "Shortlisted"
+                (@notYetSentCount new to send@(alreadySentCount > 0 ? $", {alreadySentCount} already sent" : "")).
+                @if (internship.ShortlistSentAt.HasValue)
+                {
+                    <text> Last sent @internship.ShortlistSentAt.Value.ToString("MMM dd, yyyy HH:mm").</text>
+                }
+            </p>
+        </div>
+        <form asp-action="SendShortlist" method="post" data-loading
+              data-confirm="Send @notYetSentCount candidate(s) to @internship.ExternalEmployerContactEmail?">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="internshipId" value="@internship.Id" />
+            <button class="btn btn-primary btn-sm" @(notYetSentCount == 0 ? "disabled" : "")>
+                <i class="bi bi-send me-1"></i>@(alreadySentCount > 0 ? "Send Additional Candidates" : "Send Shortlist to Employer")
+            </button>
+        </form>
+    </div>
+}
+
+@if (!applications.Any())
+{
+    <div class="uc-empty">
+        <span class="uc-empty-icon"><i class="bi bi-people"></i></span>
+        <h5>No applications yet</h5>
+    </div>
+}
+else
+{
+    @foreach (var a in applications)
+    {
+        var profile = profiles.FirstOrDefault(p => p.UserId == a.UserId);
+        var skills = skillsByUser.TryGetValue(a.UserId, out var s) ? s : new List<UniConnect.Models.StudentSkill>();
+        <div class="applicant-card">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <strong>@a.User?.FullName</strong>
+                    <span class="uc-pill status-@a.Status.ToString().ToLower() ms-2">@a.Status</span>
+                    @if (a.MatchingScore.HasValue)
+                    {
+                        <span class="match-badge match-@(a.MatchingScore >= 70 ? "high" : a.MatchingScore >= 40 ? "mid" : "low") ms-2">@a.MatchingScore% match</span>
+                    }
+                    @if (a.SentToEmployerAt.HasValue)
+                    {
+                        <span class="uc-pill uc-pill-green ms-2" title="Sent @a.SentToEmployerAt.Value.ToString("MMM dd, yyyy")"><i class="bi bi-check-circle"></i> Sent to employer</span>
+                    }
+                    <p class="text-muted small mb-0">Applied @a.AppliedAt.ToString("MMM dd, yyyy")</p>
+                </div>
+                <form asp-action="UpdateStatus" method="post" data-loading>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="applicationId" value="@a.Id" />
+                    <select name="newStatus" class="form-select form-select-sm" onchange="this.form.submit()">
+                        @foreach (var st in Enum.GetValues<UniConnect.Models.InternshipApplicationStatus>())
+                        {
+                            if (st == a.Status)
+                            {
+                                <option value="@st" selected>@st</option>
+                            }
+                            else
+                            {
+                                <option value="@st">@st</option>
+                            }
+                        }
+                    </select>
+                </form>
+            </div>
+
+            @if (profile is not null)
+            {
+                <p class="small mt-2 mb-1"><strong>Interests:</strong> @profile.CareerInterests</p>
+                @if (!string.IsNullOrWhiteSpace(profile.CvFilePath))
+                {
+                    <a href="@profile.CvFilePath" target="_blank" class="small"><i class="bi bi-file-earmark-text"></i> View CV</a>
+                }
+            }
+            @if (skills.Any())
+            {
+                <div class="applicant-skills">
+                    @foreach (var sk in skills)
+                    {
+                        <span class="applicant-skill-tag">@sk.SkillName</span>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(a.CoverMessage))
+            {
+                <p class="small mt-2 mb-0 fst-italic">"@a.CoverMessage"</p>
+            }
+        </div>
+    }
+}

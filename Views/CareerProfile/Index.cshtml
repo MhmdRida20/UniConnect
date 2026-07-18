@@ -1,0 +1,112 @@
+@model UniConnect.ViewModels.CareerProfileEditVM
+@{
+    ViewData["Title"] = "Career Profile";
+    var skills = ViewBag.Skills as List<UniConnect.Models.StudentSkill> ?? new();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/internships.css" asp-append-version="true" />
+}
+
+<div class="uc-hero" style="padding:1.5rem 0;">
+    <div class="uc-hero-inner">
+        <p class="uc-eyebrow"><i class="bi bi-person-badge"></i>Internships</p>
+        <h1 class="uc-hero-title mb-0" style="font-size:1.6rem;">My Career Profile</h1>
+    </div>
+</div>
+
+<div class="container" style="padding-top:1.25rem; max-width:760px;">
+    <div class="uc-form-card mb-3">
+        <h3 class="mb-3">Profile Details</h3>
+        <p class="text-muted small mb-3">
+            <i class="bi bi-info-circle"></i> This "Save Profile" button only saves the fields below.
+            Skills and your CV (further down) each save immediately when you click their own button —
+            you don't need to come back here afterward.
+        </p>
+        <form asp-action="Edit" method="post" data-loading>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="CareerInterests" class="form-label"></label>
+                <textarea asp-for="CareerInterests" class="form-control" rows="2" placeholder="e.g. backend development, data analysis, marketing"></textarea>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CareerGoals" class="form-label"></label>
+                <textarea asp-for="CareerGoals" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="PreferredLocation" class="form-label"></label>
+                    <input asp-for="PreferredLocation" class="form-control" placeholder="e.g. Beirut" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Availability" class="form-label"></label>
+                    <input asp-for="Availability" class="form-control" placeholder="e.g. Summer 2026, full-time" />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-check-lg me-1"></i>Save Profile Details</button>
+        </form>
+    </div>
+
+    <div class="uc-form-card mb-3">
+        <h3 class="mb-3">Skills</h3>
+        <p class="text-muted small mb-2"><i class="bi bi-lightning-charge"></i> Each skill saves immediately when you click "Add" — no separate save step needed.</p>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            @foreach (var s in skills)
+            {
+                <span class="skill-chip">
+                    @s.SkillName
+                    @if (s.ProficiencyLevel.HasValue) { <small>(@s.ProficiencyLevel)</small> }
+                    <form asp-action="RemoveSkill" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@s.Id" />
+                        <button class="skill-chip-remove" title="Remove">&times;</button>
+                    </form>
+                </span>
+            }
+            @if (!skills.Any())
+            {
+                <p class="text-muted small mb-0">No skills added yet.</p>
+            }
+        </div>
+        <form asp-action="AddSkill" method="post" class="d-flex gap-2" data-loading>
+            @Html.AntiForgeryToken()
+            <input type="text" name="skillName" class="form-control" placeholder="Add a skill, e.g. C#" required />
+            <select name="proficiencyLevel" class="form-select" style="max-width:160px">
+                <option value="">Level (optional)</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </select>
+            <button class="btn btn-outline-primary">Add</button>
+        </form>
+    </div>
+
+    <div class="uc-form-card">
+        <h3 class="mb-3">CV</h3>
+        <p class="text-muted small mb-2"><i class="bi bi-lightning-charge"></i> Uploads immediately once you choose a file — no separate save step needed.</p>
+        @if (!string.IsNullOrWhiteSpace(ViewBag.CvFileName as string))
+        {
+            <p><i class="bi bi-file-earmark-text me-1"></i>@ViewBag.CvFileName</p>
+            <form asp-action="DeleteCv" method="post" data-confirm="Remove your CV?" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-danger btn-sm">Remove CV</button>
+            </form>
+        }
+        else
+        {
+            <p class="text-muted small">No CV uploaded yet.</p>
+        }
+        <form asp-action="UploadCv" method="post" enctype="multipart/form-data" class="d-flex gap-2 mt-2" data-loading id="cvUploadForm">
+            @Html.AntiForgeryToken()
+            <input type="file" name="cv" id="cvFileInput" class="form-control" accept=".pdf,.doc,.docx" required />
+            <button class="btn btn-outline-primary" id="cvUploadButton">Upload</button>
+        </form>
+        <small class="text-muted d-block mt-1">PDF or Word document, max 5 MB. Uploads as soon as you pick a file.</small>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/career-profile-cv.js" asp-append-version="true"></script>
+}

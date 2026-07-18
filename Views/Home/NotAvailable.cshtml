@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Not Available";
+    var service = ViewBag.ServiceInfo as UniConnect.Models.Service;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/static-page.css" asp-append-version="true" />
+}
+
+<div class="static-page">
+    <div class="static-head">
+        <span class="static-ico"><i class="bi bi-slash-circle"></i></span>
+        <div>
+            <h1>@(service?.Name ?? "This service") isn't available</h1>
+            <p>Your university hasn't enabled this yet</p>
+        </div>
+    </div>
+
+    <article class="static-card">
+        @if (service is not null && !service.IsImplemented)
+        {
+            <p class="lead">
+                <strong>@service.Name</strong> is on UniConnect's service roadmap but isn't built yet.
+                It appears in the catalog so universities can see what's coming, but no university can
+                turn it on until it ships.
+            </p>
+        }
+        else
+        {
+            <p class="lead">
+                <strong>@(service?.Name ?? "This service")</strong> exists on UniConnect, but your
+                university hasn't enabled it for its students yet.
+            </p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(service?.Description))
+        {
+            <p>@service.Description</p>
+        }
+
+        <div class="static-note">
+            <i class="bi bi-info-circle"></i>
+            If you believe this should be enabled, contact your university's UniConnect administrator.
+        </div>
+
+        <a class="btn btn-primary mt-3" asp-controller="Home" asp-action="Index">
+            <i class="bi bi-house-door me-1"></i>Back to Home
+        </a>
+    </article>
+</div>

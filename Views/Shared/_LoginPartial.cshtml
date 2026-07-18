@@ -1,33 +1,45 @@
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using UniConnect.Models
+@using UniConnect.Data
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext Db
 
 <ul class="navbar-nav align-items-md-center gap-md-1">
-@if (SignInManager.IsSignedIn(User))
-{
-    <li class="nav-item">
-        <a class="nav-link d-inline-flex align-items-center" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage your account">
-            <i class="bi bi-person-circle me-1"></i>@User.Identity?.Name
-        </a>
-    </li>
-    <li class="nav-item">
-        <form class="d-grid d-md-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button type="submit" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-box-arrow-right me-1"></i>Logout
-            </button>
-        </form>
-    </li>
-}
-else
-{
-    <li class="nav-item">
-        <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Login</a>
-    </li>
-    <li class="nav-item">
-        <a class="btn btn-primary btn-sm px-3" asp-area="Identity" asp-page="/Account/Register">
-            <i class="bi bi-person-plus me-1"></i>Sign up
-        </a>
-    </li>
-}
+    @if (SignInManager.IsSignedIn(User))
+    {
+        var currentUserId = UserManager.GetUserId(User);
+        var unreadCount = await Db.Notifications.CountAsync(n => n.UserId == currentUserId && !n.IsRead);
+        <li class="nav-item">
+            <a class="nav-link d-inline-flex align-items-center position-relative" asp-controller="Notifications" asp-action="Index" title="Notifications" id="notificationBellLink">
+                <i class="bi bi-bell"></i>
+                <span id="notificationBellCount" class="badge rounded-pill bg-danger" style="font-size:.6rem; @(unreadCount == 0 ? "display:none;" : "") position:absolute; top:-2px; right:-4px;">@unreadCount</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-inline-flex align-items-center" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage your account">
+                <i class="bi bi-person-circle me-1"></i>@User.Identity?.Name
+            </a>
+        </li>
+        <li class="nav-item">
+            <form class="d-grid d-md-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-box-arrow-right me-1"></i>Logout
+                </button>
+            </form>
+        </li>
+        <li class="d-none" data-current-user-id="@currentUserId" id="notificationUserConfig"></li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        </li>
+        <li class="nav-item">
+            <a class="btn btn-primary btn-sm px-3" asp-area="Identity" asp-page="/Account/Register">
+                <i class="bi bi-person-plus me-1"></i>Sign up
+            </a>
+        </li>
+    }
 </ul>

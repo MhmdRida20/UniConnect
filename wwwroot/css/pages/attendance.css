@@ -1,0 +1,118 @@
+/* ==========================================================================
+   Smart Attendance
+   ========================================================================== */
+
+.attendance-body { padding-top: 1.5rem; }
+
+/* ── Status pills (sessions + records) ── */
+.status-active   { background: #dbeafe; color: #1d4ed8; }
+.status-closed   { background: #f1f5f9; color: #475569; }
+.status-cancelled{ background: #fee2e2; color: #b91c1c; }
+.status-present  { background: #dcfce7; color: #15803d; }
+.status-late     { background: #fef3c7; color: #92400e; }
+.status-absent   { background: #f1f5f9; color: #475569; }
+.status-excused  { background: #ede9fe; color: #6d28d9; }
+
+/* ── Session cards (Instructor Index) ── */
+.attendance-session-card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); padding: 1rem;
+    transition: box-shadow var(--uc-transition), transform var(--uc-transition);
+    height: 100%;
+}
+.attendance-session-card:hover { box-shadow: var(--uc-shadow-md); transform: translateY(-2px); color: inherit; }
+.attendance-counts { font-size: .8rem; margin: 0; }
+
+/* ── "Use my current location" button (borrowed styling, kept local so this
+   page doesn't need to load ride-create.css) ── */
+.ride-my-location-btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    border: 1px dashed var(--uc-primary-light); background: var(--uc-primary-tint);
+    color: var(--uc-primary-darker); border-radius: var(--uc-radius-sm);
+    padding: .45rem .8rem; font-size: .82rem; font-weight: 600;
+    cursor: pointer; margin-bottom: .6rem;
+    transition: background var(--uc-transition), border-color var(--uc-transition);
+}
+.ride-my-location-btn:hover { background: var(--uc-primary-soft); border-color: var(--uc-primary); }
+.ride-my-location-btn:disabled { opacity: .6; cursor: default; }
+.ride-my-location-btn i { color: var(--uc-primary); }
+
+.ride-pin-hint {
+    margin: .55rem 0 0; font-size: .78rem; color: var(--uc-muted);
+    display: flex; align-items: center; gap: .4rem;
+}
+
+.attendance-map {
+    width: 100%; height: 300px;
+    border-radius: var(--uc-radius);
+    border: 1px solid var(--uc-border);
+    box-shadow: var(--uc-shadow-xs);
+    z-index: 0;
+}
+
+/* ── Details page layout ── */
+.attendance-detail-grid { display: grid; grid-template-columns: 1fr 300px; gap: 1.25rem; align-items: start; }
+.attendance-session-info {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+.attendance-session-info h1 { font-size: 1.3rem; font-weight: 800; margin: 0; }
+
+.attendance-counts-bar {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: .6rem;
+    margin-bottom: 1.25rem;
+}
+.attendance-counts-bar > div {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius-sm); padding: .7rem; text-align: center;
+}
+.attendance-counts-bar strong { display: block; font-size: 1.3rem; font-weight: 800; }
+.attendance-counts-bar span { font-size: .74rem; color: var(--uc-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
+.attendance-counts-bar .is-suspicious strong { color: var(--uc-danger); }
+
+.attendance-roster-grid { grid-template-columns: 1.4fr .9fr .7fr .7fr 130px !important; }
+.attendance-history-grid { grid-template-columns: 1.4fr 1fr .9fr .7fr !important; }
+.attendance-override-form select { font-size: .78rem; }
+
+/* ── QR card ── */
+.attendance-qr-card { text-align: center; }
+.attendance-qr-card h3 { margin-bottom: .8rem; }
+#qrCanvas { display: flex; justify-content: center; }
+#qrCanvas canvas { border-radius: 8px; }
+.attendance-token {
+    display: block; background: var(--uc-bg); padding: .4rem .6rem;
+    border-radius: 6px; font-size: .85rem; letter-spacing: .03em; word-break: break-all;
+}
+
+@media (max-width: 1000px) {
+    .attendance-detail-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Scan / manual entry / result pages ── */
+.attendance-scan-page {
+    min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;
+}
+.attendance-scan-card {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); box-shadow: var(--uc-shadow-md);
+    padding: 2rem; max-width: 420px; width: 100%; text-align: center;
+}
+.attendance-scan-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--uc-primary-tint); color: var(--uc-primary);
+    font-size: 1.8rem; margin-bottom: 1rem;
+}
+.attendance-scan-icon.is-success { background: #dcfce7; color: #15803d; }
+.attendance-scan-icon.is-error { background: #fee2e2; color: #b91c1c; }
+.attendance-scan-card h1 { font-size: 1.3rem; font-weight: 800; margin-bottom: .3rem; }
+
+.attendance-location-status {
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    font-size: .84rem; color: var(--uc-muted); margin: 1rem 0;
+    padding: .5rem; background: var(--uc-bg); border-radius: var(--uc-radius-sm);
+}
+.attendance-location-status.is-ready { color: var(--uc-primary-dark); }
+.attendance-location-status.is-error { color: var(--uc-danger); }

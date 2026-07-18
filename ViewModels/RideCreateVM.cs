@@ -27,5 +27,13 @@ namespace UniConnect.ViewModels
 
         [StringLength(300)]
         public string? Notes { get; set; }
+
+        // Populated by the map pin picker (Phase 2). When present, these take
+        // priority over text-address geocoding, since they come directly from
+        // where the user clicked — always accurate, unlike guessing from text.
+        public double? DepartureLat { get; set; }
+        public double? DepartureLng { get; set; }
+        public double? DestinationLat { get; set; }
+        public double? DestinationLng { get; set; }
     }
 }

@@ -1,0 +1,84 @@
+/* ==========================================================================
+   Tickets — student-facing pages (list, create, details)
+   ========================================================================== */
+
+.tickets-body { padding-top: 1.5rem; }
+
+/* ── Status pills ── */
+.status-open              { background: #dbeafe; color: #1d4ed8; }
+.status-inprogress        { background: #fef3c7; color: #92400e; }
+.status-waitingforstudent { background: #ede9fe; color: #6d28d9; }
+.status-resolved          { background: #dcfce7; color: #15803d; }
+.status-closed            { background: #f1f5f9; color: #475569; }
+.status-rejected          { background: #fee2e2; color: #b91c1c; }
+
+/* ── Priority accents ── */
+.priority-low    { --p-color: #64748b; }
+.priority-medium { --p-color: #2563eb; }
+.priority-high   { --p-color: #d97706; }
+.priority-urgent { --p-color: #dc2626; }
+
+/* ── Ticket list row ── */
+.ticket-row {
+    display: flex; align-items: stretch; gap: .9rem;
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); text-decoration: none; color: inherit;
+    overflow: hidden; transition: box-shadow var(--uc-transition), transform var(--uc-transition);
+}
+.ticket-row:hover { box-shadow: var(--uc-shadow-md); transform: translateY(-1px); color: inherit; }
+.ticket-priority-bar { width: 5px; flex-shrink: 0; background: var(--p-color); }
+.ticket-row-main { flex: 1; min-width: 0; padding: .95rem 0; }
+.ticket-row-top { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .3rem; }
+.ticket-row-top strong { font-size: .98rem; color: var(--uc-text); }
+.ticket-row-meta { margin: 0; font-size: .8rem; color: var(--uc-muted); }
+.ticket-row-chevron { align-self: center; margin-right: 1rem; color: var(--uc-muted); }
+
+/* ── Priority picker (Create page) ── */
+.ticket-priority-picker { display: flex; gap: .5rem; flex-wrap: wrap; }
+.ticket-priority-option {
+    flex: 1; min-width: 100px; text-align: center; cursor: pointer;
+    border: 1.5px solid var(--uc-border); border-radius: var(--uc-radius-sm);
+    padding: .5rem .6rem; font-weight: 600; font-size: .85rem; color: var(--p-color);
+    transition: border-color var(--uc-transition), background var(--uc-transition);
+}
+.ticket-priority-option input { display: none; }
+.ticket-priority-option:has(input:checked) {
+    border-color: var(--p-color); background: color-mix(in srgb, var(--p-color) 12%, white);
+}
+
+/* ── Ticket details ── */
+.ticket-detail-card {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); overflow: hidden;
+    margin-bottom: 1.25rem;
+}
+.ticket-detail-head { padding: 1.25rem 1.5rem .5rem; }
+.ticket-detail-head h1 { font-size: 1.3rem; font-weight: 800; margin: 0 0 .3rem; }
+.ticket-detail-body { padding: 0 1.5rem 1.25rem; color: var(--uc-text-soft); }
+.ticket-priority-tag { color: var(--p-color); font-weight: 700; }
+.ticket-attachment {
+    display: inline-flex; align-items: center; gap: .4rem; margin-top: .75rem;
+    padding: .45rem .8rem; background: var(--uc-bg); border-radius: var(--uc-radius-sm);
+    font-size: .85rem; font-weight: 600; color: var(--uc-primary-darker); text-decoration: none;
+}
+
+/* ── History timeline ── */
+.ticket-history { margin-bottom: 1.25rem; }
+.ticket-history-title { font-size: 1rem; font-weight: 800; margin-bottom: .75rem; }
+.ticket-msg {
+    background: var(--uc-surface); border: 1px solid var(--uc-border-soft);
+    border-left: 3px solid var(--uc-border); border-radius: var(--uc-radius-sm);
+    padding: .8rem 1rem; margin-bottom: .6rem;
+}
+.ticket-msg.is-staff { border-left-color: var(--uc-primary); }
+.ticket-msg.is-me { background: var(--uc-primary-tint); }
+.ticket-msg-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .3rem; font-size: .85rem; }
+.ticket-msg-time { margin-left: auto; color: var(--uc-muted); font-size: .76rem; }
+.ticket-msg p { margin: 0; font-size: .92rem; color: var(--uc-text-soft); }
+.ticket-status-change { margin-top: .4rem !important; font-size: .78rem !important; color: var(--uc-primary-dark) !important; font-weight: 600; }
+
+/* ── Reply box ── */
+.ticket-reply-box {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); padding: 1rem; box-shadow: var(--uc-shadow-xs);
+}

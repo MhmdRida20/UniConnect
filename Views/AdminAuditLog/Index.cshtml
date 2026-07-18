@@ -1,0 +1,75 @@
+@model IEnumerable<UniConnect.Models.AuditLog>
+@{
+    ViewData["Title"] = "Audit Logs";
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var actionTypes = ViewBag.ActionTypes as List<string> ?? new();
+    var logs = Model.ToList();
+    var truncated = ViewBag.Truncated is true;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/reports.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
+}
+
+<a asp-controller="AdminReports" asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to reports</a>
+<h2 class="mb-3">Audit Logs</h2>
+
+<form method="get" class="d-flex flex-wrap gap-2 mb-3">
+    <select name="action" class="form-select form-select-sm" style="max-width:220px">
+        <option value="">All actions</option>
+        @foreach (var a in actionTypes)
+        {
+            if (a == ViewBag.SelectedAction as string)
+            {
+                <option value="@a" selected>@a</option>
+            }
+            else
+            {
+                <option value="@a">@a</option>
+            }
+        }
+    </select>
+    <input type="date" name="from" class="form-control form-control-sm" style="max-width:160px" value="@(((DateTime?)ViewBag.From)?.ToString("yyyy-MM-dd"))" />
+    <input type="date" name="to" class="form-control form-control-sm" style="max-width:160px" value="@(((DateTime?)ViewBag.To)?.ToString("yyyy-MM-dd"))" />
+    <button class="btn btn-outline-secondary btn-sm">Filter</button>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Clear</a>
+</form>
+
+@if (truncated)
+{
+    <div class="alert alert-warning uc-flash">
+        <i class="bi bi-exclamation-triangle"></i> Showing the most recent 500 entries only — narrow your filters for a complete view.
+    </div>
+}
+
+@if (!logs.Any())
+{
+    <div class="uc-empty">
+        <span class="uc-empty-icon"><i class="bi bi-journal-text"></i></span>
+        <h5>No matching audit entries</h5>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-hover report-table">
+            <thead>
+                <tr><th>Time</th><th>Action</th><th>User</th><th>Entity</th><th>Details</th><th>IP</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var log in logs)
+                {
+                    <tr>
+                        <td class="text-nowrap">@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td><span class="uc-pill uc-pill-grey">@log.Action</span></td>
+                        <td>@(log.User?.FullName ?? "—")</td>
+                        <td>@(log.EntityType is not null ? $"{log.EntityType} #{log.EntityId}" : "—")</td>
+                        <td class="small text-muted">@log.Details</td>
+                        <td class="small text-muted">@log.IpAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

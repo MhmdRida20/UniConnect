@@ -26,6 +26,15 @@ namespace UniConnect.Models
         [StringLength(500)]
         public string? Description { get; set; }
 
+        // Which university this group belongs to — set from the creator's
+        // university at creation time. Needed both to disambiguate the
+        // composite FK to Course, and to guarantee a group at one university
+        // is never visible/joinable from another, even if course codes
+        // coincide across catalogs.
+        [Required]
+        [StringLength(20)]
+        public string UniversityCode { get; set; } = string.Empty;
+
         // The course this group studies (FK to Course)
         [Required]
         [StringLength(10)]
@@ -47,6 +56,15 @@ namespace UniConnect.Models
         public int MinMembers { get; set; } = 2;   // FR-20
 
         public StudyGroupStatus Status { get; set; } = StudyGroupStatus.Active;
+
+        // Edge Case: "Simultaneous join requests — many students join at
+        // the same time. The system shall manage membership count
+        // consistently using concurrency control." EF Core uses this to
+        // detect (and reject) a save based on stale data, so two
+        // near-simultaneous approvals can't both squeeze past the capacity
+        // check.
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
 
         [Display(Name = "Created On")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

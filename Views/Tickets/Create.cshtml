@@ -1,0 +1,102 @@
+@model UniConnect.ViewModels.TicketCreateVM
+@{
+    ViewData["Title"] = "Submit a Ticket";
+    var showDuplicateWarning = ViewBag.DuplicateWarning is true;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/tickets.css" asp-append-version="true" />
+}
+
+<div class="form-page">
+    <a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to my tickets</a>
+
+    <div class="form-page-head">
+        <span class="form-page-ico"><i class="bi bi-ticket-detailed"></i></span>
+        <div>
+            <h1>Submit a Ticket</h1>
+            <p class="text-muted">Tell us what's going on and we'll route it to the right department.</p>
+        </div>
+    </div>
+
+    <div class="uc-form-card">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" data-loading>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            @if (showDuplicateWarning)
+            {
+                <div class="alert alert-warning d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <div>
+                        <strong>Looks similar to a recent ticket.</strong>
+                        <p class="mb-2">
+                            You submitted a ticket with the same title and category in the last 24 hours.
+                            If this is a new issue, you can go ahead and submit anyway.
+                        </p>
+                        <input type="hidden" name="ConfirmDuplicate" value="true" />
+                        <button type="submit" class="btn btn-sm btn-warning" formnovalidate>
+                            Submit anyway
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="CategoryId" class="form-label"></label>
+                <select asp-for="CategoryId" asp-items="Model.AvailableCategories" class="form-select">
+                    <option value="">— Select a category —</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" placeholder="e.g. Can't access WiFi in Building C" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="5" placeholder="Give as much detail as you can…"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Priority</label>
+                <div class="ticket-priority-picker">
+                    @foreach (var p in Enum.GetValues<UniConnect.Models.TicketPriority>())
+                    {
+                        <label class="ticket-priority-option priority-@p.ToString().ToLower()">
+                            @if (p == Model.Priority)
+                            {
+                                <input type="radio" name="Priority" value="@p" checked="checked" />
+                            }
+                            else
+                            {
+                                <input type="radio" name="Priority" value="@p" />
+                            }
+                            <span>@p</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Attachment" class="form-label">Attachment <span class="text-muted fw-normal">(optional, max 5 MB)</span></label>
+                <input asp-for="Attachment" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.docx,.txt" />
+                <span asp-validation-for="Attachment" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100" data-loading-text="Submitting…">
+                <i class="bi bi-send me-1"></i>Submit Ticket
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
+}

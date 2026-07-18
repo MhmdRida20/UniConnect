@@ -1,0 +1,137 @@
+@using UniConnect.Models
+@{
+    ViewData["Title"] = "External API Simulator";
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var apiUniversities = ViewBag.ApiUniversities as List<University> ?? new();
+    var selectedApiKey = ViewBag.SelectedApiKey as string;
+    var dataset = ViewBag.Dataset as UniConnect.ExternalApi.ExternalUniversityDataset;
+    var students = dataset?.Students ?? new List<UniConnect.ExternalApi.ExternalStudentRecord>();
+    var courses = dataset?.Courses ?? new List<UniConnect.ExternalApi.ExternalCourseRecord>();
+    var enrollments = dataset?.Enrollments ?? new List<UniConnect.ExternalApi.ExternalEnrollmentRecord>();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
+}
+
+<div class="alert alert-secondary uc-flash mb-4">
+    <i class="bi bi-info-circle"></i>
+    This simulates the OTHER side of the integration — each university's own, independent system. Changes here do
+    nothing to UniConnect on their own; go to <strong>Universities → Sync Now</strong> afterward to actually pull
+    the change in, exactly like a real sync would.
+</div>
+
+@if (!apiUniversities.Any())
+{
+    <div class="uc-empty">
+        <span class="uc-empty-icon"><i class="bi bi-cloud-slash"></i></span>
+        <h5>No "Live API" universities yet</h5>
+        <p>Create one from Universities → Add University, choosing "Live API" as the data source.</p>
+        <a class="btn btn-primary mt-2" asp-controller="AdminUniversities" asp-action="Create">Add University</a>
+    </div>
+}
+else
+{
+    <form method="get" class="d-flex align-items-center gap-2 mb-4" style="max-width:420px">
+        <label class="form-label mb-0 me-2">University:</label>
+        <select name="apiKey" class="form-select form-select-sm" onchange="this.form.submit()">
+            @foreach (var u in apiUniversities)
+            {
+                <option value="@u.ApiKey" selected="@(u.ApiKey == selectedApiKey)">@u.Name</option>
+            }
+        </select>
+    </form>
+
+    @if (dataset is null)
+    {
+        <div class="alert alert-warning uc-flash">
+            <i class="bi bi-exclamation-triangle"></i> No dataset found for this key yet — it may not have been provisioned.
+            Try regenerating the API key from the Universities screen.
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            <div class="col-lg-5">
+                <div class="st-side-card mb-3">
+                    <h3>Add a Student (external side)</h3>
+                    <form asp-action="AddStudent" method="post" data-loading>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="apiKey" value="@selectedApiKey" />
+                        <input type="text" name="fullName" class="form-control mb-2" placeholder="Full name" required />
+                        <input type="email" name="email" class="form-control mb-2" placeholder="Email" required />
+                        <input type="text" name="major" class="form-control mb-2" placeholder="Major (optional)" />
+                        <input type="number" name="yearOfStudy" class="form-control mb-2" placeholder="Year of study" min="1" max="6" value="1" />
+                        <button class="btn btn-primary btn-sm w-100">Add Student</button>
+                    </form>
+                </div>
+
+                <div class="st-side-card">
+                    <h3>Enroll a Student (external side)</h3>
+                    <form asp-action="AddEnrollment" method="post" data-loading>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="apiKey" value="@selectedApiKey" />
+                        <select name="studentNumber" class="form-select form-select-sm mb-2">
+                            @foreach (var s in students)
+                            {
+                                <option value="@s.StudentNumber">@s.StudentNumber — @s.FullName</option>
+                            }
+                        </select>
+                        <select name="courseCode" class="form-select form-select-sm mb-2">
+                            @foreach (var c in courses)
+                            {
+                                <option value="@c.CourseCode">@c.CourseCode — @c.CourseName</option>
+                            }
+                        </select>
+                        <button class="btn btn-outline-primary btn-sm w-100">Enroll</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <h3 class="club-panel-subtitle">Current External Enrollments — @dataset.Label</h3>
+                <p class="text-muted small">Drop a student from a course here to simulate them un-enrolling on the external side.</p>
+                <div class="st-table">
+                    <div class="st-table-head" style="grid-template-columns: 1fr 1fr 100px !important;">
+                        <span>Student</span>
+                        <span>Course</span>
+                        <span></span>
+                    </div>
+                    @foreach (var e in enrollments)
+                    {
+                        var student = students.FirstOrDefault(s => s.StudentNumber == e.StudentNumber);
+                        var course = courses.FirstOrDefault(c => c.CourseCode == e.CourseCode);
+                        <div class="st-table-row" style="cursor:default; grid-template-columns: 1fr 1fr 100px !important;">
+                            <span>@(student?.FullName ?? e.StudentNumber)</span>
+                            <span>@(course?.CourseName ?? e.CourseCode)</span>
+                            <form asp-action="RemoveEnrollment" method="post" data-confirm="Drop @student?.FullName from @course?.CourseName on the external side?">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="apiKey" value="@selectedApiKey" />
+                                <input type="hidden" name="studentNumber" value="@e.StudentNumber" />
+                                <input type="hidden" name="courseCode" value="@e.CourseCode" />
+                                <button class="btn btn-outline-danger btn-sm">Drop</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+
+                <h3 class="club-panel-subtitle mt-4">All Students at @dataset.Label</h3>
+                <div class="au-synced-student-list">
+                    @foreach (var s in students)
+                    {
+                        <div class="au-synced-student">
+                            <strong>@s.StudentNumber</strong>
+                            <span>@s.FullName</span>
+                            <span class="text-muted">@s.Email</span>
+                            @if (!string.IsNullOrWhiteSpace(s.Major))
+                            {
+                                <span class="uc-pill uc-pill-grey">@s.Major</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}

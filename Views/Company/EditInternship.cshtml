@@ -1,0 +1,118 @@
+@model UniConnect.ViewModels.InternshipPostVM
+@{
+    ViewData["Title"] = "Edit Internship";
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to my internships</a>
+
+<div class="uc-form-card" style="max-width:640px;">
+    <h3 class="mb-3">Edit Internship</h3>
+    <form asp-action="EditInternship" method="post" enctype="multipart/form-data" data-loading>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@ViewBag.InternshipId" />
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" placeholder="e.g. Software Engineering Intern" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="RequiredSkills" class="form-label"></label>
+            <input asp-for="RequiredSkills" class="form-control" placeholder="e.g. C#, SQL, Communication" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="RecommendedCourses" class="form-label"></label>
+            <input asp-for="RecommendedCourses" class="form-control" placeholder="e.g. CSC301, CSC340" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="RelevantMajors" class="form-label"></label>
+            <input asp-for="RelevantMajors" class="form-control" placeholder="e.g. Computer Science, Information Systems" />
+            <small class="text-muted d-block mt-1">Leave blank if open to all majors.</small>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Location" class="form-label"></label>
+                <input asp-for="Location" class="form-control" />
+                <span asp-validation-for="Location" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="DurationWeeks" class="form-label"></label>
+                <input asp-for="DurationWeeks" type="number" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="ApplicationDeadline" class="form-label"></label>
+                <input asp-for="ApplicationDeadline" class="form-control" />
+                <span asp-validation-for="ApplicationDeadline" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="NumberOfPositions" class="form-label"></label>
+                <input asp-for="NumberOfPositions" type="number" class="form-control" />
+            </div>
+        </div>
+
+        <hr />
+        <h5 class="mb-2">Who is this actually for?</h5>
+
+        <div class="mb-3">
+            <label asp-for="ExternalEmployerName" class="form-label"></label>
+            <input asp-for="ExternalEmployerName" class="form-control" placeholder="e.g. Acme Corp" />
+            <span asp-validation-for="ExternalEmployerName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="ExternalEmployerContactEmail" class="form-label"></label>
+            <input asp-for="ExternalEmployerContactEmail" class="form-control" placeholder="hr@acmecorp.com" />
+            <span asp-validation-for="ExternalEmployerContactEmail" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="ExternalEmployerLogo" class="form-label">Employer Logo <span class="text-muted fw-normal">(optional — leave blank to keep current)</span></label>
+            <input asp-for="ExternalEmployerLogo" type="file" class="form-control" accept=".png,.jpg,.jpeg" />
+        </div>
+
+        <hr />
+        <div class="mb-3">
+            <label asp-for="PostingMode" class="form-label"></label>
+            <select asp-for="PostingMode" class="form-select"
+                    asp-items="Html.GetEnumSelectList<UniConnect.Models.InternshipPostingMode>()"></select>
+            <small class="text-muted d-block mt-1">
+                <strong>Full Application</strong>: students apply here in UniConnect. <strong>Listing Only</strong>:
+                no applications are tracked here — students go straight to the employer's own link or email.
+            </small>
+        </div>
+
+        <div class="mb-3" id="listingOnlyFields">
+            <label asp-for="ExternalApplyUrl" class="form-label"></label>
+            <input asp-for="ExternalApplyUrl" class="form-control mb-2" placeholder="https://acmecorp.com/careers/apply" />
+            <span asp-validation-for="ExternalApplyUrl" class="text-danger"></span>
+
+            <label asp-for="ExternalApplyEmail" class="form-label mt-2"></label>
+            <input asp-for="ExternalApplyEmail" class="form-control" placeholder="apply@acmecorp.com" />
+            <span asp-validation-for="ExternalApplyEmail" class="text-danger"></span>
+            <small class="text-muted d-block mt-1">Provide a link, an email, or both.</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-3" data-loading-text="Saving…">
+            <i class="bi bi-check-lg me-1"></i>Save Changes
+        </button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/internship-posting-mode.js" asp-append-version="true"></script>
+}

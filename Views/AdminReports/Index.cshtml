@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Reports";
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+
+    var reportTypes = new[]
+    {
+        ("ServiceUsage", "Service Usage", "bi-bar-chart"),
+        ("Attendance", "Attendance", "bi-qr-code"),
+        ("Complaints", "Complaints & Tickets", "bi-ticket-detailed"),
+        ("Internships", "Internships", "bi-briefcase"),
+        ("StudyGroups", "Study Groups", "bi-people"),
+        ("Rides", "Ride Sharing", "bi-car-front"),
+        ("Clubs", "Clubs & Organizations", "bi-flag"),
+        ("Notifications", "Notifications", "bi-bell"),
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/reports.css" asp-append-version="true" />
+}
+
+<p class="text-muted mb-3">Select a report type to view usage and activity data across the platform.</p>
+
+<div class="row g-3">
+    @foreach (var (code, label, icon) in reportTypes)
+    {
+        <div class="col-md-6 col-lg-3">
+            <a class="report-type-card" asp-action="Report" asp-route-type="@code">
+                <span class="report-type-icon"><i class="bi @icon"></i></span>
+                <strong>@label</strong>
+            </a>
+        </div>
+    }
+</div>
+
+<div class="mt-4">
+    <a asp-controller="AdminAuditLog" asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-journal-text me-1"></i>View Audit Logs
+    </a>
+</div>

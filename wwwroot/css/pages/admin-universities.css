@@ -1,0 +1,151 @@
+/* ==========================================================================
+   Admin — Universities & Service Catalog management
+   ========================================================================== */
+
+/* Override the ticket-table grid columns for the university list */
+.au-grid {
+    grid-template-columns: 1.3fr .7fr 1fr 1fr .8fr 170px !important;
+}
+
+    .au-grid code {
+        background: var(--uc-bg);
+        padding: .15rem .45rem;
+        border-radius: 6px;
+        font-size: .8rem;
+    }
+
+.au-form-card {
+    max-width: 560px;
+}
+
+/* ── Adapter mode picker (Create page) ── */
+.au-mode-picker {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+.au-mode-option {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    border: 1.5px solid var(--uc-border);
+    border-radius: var(--uc-radius-sm);
+    padding: .75rem .9rem;
+    cursor: pointer;
+    transition: border-color var(--uc-transition), background var(--uc-transition);
+}
+
+    .au-mode-option:has(input:checked) {
+        border-color: var(--uc-primary);
+        background: var(--uc-primary-tint);
+    }
+
+    .au-mode-option input {
+        margin-top: .3rem;
+        flex-shrink: 0;
+    }
+
+    .au-mode-option strong {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .9rem;
+    }
+
+    .au-mode-option small {
+        display: block;
+        color: var(--uc-muted);
+        font-size: .78rem;
+        margin-top: .15rem;
+    }
+
+/* ── Service enablement checklist ── */
+.au-service-list {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    max-width: 700px;
+}
+
+.au-service-row {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius-sm);
+    padding: .8rem 1rem;
+    cursor: pointer;
+    transition: border-color var(--uc-transition), background var(--uc-transition);
+}
+
+    .au-service-row:has(input:checked) {
+        border-color: var(--uc-primary);
+        background: var(--uc-primary-tint);
+    }
+
+    .au-service-row.is-disabled {
+        cursor: default;
+        opacity: .6;
+    }
+
+.au-service-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--uc-radius-sm);
+    flex-shrink: 0;
+    background: var(--uc-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--uc-primary);
+}
+
+.au-service-info strong {
+    display: block;
+    font-size: .92rem;
+}
+
+.au-service-info small {
+    color: var(--uc-muted);
+    font-size: .8rem;
+}
+
+/* ── Synced students reference list (Services page) ── */
+.au-synced-students {
+    background: var(--uc-primary-tint);
+    border: 1px solid #bbf7d0;
+    border-radius: var(--uc-radius);
+    padding: 1rem 1.2rem;
+}
+
+    .au-synced-students h3 {
+        font-size: .9rem;
+        font-weight: 700;
+        margin: 0 0 .3rem;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+.au-synced-student-list {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+
+.au-synced-student {
+    display: flex;
+    gap: .9rem;
+    align-items: baseline;
+    font-size: .84rem;
+    background: var(--uc-surface);
+    border-radius: 8px;
+    padding: .4rem .7rem;
+}
+
+    .au-synced-student strong {
+        min-width: 90px;
+    }

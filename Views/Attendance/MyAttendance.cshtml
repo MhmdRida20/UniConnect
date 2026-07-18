@@ -1,0 +1,51 @@
+@model IEnumerable<UniConnect.Models.AttendanceRecord>
+@{
+    ViewData["Title"] = "My Attendance";
+    var records = Model.ToList();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+}
+
+<div class="attendance-header uc-hero">
+    <div class="uc-hero-inner d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+        <div>
+            <p class="uc-eyebrow"><i class="bi bi-qr-code"></i>Smart Attendance</p>
+            <h1 class="uc-hero-title mb-1">My Attendance</h1>
+            <p class="uc-hero-sub">@records.Count record@(records.Count == 1 ? "" : "s")</p>
+        </div>
+        <a class="btn btn-light home-cta-light fw-bold" asp-action="ManualEntry"><i class="bi bi-keyboard me-1"></i>Enter Token Manually</a>
+    </div>
+</div>
+
+<div class="attendance-body">
+    @if (!records.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-qr-code"></i></span>
+            <h5>No attendance records yet</h5>
+            <p>Scan a QR code in class, or enter a token manually, to check in.</p>
+        </div>
+    }
+    else
+    {
+        <div class="st-table">
+            <div class="st-table-head attendance-history-grid">
+                <span>Course</span>
+                <span>Date</span>
+                <span>Status</span>
+                <span>Submitted</span>
+            </div>
+            @foreach (var r in records)
+            {
+                <div class="st-table-row attendance-history-grid" style="cursor:default">
+                    <span class="st-title-cell">@r.Session?.CourseName</span>
+                    <span class="text-muted small">@r.Session?.StartTime.ToString("MMM dd, yyyy")</span>
+                    <span class="uc-pill status-@r.Status.ToString().ToLower()">@r.Status</span>
+                    <span class="text-muted small">@(r.SubmittedAt?.ToString("HH:mm") ?? "—")</span>
+                </div>
+            }
+        </div>
+    }
+</div>
