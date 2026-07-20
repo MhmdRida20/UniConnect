@@ -41,34 +41,36 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
+    <partial name="_Icons" />
     <header>
-        <nav class="navbar navbar-expand-md uc-navbar sticky-top">
+        <nav class="navbar navbar-expand-xl uc-navbar sticky-top">
             <div class="container">
                 <a class="navbar-brand uc-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <span class="uc-brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+                    <span class="uc-brand-mark"><svg class="hgi"><use href="#i-graduation"></use></svg></span>
                     <span>Uni<b>Connect</b></span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
                         aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                    <svg class="hgi uc-toggler-open"><use href="#i-menu"></use></svg>
+                    <svg class="hgi uc-toggler-close"><use href="#i-close"></use></svg>
                 </button>
                 <div class="navbar-collapse collapse" id="mainNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                    <ul class="navbar-nav me-auto mb-2 mb-xl-0">
                         <li class="nav-item">
                             <a class="nav-link @NavActive("Home", "Index")" asp-area="" asp-controller="Home" asp-action="Index">
-                                <i class="bi bi-house-door me-1"></i>Home
+                                <svg class="hgi hgi-sm"><use href="#i-home"></use></svg>Home
                             </a>
                         </li>
                         @if (ShowNav(ServiceCodes.StudyGroups))
                         {
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("StudyGroups", "Index")" asp-controller="StudyGroups" asp-action="Index">
-                                    <i class="bi bi-people me-1"></i>Study Groups
+                                    <svg class="hgi hgi-sm"><use href="#i-users"></use></svg>Study Groups
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("StudyGroups", "MyCourses")" asp-controller="StudyGroups" asp-action="MyCourses">
-                                    <i class="bi bi-journal-bookmark me-1"></i>My Courses
+                                    <svg class="hgi hgi-sm"><use href="#i-book"></use></svg>My Courses
                                 </a>
                             </li>
                         }
@@ -76,7 +78,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("Rides")" asp-controller="Rides" asp-action="Index">
-                                    <i class="bi bi-car-front me-1"></i>Rides
+                                    <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>Rides
                                 </a>
                             </li>
                         }
@@ -84,7 +86,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("Tickets")" asp-controller="Tickets" asp-action="Index">
-                                    <i class="bi bi-ticket-detailed me-1"></i>My Tickets
+                                    <svg class="hgi hgi-sm"><use href="#i-ticket"></use></svg>My Tickets
                                 </a>
                             </li>
                         }
@@ -92,7 +94,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("Clubs")" asp-controller="Clubs" asp-action="Index">
-                                    <i class="bi bi-flag me-1"></i>Clubs
+                                    <svg class="hgi hgi-sm"><use href="#i-user-multiple"></use></svg>Clubs
                                 </a>
                             </li>
                         }
@@ -100,7 +102,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("InstructorAttendance")" asp-controller="InstructorAttendance" asp-action="Index">
-                                    <i class="bi bi-qr-code me-1"></i>My Sessions
+                                    <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Sessions
                                 </a>
                             </li>
                         }
@@ -108,7 +110,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("Attendance")" asp-controller="Attendance" asp-action="MyAttendance">
-                                    <i class="bi bi-qr-code me-1"></i>My Attendance
+                                    <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Attendance
                                 </a>
                             </li>
                         }
@@ -116,11 +118,12 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("Internships")" asp-controller="Internships" asp-action="Index">
-                                    <i class="bi bi-briefcase me-1"></i>Internships
+                                    <svg class="hgi hgi-sm"><use href="#i-briefcase"></use></svg>Internships
                                 </a>
                             </li>
                         }
                     </ul>
+                    <span class="uc-navbar-divider d-none d-xl-block" aria-hidden="true"></span>
                     <partial name="_LoginPartial" />
                 </div>
             </div>
@@ -144,7 +147,7 @@
     <footer class="uc-footer">
         <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
             <span class="d-inline-flex align-items-center gap-2">
-                <i class="bi bi-mortarboard-fill" style="color: var(--uc-primary);"></i>
+                <svg class="hgi hgi-sm" style="color: var(--uc-primary);"><use href="#i-graduation"></use></svg>
                 &copy; 2026 UniConnect — Connect. Study. Commute.
             </span>
             <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy Policy</a>

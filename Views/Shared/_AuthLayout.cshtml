@@ -1,0 +1,137 @@
+@{
+    // Dedicated full-height split-screen shell for the authentication pages
+    // (Login / Register). Kept separate from the main _Layout so these pages
+    // get an immersive, distraction-free experience without the app navbar.
+    var authMode = (ViewData["AuthMode"] as string) ?? "login";
+    var rfrom = ViewContext.HttpContext.Request.Query["returnUrl"].ToString();
+}
+<!DOCTYPE html>
+<html lang="en" data-auth-mode="@authMode">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#14532d" />
+    <title>@ViewData["Title"] · UniConnect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/auth.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="auth-body">
+    <partial name="_Icons" />
+
+    <div class="auth-shell">
+        @* ───────────── Brand / marketing panel (left) ───────────── *@
+        <aside class="auth-brand">
+            <span class="auth-aura auth-aura-1" aria-hidden="true"></span>
+            <span class="auth-aura auth-aura-2" aria-hidden="true"></span>
+            <span class="auth-grid" aria-hidden="true"></span>
+
+            @* Floating decorative icon chips — fill the otherwise-empty canvas *@
+            <span class="auth-chip auth-chip-1" aria-hidden="true"><svg class="hgi"><use href="#i-book"></use></svg></span>
+            <span class="auth-chip auth-chip-2" aria-hidden="true"><svg class="hgi"><use href="#i-bell"></use></svg></span>
+            <span class="auth-chip auth-chip-3" aria-hidden="true"><svg class="hgi"><use href="#i-calendar"></use></svg></span>
+            <span class="auth-chip auth-chip-4" aria-hidden="true"><svg class="hgi"><use href="#i-location"></use></svg></span>
+            <span class="auth-chip auth-chip-5" aria-hidden="true"><svg class="hgi"><use href="#i-idea"></use></svg></span>
+
+            <div class="auth-brand-top">
+                <a class="auth-logo" href="/">
+                    <span class="auth-logo-mark"><svg class="hgi"><use href="#i-graduation"></use></svg></span>
+                    <span class="auth-logo-text">Uni<b>Connect</b></span>
+                </a>
+            </div>
+
+            <div class="auth-brand-body">
+                <h2 class="auth-brand-headline">
+                    One campus.<br />Every service,<br /><span class="auth-grad">beautifully connected.</span>
+                </h2>
+                <p class="auth-brand-sub">
+                    Study groups, campus rides, attendance, clubs, internships and support —
+                    all in a single student portal.
+                </p>
+
+                <ul class="auth-feature-list">
+                    <li class="auth-feature" style="--i:0">
+                        <span class="auth-feature-ico"><svg class="hgi"><use href="#i-users"></use></svg></span>
+                        <div>
+                            <strong>Study together</strong>
+                            <small>Join course groups with real-time chat</small>
+                        </div>
+                    </li>
+                    <li class="auth-feature" style="--i:1">
+                        <span class="auth-feature-ico"><svg class="hgi"><use href="#i-car"></use></svg></span>
+                        <div>
+                            <strong>Ride together</strong>
+                            <small>Share campus commutes with live tracking</small>
+                        </div>
+                    </li>
+                    <li class="auth-feature" style="--i:2">
+                        <span class="auth-feature-ico"><svg class="hgi"><use href="#i-briefcase"></use></svg></span>
+                        <div>
+                            <strong>Grow together</strong>
+                            <small>Discover internships matched to you</small>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="auth-quote-carousel" aria-hidden="true">
+                    <blockquote class="auth-quote" style="--qi:0">
+                        <p>&ldquo;UniConnect saved me hours every week coordinating rides and study sessions.&rdquo;</p>
+                        <cite>Sara K. — Computer Science</cite>
+                    </blockquote>
+                    <blockquote class="auth-quote" style="--qi:1">
+                        <p>&ldquo;Attendance used to be a hassle. Now I just scan the QR code and go.&rdquo;</p>
+                        <cite>Omar N. — Year 4</cite>
+                    </blockquote>
+                    <blockquote class="auth-quote" style="--qi:2">
+                        <p>&ldquo;Found my internship through the matching score — way faster than searching alone.&rdquo;</p>
+                        <cite>Lara T. — Mathematics</cite>
+                    </blockquote>
+                </div>
+            </div>
+
+            <div class="auth-brand-foot">
+                <span class="auth-trust"><svg class="hgi hgi-sm"><use href="#i-shield"></use></svg>Verified student access</span>
+                <span class="auth-trust"><svg class="hgi hgi-sm"><use href="#i-check-badge"></use></svg>Secure &amp; private</span>
+            </div>
+        </aside>
+
+        @* ───────────── Form panel (right) ───────────── *@
+        <main class="auth-panel" role="main">
+            <span class="auth-panel-dots" aria-hidden="true"></span>
+            <span class="auth-panel-blob auth-panel-blob-1" aria-hidden="true"></span>
+            <span class="auth-panel-blob auth-panel-blob-2" aria-hidden="true"></span>
+
+            <a class="auth-back" href="/">
+                <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to home
+            </a>
+
+            <div class="auth-card" data-auth-card>
+                @RenderBody()
+
+                <div class="auth-social-proof">
+                    <span class="auth-avatar-stack" aria-hidden="true">
+                        <span style="--c:#16a34a">A</span>
+                        <span style="--c:#0d9488">S</span>
+                        <span style="--c:#2563eb">O</span>
+                        <span style="--c:#ca8a04">L</span>
+                    </span>
+                    <span>Join <strong>1,200+ students</strong> already on UniConnect</span>
+                </div>
+            </div>
+
+            <p class="auth-legal">
+                &copy; 2026 UniConnect · <a href="/Home/Privacy">Privacy</a>
+            </p>
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/pages/auth.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

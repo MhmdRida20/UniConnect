@@ -18,32 +18,38 @@
         <span class="home-hero-aura home-hero-aura-2" aria-hidden="true"></span>
         <div class="uc-hero-inner row align-items-center g-4">
             <div class="col-lg-7">
-                <p class="uc-eyebrow home-fade" style="--d:0ms"><i class="bi bi-stars"></i>Your campus, connected</p>
+                <p class="uc-eyebrow home-fade" style="--d:0ms"><span class="home-live-dot" aria-hidden="true"></span><svg class="hgi hgi-sm"><use href="#i-sparkles"></use></svg>Your campus, connected</p>
                 <h1 class="uc-hero-title home-fade" style="--d:80ms">
                     Study together.<br />Ride together.<br />
-                    <span class="home-hero-accent">Succeed together.</span>
+                    <span class="home-hero-rotator">
+                        <span class="home-hero-accent home-hero-rotate-item" style="--ri:0">Succeed together.</span>
+                        <span class="home-hero-accent home-hero-rotate-item" style="--ri:1">Commute together.</span>
+                        <span class="home-hero-accent home-hero-rotate-item" style="--ri:2">Connect together.</span>
+                        <span class="home-hero-accent home-hero-rotate-item" style="--ri:3">Grow together.</span>
+                    </span>
                 </h1>
                 <p class="uc-hero-sub mb-4 home-fade" style="--d:160ms">
-                    UniConnect brings your courses, study groups, and campus carpools into one
-                    friendly place — so you spend less time organising and more time learning.
+                    UniConnect brings your courses, study groups, campus rides, attendance, clubs
+                    and internships into one friendly place — so you spend less time organising
+                    and more time learning.
                 </p>
                 <div class="d-flex flex-wrap gap-2 home-fade" style="--d:240ms">
                     @if (signedIn)
                     {
                         <a class="btn btn-light btn-lg home-cta-light" asp-controller="StudyGroups" asp-action="Index">
-                            <i class="bi bi-people me-1"></i>Browse Study Groups
+                            <svg class="hgi hgi-sm me-1"><use href="#i-users"></use></svg>Browse Study Groups
                         </a>
                         <a class="btn btn-outline-light btn-lg" asp-controller="Rides" asp-action="Index">
-                            <i class="bi bi-car-front me-1"></i>Find a Ride
+                            <svg class="hgi hgi-sm me-1"><use href="#i-car"></use></svg>Find a Ride
                         </a>
                     }
                     else
                     {
                         <a class="btn btn-light btn-lg home-cta-light" asp-area="Identity" asp-page="/Account/Register">
-                            <i class="bi bi-person-plus me-1"></i>Get Started — it's free
+                            <svg class="hgi hgi-sm me-1"><use href="#i-user-add"></use></svg>Get Started — it's free
                         </a>
                         <a class="btn btn-outline-light btn-lg" asp-area="Identity" asp-page="/Account/Login">
-                            Log in
+                            <svg class="hgi hgi-sm me-1"><use href="#i-login"></use></svg>Log in
                         </a>
                     }
                 </div>
@@ -51,7 +57,7 @@
             <div class="col-lg-5 d-none d-lg-block">
                 <div class="home-hero-card">
                     <div class="home-hero-card-row">
-                        <span class="home-hero-card-ico" style="background:#dcfce7;color:#15803d;"><i class="bi bi-people-fill"></i></span>
+                        <span class="home-hero-card-ico" style="background:#dcfce7;color:#15803d;"><svg class="hgi"><use href="#i-users"></use></svg></span>
                         <div>
                             <strong>Calculus Crew</strong>
                             <small>MAT201 · 4 members · meeting tonight</small>
@@ -59,7 +65,7 @@
                         <span class="uc-pill uc-pill-green ms-auto">Live</span>
                     </div>
                     <div class="home-hero-card-row">
-                        <span class="home-hero-card-ico" style="background:#ccfbf1;color:#0f766e;"><i class="bi bi-geo-alt-fill"></i></span>
+                        <span class="home-hero-card-ico" style="background:#ccfbf1;color:#0f766e;"><svg class="hgi"><use href="#i-location"></use></svg></span>
                         <div>
                             <strong>Hamra → Main Gate</strong>
                             <small>Today 08:30 · 2 seats left</small>
@@ -67,7 +73,7 @@
                         <span class="uc-pill uc-pill-blue ms-auto">Ride</span>
                     </div>
                     <div class="home-hero-card-row">
-                        <span class="home-hero-card-ico" style="background:#fef3c7;color:#92400e;"><i class="bi bi-journal-check"></i></span>
+                        <span class="home-hero-card-ico" style="background:#fef3c7;color:#92400e;"><svg class="hgi"><use href="#i-book"></use></svg></span>
                         <div>
                             <strong>5 courses</strong>
                             <small>15 credits · Fall 2026</small>
@@ -82,44 +88,85 @@
     @* ─────────────────────────── STATS ─────────────────────────── *@
     <section class="home-stats container-fluid px-0">
         <div class="row g-3 justify-content-center">
-            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-num" data-count="1200">0</span><span class="home-stat-label">Students connected</span></div></div>
-            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-num" data-count="340">0</span><span class="home-stat-label">Study groups</span></div></div>
-            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-num" data-count="890">0</span><span class="home-stat-label">Rides shared</span></div></div>
-            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-num" data-count="48">0</span><span class="home-stat-label">Courses covered</span></div></div>
+            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-ico"><svg class="hgi"><use href="#i-students"></use></svg></span><span class="home-stat-num" data-count="1200">0</span><span class="home-stat-label">Students connected</span></div></div>
+            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-ico"><svg class="hgi"><use href="#i-users"></use></svg></span><span class="home-stat-num" data-count="340">0</span><span class="home-stat-label">Study groups</span></div></div>
+            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-ico"><svg class="hgi"><use href="#i-car"></use></svg></span><span class="home-stat-num" data-count="890">0</span><span class="home-stat-label">Rides shared</span></div></div>
+            <div class="col-6 col-lg-3"><div class="home-stat"><span class="home-stat-ico"><svg class="hgi"><use href="#i-book"></use></svg></span><span class="home-stat-num" data-count="48">0</span><span class="home-stat-label">Courses covered</span></div></div>
+        </div>
+
+        @* Auto-scrolling highlights marquee — duplicated once for a seamless loop *@
+        <div class="home-marquee" aria-hidden="true">
+            <div class="home-marquee-track">
+                @for (var m = 0; m < 2; m++)
+                {
+                    <span class="home-marquee-item"><svg class="hgi hgi-sm"><use href="#i-idea"></use></svg>Real-time group chat</span>
+                    <span class="home-marquee-item"><svg class="hgi hgi-sm"><use href="#i-map"></use></svg>Live GPS ride tracking</span>
+                    <span class="home-marquee-item"><svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>QR + GPS check-in</span>
+                    <span class="home-marquee-item"><svg class="hgi hgi-sm"><use href="#i-check-badge"></use></svg>Matching score for internships</span>
+                    <span class="home-marquee-item"><svg class="hgi hgi-sm"><use href="#i-user-multiple"></use></svg>Officer-led clubs &amp; events</span>
+                    <span class="home-marquee-item"><svg class="hgi hgi-sm"><use href="#i-shield"></use></svg>Verified student access</span>
+                    <span class="home-marquee-item"><svg class="hgi hgi-sm"><use href="#i-bell"></use></svg>Instant live notifications</span>
+                    <span class="home-marquee-item"><svg class="hgi hgi-sm"><use href="#i-building"></use></svg>Multi-university ready</span>
+                }
+            </div>
         </div>
     </section>
 
-    @* ─────────────────────────── FEATURES ─────────────────────────── *@
+    @* ─────────────────────────── SERVICES ─────────────────────────── *@
     <section class="home-section">
         <div class="uc-section-head text-center">
-            <p class="home-kicker">What you can do</p>
-            <h2>Everything you need, in one place</h2>
-            <p class="uc-section-sub">Three tools built around how students actually work together.</p>
+            <p class="home-kicker">Everything in one portal</p>
+            <h2>Six services, one student login</h2>
+            <p class="uc-section-sub">Built around how students actually live campus life — study, commute, attend, connect and grow.</p>
         </div>
 
         <div class="row g-4">
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-4">
                 <a class="home-feature uc-reveal" asp-controller="StudyGroups" asp-action="Index">
-                    <span class="home-feature-ico" style="--f:#16a34a;--fb:#dcfce7;"><i class="bi bi-people-fill"></i></span>
+                    <span class="home-feature-ico" style="--f:#16a34a;--fb:#dcfce7;"><svg class="hgi"><use href="#i-users"></use></svg></span>
                     <h3>Study Groups</h3>
                     <p>Create or join groups for your courses, chat in real time, and keep everyone on the same page.</p>
-                    <span class="home-feature-link">Explore groups <i class="bi bi-arrow-right"></i></span>
+                    <span class="home-feature-link">Explore groups <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg></span>
                 </a>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-4">
                 <a class="home-feature uc-reveal" asp-controller="Rides" asp-action="Index">
-                    <span class="home-feature-ico" style="--f:#0d9488;--fb:#ccfbf1;"><i class="bi bi-car-front-fill"></i></span>
+                    <span class="home-feature-ico" style="--f:#0d9488;--fb:#ccfbf1;"><svg class="hgi"><use href="#i-car"></use></svg></span>
                     <h3>Campus Rides</h3>
                     <p>Offer a seat or request a pickup. See routes on a live map and split the commute with classmates.</p>
-                    <span class="home-feature-link">Find a ride <i class="bi bi-arrow-right"></i></span>
+                    <span class="home-feature-link">Find a ride <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg></span>
                 </a>
             </div>
-            <div class="col-md-4">
-                <a class="home-feature uc-reveal" asp-controller="StudyGroups" asp-action="MyCourses">
-                    <span class="home-feature-ico" style="--f:#ca8a04;--fb:#fef9c3;"><i class="bi bi-journal-bookmark-fill"></i></span>
-                    <h3>My Courses</h3>
-                    <p>All your enrolled courses, searchable and filterable, each linked straight to its study groups.</p>
-                    <span class="home-feature-link">View courses <i class="bi bi-arrow-right"></i></span>
+            <div class="col-md-6 col-lg-4">
+                <a class="home-feature uc-reveal" asp-controller="Attendance" asp-action="MyAttendance">
+                    <span class="home-feature-ico" style="--f:#2563eb;--fb:#dbeafe;"><svg class="hgi"><use href="#i-qr"></use></svg></span>
+                    <h3>Smart Attendance</h3>
+                    <p>Check in to class in seconds with QR + GPS, and track your attendance history at a glance.</p>
+                    <span class="home-feature-link">View attendance <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg></span>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <a class="home-feature uc-reveal" asp-controller="Clubs" asp-action="Index">
+                    <span class="home-feature-ico" style="--f:#9333ea;--fb:#f3e8ff;"><svg class="hgi"><use href="#i-user-multiple"></use></svg></span>
+                    <h3>Clubs &amp; Events</h3>
+                    <p>Join student clubs, follow announcements, and RSVP to events happening around campus.</p>
+                    <span class="home-feature-link">Discover clubs <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg></span>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <a class="home-feature uc-reveal" asp-controller="Internships" asp-action="Index">
+                    <span class="home-feature-ico" style="--f:#ca8a04;--fb:#fef9c3;"><svg class="hgi"><use href="#i-briefcase"></use></svg></span>
+                    <h3>Internships</h3>
+                    <p>Browse opportunities with a live match score based on your skills, courses and interests.</p>
+                    <span class="home-feature-link">Browse internships <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg></span>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <a class="home-feature uc-reveal" asp-controller="Tickets" asp-action="Index">
+                    <span class="home-feature-ico" style="--f:#dc2626;--fb:#fee2e2;"><svg class="hgi"><use href="#i-ticket"></use></svg></span>
+                    <h3>Support Tickets</h3>
+                    <p>Raise a complaint or request to any department and track every response until it's resolved.</p>
+                    <span class="home-feature-link">Get support <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg></span>
                 </a>
             </div>
         </div>
@@ -134,23 +181,26 @@
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="home-step uc-reveal">
+                    <span class="home-step-ico"><svg class="hgi"><use href="#i-id"></use></svg></span>
                     <span class="home-step-num">1</span>
-                    <h4>Pick your courses</h4>
-                    <p>Your enrolment syncs automatically, so your courses are ready the moment you sign in.</p>
+                    <h4>Verify your ID</h4>
+                    <p>Sign up with your University ID and registrar email — your enrolment syncs automatically.</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="home-step uc-reveal">
+                    <span class="home-step-ico"><svg class="hgi"><use href="#i-idea"></use></svg></span>
                     <span class="home-step-num">2</span>
                     <h4>Join or create</h4>
-                    <p>Spin up a study group or offer a ride in seconds. Classmates can request to join instantly.</p>
+                    <p>Spin up a study group, offer a ride or join a club in seconds. Classmates can jump in instantly.</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="home-step uc-reveal">
+                    <span class="home-step-ico"><svg class="hgi"><use href="#i-check-badge"></use></svg></span>
                     <span class="home-step-num">3</span>
                     <h4>Connect &amp; go</h4>
-                    <p>Chat live, coordinate pickups on the map, and meet up — on campus or on the road.</p>
+                    <p>Chat live, coordinate pickups on the map, check in to class and meet up — on campus or on the road.</p>
                 </div>
             </div>
         </div>
@@ -159,18 +209,19 @@
     @* ─────────────────────────── CTA ─────────────────────────── *@
     <section class="home-cta uc-reveal">
         <div class="home-cta-inner">
+            <span class="home-cta-badge"><svg class="hgi hgi-sm"><use href="#i-graduation"></use></svg></span>
             <h2>Ready to connect with your campus?</h2>
             <p>Join your classmates already studying smarter and commuting together on UniConnect.</p>
             @if (signedIn)
             {
                 <a class="btn btn-light btn-lg home-cta-light" asp-controller="StudyGroups" asp-action="Index">
-                    Go to my dashboard <i class="bi bi-arrow-right ms-1"></i>
+                    Go to my dashboard <svg class="hgi hgi-sm ms-1"><use href="#i-arrow-right"></use></svg>
                 </a>
             }
             else
             {
                 <a class="btn btn-light btn-lg home-cta-light" asp-area="Identity" asp-page="/Account/Register">
-                    Create your free account <i class="bi bi-arrow-right ms-1"></i>
+                    Create your free account <svg class="hgi hgi-sm ms-1"><use href="#i-arrow-right"></use></svg>
                 </a>
             }
         </div>

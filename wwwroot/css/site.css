@@ -176,9 +176,13 @@ a:focus-visible, button:focus-visible {
     to { left: 160%; }
 }
 .uc-brand span b { color: var(--uc-primary); }
+.uc-brand-mark .hgi { width: 19px; height: 19px; }
 
 .uc-navbar .nav-link {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
     color: var(--uc-text-soft) !important;
     font-weight: 550;
     font-size: .94rem;
@@ -186,15 +190,18 @@ a:focus-visible, button:focus-visible {
     border-radius: var(--uc-radius-sm);
     transition: color var(--uc-transition), background var(--uc-transition);
 }
+.uc-navbar .nav-link .hgi { color: var(--uc-muted); transition: color var(--uc-transition), transform var(--uc-transition); }
 .uc-navbar .nav-link:hover {
     color: var(--uc-primary-dark) !important;
     background: var(--uc-primary-tint);
 }
+.uc-navbar .nav-link:hover .hgi { color: var(--uc-primary); transform: scale(1.08); }
 .uc-navbar .nav-link.active {
     color: var(--uc-primary-dark) !important;
     font-weight: 700;
     background: var(--uc-primary-tint);
 }
+.uc-navbar .nav-link.active .hgi { color: var(--uc-primary-dark); }
 .uc-navbar .nav-link.active::after {
     content: '';
     position: absolute;
@@ -208,9 +215,133 @@ a:focus-visible, button:focus-visible {
     from { transform: scaleX(0); opacity: 0; }
     to   { transform: scaleX(1); opacity: 1; }
 }
+
+/* Vertical divider between the nav links and the account cluster (desktop only) */
+.uc-navbar-divider {
+    width: 1px; align-self: stretch; min-height: 26px;
+    background: var(--uc-border);
+    margin: 0 .65rem;
+}
+
+/* Hamburger <-> close morph.
+   NOTE: no `display` set here at the base level — Bootstrap's own
+   `.navbar-expand-xl .navbar-toggler { display: none }` (≥1200px) must
+   stay in control of visibility. Setting display unconditionally here
+   would out-cascade that responsive rule (site.css loads after
+   bootstrap.min.css) and show the toggler at desktop widths too. */
 .uc-navbar .navbar-toggler {
+    position: relative;
     border: 1px solid var(--uc-border);
-    padding: .35rem .55rem;
+    padding: .4rem .55rem;
+    border-radius: var(--uc-radius-sm);
+    transition: background var(--uc-transition), border-color var(--uc-transition);
+}
+.uc-navbar .navbar-toggler:hover { background: var(--uc-primary-tint); border-color: var(--uc-primary-soft); }
+.uc-navbar .navbar-toggler:focus { box-shadow: 0 0 0 3px rgba(22,163,74,.18); }
+.uc-navbar .navbar-toggler .hgi { color: var(--uc-text-soft); width: 20px; height: 20px; transition: transform .25s ease, opacity .2s ease; }
+.uc-toggler-close { display: none; position: absolute; }
+.navbar-toggler[aria-expanded="true"] .uc-toggler-open { display: none; }
+.navbar-toggler[aria-expanded="true"] .uc-toggler-close { display: inline-block; position: static; animation: ucTogglerIn .2s ease; }
+@keyframes ucTogglerIn { from { transform: rotate(-45deg); opacity: 0; } to { transform: rotate(0); opacity: 1; } }
+
+/* Mobile/tablet collapse (below the xl breakpoint the navbar expands at):
+   soften Bootstrap's abrupt open with a fade+slide, center the toggler
+   icon, tighten link spacing, and keep long labels on one line. */
+@media (max-width: 1199.98px) {
+    .uc-navbar .navbar-toggler { display: inline-flex; align-items: center; justify-content: center; }
+    .navbar-collapse.collapsing { transition: height .28s ease; }
+    .navbar-collapse.show .navbar-nav { animation: ucMobileNavIn .3s ease both; }
+    @keyframes ucMobileNavIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    .uc-navbar .nav-link { padding: .65rem .85rem !important; white-space: normal; }
+}
+@media (min-width: 1200px) {
+    .uc-navbar .nav-link { white-space: nowrap; padding-inline: .65rem !important; gap: .35rem; font-size: .9rem; }
+}
+
+/* --------------------------------------------------------------------------
+   4b. Account cluster (notification bell + avatar dropdown)
+   -------------------------------------------------------------------------- */
+.uc-bell { color: var(--uc-text-soft) !important; }
+.uc-bell .hgi { width: 20px; height: 20px; }
+.uc-bell-badge {
+    position: absolute; top: 2px; right: 2px;
+    min-width: 16px; height: 16px; padding: 0 3px;
+    border-radius: var(--uc-radius-pill);
+    background: var(--uc-danger); color: #fff;
+    font-size: .62rem; font-weight: 700; line-height: 16px; text-align: center;
+    box-shadow: 0 0 0 2px var(--uc-surface);
+    animation: ucBellPop .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes ucBellPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+.uc-account-toggle {
+    padding: .3rem .6rem .3rem .3rem !important;
+    border-radius: var(--uc-radius-pill) !important;
+    gap: .5rem !important;
+    background: transparent;
+    transition: background var(--uc-transition);
+}
+.uc-account-toggle:hover, .uc-account-item.show .uc-account-toggle {
+    background: var(--uc-primary-tint);
+}
+.uc-account-avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--uc-primary-light), var(--uc-primary-dark));
+    color: #fff; font-weight: 700; font-size: .82rem;
+    box-shadow: var(--uc-shadow-green);
+}
+.uc-account-name { font-weight: 600; font-size: .88rem; color: var(--uc-text); max-width: 11ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uc-account-caret { transform: rotate(90deg); color: var(--uc-muted) !important; width: 13px; height: 13px; transition: transform var(--uc-transition); }
+.uc-account-item.show .uc-account-caret { transform: rotate(-90deg); }
+
+.uc-account-menu {
+    min-width: 15.5rem;
+    padding: 0;
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow-lg);
+    overflow: hidden;
+    margin-top: .6rem !important;
+    animation: authFieldIn .18s ease both;
+}
+.uc-account-menu-head {
+    display: flex; align-items: center; gap: .7rem;
+    padding: .95rem 1rem;
+    background: var(--uc-primary-tint);
+    border-bottom: 1px solid var(--uc-border-soft);
+}
+.uc-account-avatar-lg { width: 40px; height: 40px; font-size: .95rem; }
+.uc-account-menu-head strong { display: block; font-size: .88rem; color: var(--uc-text); }
+.uc-account-menu-head small { display: block; font-size: .76rem; color: var(--uc-muted); }
+.uc-account-menu-body { padding: .4rem; }
+.uc-account-menu-link {
+    display: flex; align-items: center; gap: .65rem;
+    width: 100%; border: none; background: none;
+    padding: .55rem .7rem; border-radius: var(--uc-radius-sm);
+    font-size: .87rem; font-weight: 600; color: var(--uc-text-soft);
+    text-align: left; text-decoration: none;
+    transition: background var(--uc-transition), color var(--uc-transition);
+}
+.uc-account-menu-link .hgi { color: var(--uc-muted); }
+.uc-account-menu-link:hover { background: var(--uc-primary-tint); color: var(--uc-primary-dark); }
+.uc-account-menu-link:hover .hgi { color: var(--uc-primary-dark); }
+.uc-account-menu-foot { padding: .4rem; border-top: 1px solid var(--uc-border-soft); }
+.uc-account-logout:hover { background: #fef2f2; color: var(--uc-danger); }
+.uc-account-logout:hover .hgi { color: var(--uc-danger); }
+
+.uc-nav-login .hgi { width: 17px; height: 17px; }
+.uc-nav-signup {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding-inline: .9rem !important;
+    box-shadow: var(--uc-shadow-green);
+}
+.uc-nav-signup .hgi { width: 16px; height: 16px; }
+
+@media (max-width: 1199.98px) {
+    .uc-account-nav { flex-direction: row; align-items: center; gap: .5rem; margin-top: .5rem; }
+    .uc-account-name { display: none; }
+    .uc-account-menu { position: absolute; right: 0; }
 }
 
 /* --------------------------------------------------------------------------
@@ -525,3 +656,24 @@ a:focus-visible, button:focus-visible {
         scroll-behavior: auto !important;
     }
 }
+
+/* --------------------------------------------------------------------------
+   15. Hugeicons (inline SVG sprite — see Views/Shared/_Icons.cshtml)
+   -------------------------------------------------------------------------- */
+.hgi {
+    width: 1.25em;
+    height: 1.25em;
+    display: inline-block;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    color: currentColor;
+    pointer-events: none;
+}
+.hgi svg, .hgi use { pointer-events: none; }
+/* size helpers */
+.hgi-sm { width: 1em;    height: 1em;    vertical-align: -0.15em; }
+.hgi-lg { width: 1.5em;  height: 1.5em; }
+.hgi-xl { width: 2rem;   height: 2rem; }
+.hgi-2x { width: 2.5rem; height: 2.5rem; }
+/* nudge crisper strokes on tiny sizes */
+.hgi[data-thin] { stroke-width: 1.4; }

@@ -19,15 +19,15 @@
     z-index: 0;
 }
 .home-hero-aura-1 {
-    width: 360px; height: 360px;
-    top: -120px; right: -60px;
-    background: radial-gradient(circle, rgba(134, 239, 172, .45), transparent 70%);
+    width: 460px; height: 460px;
+    top: -160px; right: -80px;
+    background: radial-gradient(circle, rgba(187, 247, 208, .55), transparent 70%);
     animation: homeAuraFloat 11s ease-in-out infinite;
 }
 .home-hero-aura-2 {
-    width: 300px; height: 300px;
-    bottom: -140px; left: -80px;
-    background: radial-gradient(circle, rgba(45, 212, 191, .35), transparent 70%);
+    width: 380px; height: 380px;
+    bottom: -160px; left: -100px;
+    background: radial-gradient(circle, rgba(94, 234, 212, .45), transparent 70%);
     animation: homeAuraFloat 14s ease-in-out infinite reverse;
 }
 @keyframes homeAuraFloat {
@@ -45,9 +45,83 @@
 @keyframes homeFadeUp {
     to { opacity: 1; transform: none; }
 }
+/* Pulsing "live" dot before the eyebrow label */
+.home-live-dot {
+    position: relative;
+    display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #4ade80;
+    margin-right: .1rem;
+}
+.home-live-dot::after {
+    content: '';
+    position: absolute; inset: -4px;
+    border-radius: 50%;
+    border: 1.5px solid #4ade80;
+    animation: homeLivePulse 1.8s cubic-bezier(.4,0,.6,1) infinite;
+}
+@keyframes homeLivePulse {
+    0%   { transform: scale(.4); opacity: .9; }
+    100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Rotating headline word — crossfades through campus-life taglines.
+   Driven by JS (home.js toggles .is-active on exactly one item at a
+   time) rather than staggered CSS animation-delays: with several items
+   sharing one cycle, delay math is easy to get subtly wrong and ends up
+   with two words visibly overlapping mid-transition. A single source of
+   truth for "which one is active" avoids that class of bug entirely. */
+.home-hero-rotator {
+    position: relative;
+    display: block;
+    height: 1.25em;
+    margin-top: .05em;
+    overflow: hidden;
+}
+.home-hero-rotate-item {
+    position: absolute; left: 0; top: 0;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .5s ease, transform .5s ease;
+}
+.home-hero-rotate-item.is-active {
+    opacity: 1;
+    transform: none;
+}
+
+/* ── Highlights marquee ── */
+.home-marquee {
+    margin-top: 1.75rem;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.home-marquee-track {
+    display: flex;
+    width: max-content;
+    gap: 2.25rem;
+    animation: homeMarquee 26s linear infinite;
+}
+.home-marquee:hover .home-marquee-track { animation-play-state: paused; }
+.home-marquee-item {
+    display: inline-flex; align-items: center; gap: .5rem;
+    white-space: nowrap;
+    font-size: .84rem; font-weight: 600; color: var(--uc-muted);
+}
+.home-marquee-item .hgi { color: var(--uc-primary); }
+@keyframes homeMarquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .home-hero-aura { animation: none; }
     .home-fade { animation: none; opacity: 1; transform: none; }
+    .home-live-dot::after { animation: none; display: none; }
+    .home-hero-rotate-item { animation: none; position: static; opacity: 1 !important; }
+    .home-hero-rotate-item:not(:first-child) { display: none; }
+    .home-marquee-track { animation: none; }
 }
 
 /* Floating preview card in the hero */
@@ -234,3 +308,63 @@
     .home-stat-num { font-size: 1.55rem; }
     .home-cta-inner { padding: 2.25rem 1.25rem; }
 }
+
+/* ==========================================================================
+   Hugeicons sizing + new decorative elements
+   ========================================================================== */
+
+/* Hero preview card icons */
+.home-hero-card-ico .hgi { width: 22px; height: 22px; }
+
+/* Stat tiles now lead with an icon badge */
+.home-stat-ico {
+    width: 40px; height: 40px; margin: 0 auto .55rem;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-primary-tint);
+    color: var(--uc-primary-dark);
+    border: 1px solid var(--uc-primary-soft);
+}
+.home-stat-ico .hgi { width: 22px; height: 22px; }
+.home-stat:hover .home-stat-ico {
+    background: var(--uc-primary-soft);
+    transform: translateY(-1px);
+    transition: transform var(--uc-transition), background var(--uc-transition);
+}
+
+/* Feature card icons (SVG) */
+.home-feature-ico .hgi { width: 26px; height: 26px; }
+.home-feature-link .hgi { width: 16px; height: 16px; }
+
+/* Steps: gradient icon badge + corner number */
+.home-step { position: relative; padding-top: 1.75rem; }
+.home-step-ico {
+    width: 52px; height: 52px; border-radius: 15px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--uc-primary-light), var(--uc-primary-dark));
+    color: #fff; box-shadow: var(--uc-shadow-green);
+    margin-bottom: 1rem;
+}
+.home-step-ico .hgi { width: 26px; height: 26px; }
+.home-step-num {
+    position: absolute; top: 1.25rem; right: 1.25rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    margin: 0;
+    background: var(--uc-primary-soft); color: var(--uc-primary-darker);
+    font-weight: 800; font-size: .95rem;
+    border: 1px solid #fff;
+}
+
+/* CTA badge */
+.home-cta-badge {
+    width: 56px; height: 56px; margin: 0 auto 1.1rem;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.28);
+    color: #fff;
+    backdrop-filter: blur(4px);
+}
+.home-cta-badge .hgi { width: 28px; height: 28px; }
+.home-cta-inner .home-cta-light .hgi { width: 16px; height: 16px; }

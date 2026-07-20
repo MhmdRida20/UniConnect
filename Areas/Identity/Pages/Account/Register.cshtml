@@ -1,67 +1,92 @@
-﻿@page
+@page
 @model RegisterModel
 @{
     ViewData["Title"] = "Register";
+    ViewData["AuthMode"] = "register";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
 }
 
-<h1>@ViewData["Title"]</h1>
-
-<div class="row">
-    <div class="col-md-5">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h3>Create a student account</h3>
-            <p class="text-muted small">
-                You must be a registered university student. Use your University ID and
-                the email on file with the registrar.
-            </p>
-            <hr />
-
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <div class="form-floating mb-3">
-                <select asp-for="Input.UniversityCode" class="form-select">
-                    <option value="">— Select your university —</option>
-                    @foreach (var u in Model.Universities)
-                    {
-                        <option value="@u.Code">@u.Name</option>
-                    }
-                </select>
-                <label asp-for="Input.UniversityCode"></label>
-                <span asp-validation-for="Input.UniversityCode" class="text-danger"></span>
-            </div>
-
-            <div class="form-floating mb-3">
-                <input asp-for="Input.UniversityId" class="form-control" autocomplete="off"
-                       placeholder="U2024001" />
-                <label asp-for="Input.UniversityId"></label>
-                <span asp-validation-for="Input.UniversityId" class="text-danger"></span>
-            </div>
-
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username"
-                       placeholder="name@uni.edu" />
-                <label asp-for="Input.Email"></label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password"
-                       placeholder="password" />
-                <label asp-for="Input.Password"></label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password"
-                       placeholder="password" />
-                <label asp-for="Input.ConfirmPassword"></label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-            </div>
-
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
+<form id="registerForm" class="auth-form" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+    <div class="auth-head">
+        <span class="auth-head-ico"><svg class="hgi"><use href="#i-user-add"></use></svg></span>
+        <h1 class="auth-title">Create your account</h1>
+        <p class="auth-subtitle">
+            <span class="auth-hint"><svg class="hgi hgi-sm"><use href="#i-shield"></use></svg>
+                Registered students only — use your University ID &amp; registrar email.</span>
+        </p>
     </div>
-</div>
+
+    <div asp-validation-summary="ModelOnly" class="auth-summary text-danger" role="alert"></div>
+
+    <div class="auth-field auth-field--select">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-building"></use></svg></span>
+        <div class="auth-float">
+            <select asp-for="Input.UniversityCode" class="auth-select" required>
+                <option value="" disabled selected hidden></option>
+                @foreach (var u in Model.Universities)
+                {
+                    <option value="@u.Code">@u.Name</option>
+                }
+            </select>
+            <label asp-for="Input.UniversityCode" class="auth-label">University</label>
+        </div>
+    </div>
+    <span asp-validation-for="Input.UniversityCode" class="auth-error"></span>
+
+    <div class="auth-field">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-id"></use></svg></span>
+        <div class="auth-float">
+            <input asp-for="Input.UniversityId" id="Input_UniversityId" class="auth-input" autocomplete="off" placeholder=" " />
+            <label asp-for="Input.UniversityId" class="auth-label">University ID</label>
+        </div>
+    </div>
+    <span asp-validation-for="Input.UniversityId" class="auth-error"></span>
+
+    <div class="auth-field">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-mail"></use></svg></span>
+        <div class="auth-float">
+            <input asp-for="Input.Email" id="Input_Email" class="auth-input" autocomplete="username" placeholder=" " />
+            <label asp-for="Input.Email" class="auth-label">University email</label>
+        </div>
+    </div>
+    <span asp-validation-for="Input.Email" class="auth-error"></span>
+
+    <div class="auth-field">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-lock"></use></svg></span>
+        <div class="auth-float">
+            <input asp-for="Input.Password" id="Input_Password" type="password" class="auth-input" autocomplete="new-password" placeholder=" " />
+            <label asp-for="Input.Password" class="auth-label">Password</label>
+        </div>
+        <button type="button" class="auth-pass-toggle" data-pass-toggle="Input_Password" aria-label="Show password" aria-pressed="false">
+            <svg class="hgi"><use href="#i-eye"></use></svg>
+        </button>
+    </div>
+    <span asp-validation-for="Input.Password" class="auth-error"></span>
+
+    <div class="auth-field">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-lock"></use></svg></span>
+        <div class="auth-float">
+            <input asp-for="Input.ConfirmPassword" id="Input_ConfirmPassword" type="password" class="auth-input" autocomplete="new-password" placeholder=" " />
+            <label asp-for="Input.ConfirmPassword" class="auth-label">Confirm password</label>
+        </div>
+        <button type="button" class="auth-pass-toggle" data-pass-toggle="Input_ConfirmPassword" aria-label="Show password" aria-pressed="false">
+            <svg class="hgi"><use href="#i-eye"></use></svg>
+        </button>
+    </div>
+    <span asp-validation-for="Input.ConfirmPassword" class="auth-error"></span>
+
+    <button id="registerSubmit" type="submit" class="auth-submit">
+        <span>Create account</span>
+        <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+    </button>
+
+    <div class="auth-switch">
+        Already have an account?
+        <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" data-auth-nav>
+            Log in <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+        </a>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

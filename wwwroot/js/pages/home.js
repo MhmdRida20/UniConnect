@@ -39,3 +39,27 @@
 
     counters.forEach((c) => io.observe(c));
 })();
+
+/* ==========================================================================
+   Hero headline rotator — crossfades through campus-life taglines.
+   Exactly one .home-hero-rotate-item carries .is-active at a time (CSS
+   handles the fade via transition); a plain interval keeps that
+   invariant, which is simpler and more reliable than staggering several
+   CSS animation-delays against one shared cycle.
+   ========================================================================== */
+(function () {
+    'use strict';
+
+    const items = Array.from(document.querySelectorAll('.home-hero-rotate-item'));
+    if (items.length < 2) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let index = 0;
+    items[index].classList.add('is-active');
+
+    setInterval(() => {
+        items[index].classList.remove('is-active');
+        index = (index + 1) % items.length;
+        items[index].classList.add('is-active');
+    }, 2800);
+})();
