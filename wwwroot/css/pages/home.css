@@ -10,6 +10,46 @@
     -webkit-text-fill-color: transparent;
 }
 
+/* Soft glowing auras behind the hero content — pure decoration */
+.home-hero-aura {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+}
+.home-hero-aura-1 {
+    width: 360px; height: 360px;
+    top: -120px; right: -60px;
+    background: radial-gradient(circle, rgba(134, 239, 172, .45), transparent 70%);
+    animation: homeAuraFloat 11s ease-in-out infinite;
+}
+.home-hero-aura-2 {
+    width: 300px; height: 300px;
+    bottom: -140px; left: -80px;
+    background: radial-gradient(circle, rgba(45, 212, 191, .35), transparent 70%);
+    animation: homeAuraFloat 14s ease-in-out infinite reverse;
+}
+@keyframes homeAuraFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(18px, -22px) scale(1.08); }
+}
+
+/* Staggered fade-up entrance for hero copy */
+.home-fade {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: homeFadeUp .6s cubic-bezier(.4, 0, .2, 1) forwards;
+    animation-delay: var(--d, 0ms);
+}
+@keyframes homeFadeUp {
+    to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .home-hero-aura { animation: none; }
+    .home-fade { animation: none; opacity: 1; transform: none; }
+}
+
 /* Floating preview card in the hero */
 .home-hero-card {
     background: rgba(255, 255, 255, .12);
@@ -18,7 +58,14 @@
     padding: 1rem;
     backdrop-filter: blur(6px);
     box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
-    animation: ucCardIn .6s ease both;
+    animation: ucCardIn .6s ease both, homeCardFloat 6s ease-in-out 1s infinite;
+}
+@keyframes homeCardFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .home-hero-card { animation: ucCardIn .6s ease both; }
 }
 .home-hero-card-row {
     display: flex; align-items: center; gap: .75rem;
@@ -52,6 +99,8 @@
     margin-bottom: 1rem;
 }
 .home-stat {
+    position: relative;
+    overflow: hidden;
     background: var(--uc-surface);
     border: 1px solid var(--uc-border);
     border-radius: var(--uc-radius);
@@ -59,6 +108,17 @@
     padding: 1.25rem 1rem;
     text-align: center;
     height: 100%;
+    transition: transform var(--uc-transition), box-shadow var(--uc-transition);
+}
+.home-stat::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--uc-primary-light), var(--uc-accent));
+}
+.home-stat:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--uc-shadow-lg);
 }
 .home-stat-num {
     display: block;
@@ -84,6 +144,7 @@
 
 /* ── Feature cards ── */
 .home-feature {
+    position: relative;
     display: block; height: 100%;
     background: var(--uc-surface);
     border: 1px solid var(--uc-border);
@@ -91,7 +152,17 @@
     padding: 1.75rem;
     box-shadow: var(--uc-shadow);
     color: inherit;
+    overflow: hidden;
     transition: transform var(--uc-transition), box-shadow var(--uc-transition), border-color var(--uc-transition);
+}
+.home-feature::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--f), var(--fb));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--uc-transition);
 }
 .home-feature:hover {
     transform: translateY(-6px);
@@ -99,11 +170,16 @@
     border-color: #bbf7d0;
     color: inherit;
 }
+.home-feature:hover::before { transform: scaleX(1); }
 .home-feature-ico {
     width: 54px; height: 54px; border-radius: 15px;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.5rem; margin-bottom: 1rem;
     color: var(--f); background: var(--fb);
+    transition: transform var(--uc-transition);
+}
+.home-feature:hover .home-feature-ico {
+    transform: translateY(-3px) scale(1.06) rotate(-3deg);
 }
 .home-feature h3 { font-size: 1.15rem; margin-bottom: .5rem; }
 .home-feature p { color: var(--uc-muted); font-size: .9rem; margin-bottom: 1rem; }

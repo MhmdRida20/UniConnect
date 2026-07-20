@@ -149,6 +149,8 @@ a:focus-visible, button:focus-visible {
 }
 .uc-brand:hover { color: var(--uc-primary-dark) !important; }
 .uc-brand-mark {
+    position: relative;
+    overflow: hidden;
     width: 34px; height: 34px;
     border-radius: 10px;
     display: inline-flex; align-items: center; justify-content: center;
@@ -156,6 +158,22 @@ a:focus-visible, button:focus-visible {
     color: #fff;
     font-size: 1.05rem;
     box-shadow: var(--uc-shadow-green);
+    transition: transform var(--uc-transition);
+}
+/* Diagonal shine that sweeps across the mark on brand hover */
+.uc-brand-mark::after {
+    content: '';
+    position: absolute; top: 0; left: -120%;
+    width: 60%; height: 100%;
+    background: linear-gradient(115deg, transparent, rgba(255, 255, 255, .55), transparent);
+    transform: skewX(-18deg);
+}
+.uc-brand:hover .uc-brand-mark { transform: rotate(-6deg) scale(1.05); }
+.uc-brand:hover .uc-brand-mark::after {
+    animation: ucBrandShine .7s ease;
+}
+@keyframes ucBrandShine {
+    to { left: 160%; }
 }
 .uc-brand span b { color: var(--uc-primary); }
 
@@ -175,6 +193,7 @@ a:focus-visible, button:focus-visible {
 .uc-navbar .nav-link.active {
     color: var(--uc-primary-dark) !important;
     font-weight: 700;
+    background: var(--uc-primary-tint);
 }
 .uc-navbar .nav-link.active::after {
     content: '';
@@ -182,6 +201,12 @@ a:focus-visible, button:focus-visible {
     left: .85rem; right: .85rem; bottom: .15rem;
     height: 2px; border-radius: 2px;
     background: var(--uc-primary);
+    animation: ucNavUnderline .35s cubic-bezier(.4, 0, .2, 1);
+    transform-origin: center;
+}
+@keyframes ucNavUnderline {
+    from { transform: scaleX(0); opacity: 0; }
+    to   { transform: scaleX(1); opacity: 1; }
 }
 .uc-navbar .navbar-toggler {
     border: 1px solid var(--uc-border);

@@ -14,18 +14,20 @@
 
     @* ─────────────────────────── HERO ─────────────────────────── *@
     <section class="home-hero uc-hero">
+        <span class="home-hero-aura home-hero-aura-1" aria-hidden="true"></span>
+        <span class="home-hero-aura home-hero-aura-2" aria-hidden="true"></span>
         <div class="uc-hero-inner row align-items-center g-4">
             <div class="col-lg-7">
-                <p class="uc-eyebrow"><i class="bi bi-stars"></i>Your campus, connected</p>
-                <h1 class="uc-hero-title">
+                <p class="uc-eyebrow home-fade" style="--d:0ms"><i class="bi bi-stars"></i>Your campus, connected</p>
+                <h1 class="uc-hero-title home-fade" style="--d:80ms">
                     Study together.<br />Ride together.<br />
                     <span class="home-hero-accent">Succeed together.</span>
                 </h1>
-                <p class="uc-hero-sub mb-4">
+                <p class="uc-hero-sub mb-4 home-fade" style="--d:160ms">
                     UniConnect brings your courses, study groups, and campus carpools into one
                     friendly place — so you spend less time organising and more time learning.
                 </p>
-                <div class="d-flex flex-wrap gap-2">
+                <div class="d-flex flex-wrap gap-2 home-fade" style="--d:240ms">
                     @if (signedIn)
                     {
                         <a class="btn btn-light btn-lg home-cta-light" asp-controller="StudyGroups" asp-action="Index">
