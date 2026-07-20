@@ -2,9 +2,73 @@
    Admin — Universities & Service Catalog management
    ========================================================================== */
 
+/* "Back to universities" link — same look as form-page.css's .form-back,
+   defined locally since these pages don't otherwise load that stylesheet. */
+.form-back {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .85rem; font-weight: 600; color: var(--uc-muted);
+    text-decoration: none; transition: color var(--uc-transition), gap var(--uc-transition);
+}
+.form-back:hover { color: var(--uc-primary-dark); gap: .6rem; }
+
+/* ── Overview stat strip ── */
+.au-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .9rem;
+    margin-bottom: 1.5rem;
+}
+.au-stat {
+    display: flex; align-items: center; gap: .8rem;
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow-xs);
+    padding: 1rem 1.1rem;
+    animation: authFieldIn .4s ease both;
+}
+.au-stat:nth-child(2) { animation-delay: .05s; }
+.au-stat:nth-child(3) { animation-delay: .1s; }
+.au-stat:nth-child(4) { animation-delay: .15s; }
+.au-stat-ico {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-primary-tint); color: var(--uc-primary-dark);
+}
+.au-stat-ico .hgi { width: 22px; height: 22px; }
+.au-stat-ico-green { background: #dcfce7; color: #15803d; }
+.au-stat-ico-blue  { background: #dbeafe; color: #1d4ed8; }
+.au-stat-ico-amber { background: #fef9c3; color: #92400e; }
+.au-stat strong { display: block; font-size: 1.4rem; font-weight: 800; color: var(--uc-text); line-height: 1.1; }
+.au-stat small { color: var(--uc-muted); font-size: .78rem; }
+
+/* ── Search box ── */
+.au-search {
+    position: relative; max-width: 320px; flex: 1;
+    display: flex; align-items: center;
+}
+.au-search .hgi { position: absolute; left: .8rem; color: var(--uc-muted); pointer-events: none; }
+.au-search input {
+    width: 100%;
+    border: 1.5px solid var(--uc-border); border-radius: var(--uc-radius-pill);
+    padding: .5rem .9rem .5rem 2.4rem;
+    font-size: .88rem; background: var(--uc-surface);
+    transition: border-color var(--uc-transition), box-shadow var(--uc-transition);
+}
+.au-search input:focus {
+    outline: none; border-color: var(--uc-primary);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, .14);
+}
+
 /* Override the ticket-table grid columns for the university list */
 .au-grid {
-    grid-template-columns: 1.3fr .7fr 1fr 1fr .8fr 170px !important;
+    grid-template-columns: 1.3fr .7fr 1.1fr 1fr .8fr 170px !important;
+}
+/* ...but let staff-tickets.css's mobile rule (single-column stacking below
+   900px) win back over that !important — otherwise rows stay squeezed
+   into six columns on a phone instead of stacking readably. */
+@media (max-width: 900px) {
+    .au-grid { grid-template-columns: 1fr !important; }
 }
 
     .au-grid code {
@@ -14,8 +78,76 @@
         font-size: .8rem;
     }
 
+/* Row entrance stagger */
+.au-row { animation: authFieldIn .35s ease both; animation-delay: calc(var(--ri, 0) * 35ms); }
+
+/* Active/inactive status dot before the university name */
+.au-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-right: .5rem; flex-shrink: 0;
+}
+.au-dot.is-active { background: var(--uc-primary); box-shadow: 0 0 0 3px var(--uc-primary-soft); }
+.au-dot.is-inactive { background: var(--uc-muted); box-shadow: 0 0 0 3px var(--uc-border-soft); }
+
+/* Sync status text */
+.au-sync-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .82rem; font-weight: 600; }
+.au-sync-status .hgi { width: 15px; height: 15px; }
+.au-sync-status.is-ok { color: var(--uc-primary-dark); }
+.au-sync-status.is-fail { color: var(--uc-danger); cursor: help; }
+.au-sync-status.is-pending { color: var(--uc-muted); }
+
+/* Row action buttons — icon-only, consistent hit target, clear hover */
+.au-actions { flex-wrap: nowrap; }
+.au-icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: var(--uc-radius-sm);
+    border: 1px solid var(--uc-border); background: var(--uc-surface);
+    color: var(--uc-text-soft);
+    transition: background var(--uc-transition), border-color var(--uc-transition), color var(--uc-transition), transform .1s ease;
+}
+.au-icon-btn .hgi { width: 16px; height: 16px; }
+.au-icon-btn:hover { background: var(--uc-primary-tint); border-color: var(--uc-primary-soft); color: var(--uc-primary-dark); }
+.au-icon-btn:active { transform: scale(.93); }
+.au-icon-btn-danger:hover { background: #fef2f2; border-color: #fecaca; color: var(--uc-danger); }
+
+.au-create-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 560px) minmax(260px, 320px);
+    gap: 1.5rem;
+    align-items: start;
+}
+
 .au-form-card {
     max-width: 560px;
+}
+
+.au-whathappens {
+    background: var(--uc-primary-tint);
+    border: 1px solid #bbf7d0;
+    border-radius: var(--uc-radius-lg);
+    padding: 1.5rem;
+    position: sticky; top: 1.5rem;
+}
+.au-whathappens h3 {
+    display: flex; align-items: center; gap: .5rem;
+    font-size: .92rem; font-weight: 800; color: var(--uc-primary-darker);
+    margin: 0 0 1rem;
+}
+.au-whathappens ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+.au-whathappens li { display: flex; gap: .75rem; }
+.au-wh-ico {
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-surface); color: var(--uc-primary-dark);
+    box-shadow: var(--uc-shadow-xs);
+}
+.au-wh-ico .hgi { width: 18px; height: 18px; }
+.au-whathappens strong { display: block; font-size: .85rem; color: var(--uc-text); margin-bottom: .15rem; }
+.au-whathappens small { color: var(--uc-text-soft); font-size: .78rem; line-height: 1.45; }
+
+@media (max-width: 991.98px) {
+    .au-create-layout { grid-template-columns: 1fr; }
+    .au-whathappens { position: static; order: -1; }
 }
 
 /* ── Adapter mode picker (Create page) ── */
@@ -90,6 +222,30 @@
         opacity: .6;
     }
 
+/* Custom toggle switch replacing the raw checkbox */
+.au-toggle {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+.au-toggle-visual {
+    position: relative; flex-shrink: 0;
+    width: 40px; height: 24px; border-radius: 999px;
+    background: var(--uc-border);
+    transition: background var(--uc-transition);
+}
+.au-toggle-visual::after {
+    content: '';
+    position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    transition: transform var(--uc-transition);
+}
+.au-toggle:checked + .au-toggle-visual { background: var(--uc-primary); }
+.au-toggle:checked + .au-toggle-visual::after { transform: translateX(16px); }
+.au-toggle:focus-visible + .au-toggle-visual { box-shadow: 0 0 0 3px rgba(22, 163, 74, .3); }
+.au-toggle:disabled + .au-toggle-visual { opacity: .5; }
+
 .au-service-icon {
     width: 38px;
     height: 38px;
@@ -99,9 +255,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
     color: var(--uc-primary);
 }
+.au-service-icon .hgi { width: 20px; height: 20px; }
 
 .au-service-info strong {
     display: block;
@@ -139,7 +295,7 @@
 .au-synced-student {
     display: flex;
     gap: .9rem;
-    align-items: baseline;
+    align-items: center;
     font-size: .84rem;
     background: var(--uc-surface);
     border-radius: 8px;
@@ -149,3 +305,35 @@
     .au-synced-student strong {
         min-width: 90px;
     }
+
+.au-synced-avatar {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-primary-soft); color: var(--uc-primary-darker);
+    font-size: .74rem; font-weight: 700;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+    .au-stats { grid-template-columns: repeat(2, 1fr); }
+    .au-synced-student { flex-wrap: wrap; row-gap: .2rem; }
+    .au-synced-student strong { min-width: auto; }
+    .au-synced-student .uc-pill { margin-left: 2.35rem !important; } /* override Bootstrap's ms-auto so it aligns under the name instead of hard-right */
+}
+@media (max-width: 480px) {
+    .au-search { max-width: none; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .au-stat, .au-row { animation: none; }
+    .au-spin { animation: none; }
+}
+
+/* Generate-API-key button/field feedback */
+.au-spin { animation: auSpin .9s linear infinite; }
+@keyframes auSpin { to { transform: rotate(360deg); } }
+
+.au-field-flash { animation: auFieldFlash .8s ease; }
+@keyframes auFieldFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(22, 163, 74, .35); }
+    100% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
+}

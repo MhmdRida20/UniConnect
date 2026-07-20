@@ -6,18 +6,34 @@
     var enabledCodes = ViewBag.EnabledCodes as List<string> ?? new();
     var services = Model.ToList();
     var syncedStudents = ViewBag.SyncedStudents as List<UniConnect.Models.Student>;
+
+    // The Service catalog stores a Bootstrap-Icons class (e.g. "bi-people")
+    // for the legacy icon font — mapped here to this page's Hugeicons
+    // symbol ids rather than changing what's persisted in the database.
+    string HgiFor(string? bootstrapClass) => bootstrapClass switch
+    {
+        "bi-people" => "i-users",
+        "bi-car-front" => "i-car",
+        "bi-qr-code" => "i-qr",
+        "bi-ticket-detailed" => "i-ticket",
+        "bi-briefcase" => "i-briefcase",
+        "bi-flag" => "i-flag",
+        _ => "i-customize"
+    };
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
 }
 
-<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to universities</a>
+<a asp-action="Index" class="form-back mb-3 d-inline-flex align-items-center gap-1">
+    <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to universities
+</a>
 
 @if (syncedStudents is { Count: > 0 })
 {
     <div class="au-synced-students mb-4">
-        <h3><i class="bi bi-cloud-check"></i> Students synced from the external API</h3>
+        <h3><svg class="hgi hgi-sm"><use href="#i-cloud-sync"></use></svg>Students synced from the external API</h3>
         <p class="text-muted small mb-2">
             Pulled from this university's live API by the sync job (last synced:
             @(university?.LastSyncAt?.ToString("MMM dd, HH:mm") ?? "never") — status: @(university?.LastSyncStatus ?? "unknown")).
@@ -26,13 +42,15 @@
         <div class="au-synced-student-list">
             @foreach (var s in syncedStudents)
             {
+                var initial = string.IsNullOrEmpty(s.FullName) ? "?" : s.FullName.Substring(0, 1).ToUpperInvariant();
                 <div class="au-synced-student">
+                    <span class="au-synced-avatar">@initial</span>
                     <strong>@s.UniversityId</strong>
                     <span>@s.FullName</span>
                     <span class="text-muted">@s.UniversityEmail</span>
                     @if (!string.IsNullOrWhiteSpace(s.Major))
                     {
-                        <span class="uc-pill uc-pill-grey">@s.Major</span>
+                        <span class="uc-pill uc-pill-grey ms-auto">@s.Major</span>
                     }
                 </div>
             }
@@ -42,7 +60,7 @@
 else
 {
     <div class="alert alert-warning uc-flash">
-        <i class="bi bi-exclamation-triangle"></i> No students synced yet — this university hasn't been synced successfully,
+        <svg class="hgi hgi-sm me-1"><use href="#i-alert"></use></svg> No students synced yet — this university hasn't been synced successfully,
         or its external API returned no enrollments. Try <strong>Sync Now</strong> from the Universities list.
     </div>
 }
@@ -59,17 +77,18 @@ else
             <label class="au-service-row @(!s.IsImplemented ? "is-disabled" : "")">
                 @if (s.IsImplemented && isEnabled)
                 {
-                    <input type="checkbox" name="enabledServiceCodes" value="@s.Code" checked="checked" />
+                    <input type="checkbox" name="enabledServiceCodes" value="@s.Code" checked="checked" class="au-toggle" />
                 }
                 else if (s.IsImplemented)
                 {
-                    <input type="checkbox" name="enabledServiceCodes" value="@s.Code" />
+                    <input type="checkbox" name="enabledServiceCodes" value="@s.Code" class="au-toggle" />
                 }
                 else
                 {
-                    <input type="checkbox" disabled />
+                    <input type="checkbox" disabled class="au-toggle" />
                 }
-                <span class="au-service-icon"><i class="bi @(s.IconClass ?? "bi-app")"></i></span>
+                <span class="au-toggle-visual" aria-hidden="true"></span>
+                <span class="au-service-icon"><svg class="hgi"><use href="#@HgiFor(s.IconClass)"></use></svg></span>
                 <div class="au-service-info">
                     <strong>@s.Name</strong>
                     <small>@s.Description</small>
@@ -91,6 +110,6 @@ else
     </div>
 
     <button type="submit" class="btn btn-primary mt-3" data-loading-text="Saving…">
-        <i class="bi bi-check-lg me-1"></i>Save Changes
+        <svg class="hgi hgi-sm me-1"><use href="#i-check-circle"></use></svg>Save Changes
     </button>
 </form>

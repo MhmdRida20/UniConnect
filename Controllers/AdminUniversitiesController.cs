@@ -84,6 +84,9 @@ namespace UniConnect.Controllers
                 .ToDictionaryAsync(x => x.UniversityCode, x => x.Count);
 
             ViewBag.EnabledCounts = enabledCounts;
+            // Platform-wide overview strip on the Index page.
+            ViewBag.TotalServices = await _db.Services.CountAsync(s => s.IsImplemented);
+            ViewBag.TotalStudents = await _db.Students.CountAsync();
             return View(universities);
         }
 

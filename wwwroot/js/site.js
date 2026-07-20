@@ -140,6 +140,33 @@
     }
 
     /* ----------------------------------------------------------------------
+       Portal sidebar — off-canvas drawer below 992px (_PortalLayout.cshtml
+       only; no-ops elsewhere since the trigger elements won't exist).
+       ---------------------------------------------------------------------- */
+    function initPortalSidebar() {
+        const shell = document.querySelector('.portal-shell');
+        const toggle = document.querySelector('[data-portal-toggle]');
+        const backdrop = document.querySelector('[data-portal-backdrop]');
+        if (!shell || !toggle) return;
+
+        function setOpen(open) {
+            shell.classList.toggle('is-sidebar-open', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        toggle.addEventListener('click', () => setOpen(!shell.classList.contains('is-sidebar-open')));
+        backdrop?.addEventListener('click', () => setOpen(false));
+        // Close automatically after following a nav link on mobile, so the
+        // drawer doesn't stay open over the newly-loaded page.
+        document.querySelectorAll('.portal-nav-link').forEach((link) => {
+            link.addEventListener('click', () => setOpen(false));
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') setOpen(false);
+        });
+    }
+
+    /* ----------------------------------------------------------------------
        Expose helpers + boot.
        ---------------------------------------------------------------------- */
     window.UC = {
@@ -160,5 +187,6 @@
         initConfirm();
         initLoadingButtons();
         hoistFlashAlerts();
+        initPortalSidebar();
     });
 })();

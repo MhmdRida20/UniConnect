@@ -466,6 +466,19 @@ a:focus-visible, button:focus-visible {
     .uc-form-card { padding: 2.25rem; }
 }
 
+/* Icon-led input — a lighter-weight sibling of the auth pages' floating-
+   label field, for standard label-above forms elsewhere in the app (e.g.
+   the admin portal). Wrap a normal .form-control: <div class="uc-input-icon">
+   <svg class="hgi">...</svg><input class="form-control">.  </div> */
+.uc-input-icon { position: relative; }
+.uc-input-icon > .hgi {
+    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
+    color: var(--uc-muted); pointer-events: none;
+    transition: color var(--uc-transition);
+}
+.uc-input-icon > .form-control { padding-left: 2.6rem; }
+.uc-input-icon:focus-within > .hgi { color: var(--uc-primary); }
+
 /* --------------------------------------------------------------------------
    8. Badges & pills
    -------------------------------------------------------------------------- */

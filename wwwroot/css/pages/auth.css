@@ -31,7 +31,14 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    /* Top-aligned, not space-between — on a tall/large monitor,
+       space-between stretches the gap above the headline until the
+       whole panel looks like it "starts in the middle." A fixed top
+       gap (via .auth-brand-body's margin-top below) keeps the logo,
+       headline, and trust badges anchored near the top on every
+       screen size, with any leftover height simply left blank at the
+       bottom instead of being redistributed upward. */
+    justify-content: flex-start;
     padding: 2.75rem clamp(2rem, 4vw, 4rem);
     color: #fff;
     background:
@@ -69,8 +76,17 @@
     mask-image: radial-gradient(120% 90% at 30% 20%, #000 30%, transparent 80%);
     -webkit-mask-image: radial-gradient(120% 90% at 30% 20%, #000 30%, transparent 80%);
 }
-.auth-brand > *:not(.auth-aura):not(.auth-grid) { position: relative; z-index: 1; }
+/* Lift the real content above the decorative layers. Target the content
+   wrappers explicitly — NOT a broad `> *:not(...)`, whose (0,3,0)
+   specificity out-cascaded `.auth-chip { position: absolute }` and forced
+   the floating decorative chips into `position: relative`, dropping them
+   back into the flex flow as stacked items that shoved the logo ~194px
+   down the panel. */
+.auth-brand-top,
+.auth-brand-body,
+.auth-brand-foot { position: relative; z-index: 1; }
 
+.auth-brand-body { margin-top: 3rem; }
 .auth-logo { display: inline-flex; align-items: center; gap: .6rem; text-decoration: none; color: #fff; }
 .auth-logo-mark {
     width: 42px; height: 42px; border-radius: 12px;
@@ -143,8 +159,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 2.5rem clamp(1.25rem, 4vw, 3.5rem);
+    /* Top-aligned, not vertically centered — on a tall/large monitor,
+       centering the card leaves a huge dead zone above it and makes the
+       page look like it "starts in the middle." A fixed top gap keeps
+       the form anchored near the top on every screen size. */
+    justify-content: flex-start;
+    padding: 5.5rem clamp(1.25rem, 4vw, 3.5rem) 2.5rem;
     overflow-y: auto;
 }
 .auth-back {
@@ -471,10 +491,6 @@
     .auth-title { font-size: 1.4rem; }
     .auth-social-proof { flex-wrap: wrap; }
 }
-@media (min-height: 780px) and (min-width: 992px) {
-    .auth-panel { justify-content: center; }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .auth-aura, .auth-chip, .auth-panel-blob { animation: none; }
     .auth-brand-headline, .auth-brand-sub, .auth-feature,

@@ -4,6 +4,9 @@
     Layout = "~/Views/Shared/_PortalLayout.cshtml";
     var universities = Model.ToList();
     var enabledCounts = ViewBag.EnabledCounts as Dictionary<string, int> ?? new();
+    var totalServices = (int)(ViewBag.TotalServices ?? 0);
+    var totalStudents = (int)(ViewBag.TotalStudents ?? 0);
+    var activeCount = universities.Count(u => u.IsActive);
 }
 
 @section Styles {
@@ -11,57 +14,101 @@
     <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="text-muted mb-0">@universities.Count universit@(universities.Count == 1 ? "y" : "ies") on the platform</p>
-    <a asp-action="Create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add University</a>
+@* ─────────────────────────── OVERVIEW STRIP ─────────────────────────── *@
+<div class="au-stats">
+    <div class="au-stat">
+        <span class="au-stat-ico"><svg class="hgi"><use href="#i-building"></use></svg></span>
+        <div>
+            <strong>@universities.Count</strong>
+            <small>Universit@(universities.Count == 1 ? "y" : "ies") on the platform</small>
+        </div>
+    </div>
+    <div class="au-stat">
+        <span class="au-stat-ico au-stat-ico-green"><svg class="hgi"><use href="#i-check-circle"></use></svg></span>
+        <div>
+            <strong>@activeCount</strong>
+            <small>Active right now</small>
+        </div>
+    </div>
+    <div class="au-stat">
+        <span class="au-stat-ico au-stat-ico-blue"><svg class="hgi"><use href="#i-students"></use></svg></span>
+        <div>
+            <strong>@totalStudents.ToString("N0")</strong>
+            <small>Students synced platform-wide</small>
+        </div>
+    </div>
+    <div class="au-stat">
+        <span class="au-stat-ico au-stat-ico-amber"><svg class="hgi"><use href="#i-customize"></use></svg></span>
+        <div>
+            <strong>@totalServices</strong>
+            <small>Services in the catalog</small>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+    @if (universities.Count > 0)
+    {
+        <div class="au-search">
+            <svg class="hgi hgi-sm"><use href="#i-search"></use></svg>
+            <input type="search" id="auSearch" placeholder="Search by name or code…" aria-label="Search universities" />
+        </div>
+    }
+    else
+    {
+        <span></span>
+    }
+    <a asp-action="Create" class="btn btn-primary btn-sm"><svg class="hgi hgi-sm me-1"><use href="#i-plus"></use></svg>Add University</a>
 </div>
 
 @if (!universities.Any())
 {
     <div class="uc-empty">
-        <span class="uc-empty-icon"><i class="bi bi-bank"></i></span>
+        <span class="uc-empty-icon"><svg class="hgi hgi-xl"><use href="#i-building"></use></svg></span>
         <h5>No universities yet</h5>
         <p>Add the first university to get started.</p>
-        <a class="btn btn-primary mt-2" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Add University</a>
+        <a class="btn btn-primary mt-2" asp-action="Create"><svg class="hgi hgi-sm me-1"><use href="#i-plus"></use></svg>Add University</a>
     </div>
 }
 else
 {
-    <div class="st-table">
+    <div class="st-table" id="auTable">
         <div class="st-table-head au-grid">
             <span>University</span>
             <span>Code</span>
-            <span>Data Source</span>
-            <span>Services Enabled</span>
+            <span>Sync Status</span>
+            <span>Services</span>
             <span>Status</span>
             <span></span>
         </div>
+        @{ var rowIndex = 0; }
         @foreach (var u in universities)
         {
             var enabled = enabledCounts.TryGetValue(u.Code, out var c) ? c : 0;
-            <div class="st-table-row au-grid" style="cursor:default">
-                <span class="st-title-cell">@u.Name</span>
+            rowIndex++;
+            <div class="st-table-row au-grid au-row" style="cursor:default; --ri:@rowIndex" data-au-name="@u.Name.ToLowerInvariant()" data-au-code="@u.Code.ToLowerInvariant()">
+                <span class="st-title-cell">
+                    <span class="au-dot @(u.IsActive ? "is-active" : "is-inactive")" aria-hidden="true"></span>
+                    @u.Name
+                </span>
                 <span><code>@u.Code</code></span>
                 <span>
-                    <span class="uc-pill uc-pill-green"><i class="bi bi-cloud-check"></i>Live API</span>
                     @if (u.LastSyncStatus == "Success")
                     {
-                        <small class="d-block text-muted mt-1">
-                            <i class="bi bi-check-circle text-success"></i> Synced @u.LastSyncAt?.ToString("MMM dd, HH:mm")
-                        </small>
+                        <span class="au-sync-status is-ok"><svg class="hgi hgi-sm"><use href="#i-check-circle"></use></svg>Synced @u.LastSyncAt?.ToString("MMM dd, HH:mm")</span>
                     }
                     else if (u.LastSyncStatus == "Failed")
                     {
-                        <small class="d-block text-danger mt-1" title="@u.LastSyncError">
-                            <i class="bi bi-exclamation-triangle"></i> Sync failed @u.LastSyncAt?.ToString("MMM dd, HH:mm")
-                        </small>
+                        <span class="au-sync-status is-fail" title="@u.LastSyncError"><svg class="hgi hgi-sm"><use href="#i-alert"></use></svg>Sync failed @u.LastSyncAt?.ToString("MMM dd, HH:mm")</span>
                     }
                     else
                     {
-                        <small class="d-block text-muted mt-1">Never synced yet</small>
+                        <span class="au-sync-status is-pending"><svg class="hgi hgi-sm"><use href="#i-loading"></use></svg>Never synced</span>
                     }
                 </span>
-                <span>@enabled service@(enabled == 1 ? "" : "s")</span>
+                <span>
+                    <span class="uc-pill @(enabled == 0 ? "uc-pill-grey" : "uc-pill-green")">@enabled/@totalServices enabled</span>
+                </span>
                 <span>
                     @if (u.IsActive)
                     {
@@ -72,31 +119,36 @@ else
                         <span class="uc-pill uc-pill-grey">Inactive</span>
                     }
                 </span>
-                <div class="d-flex gap-2 justify-content-end">
+                <div class="d-flex gap-1 justify-content-end au-actions">
                     <form asp-action="SyncNow" asp-route-code="@u.Code" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
-                        <button class="btn btn-outline-secondary btn-sm" title="Sync Now">
-                            <i class="bi bi-arrow-repeat"></i>
+                        <button class="au-icon-btn" title="Sync now" aria-label="Sync now">
+                            <svg class="hgi"><use href="#i-refresh"></use></svg>
                         </button>
                     </form>
-                    <a asp-action="Services" asp-route-code="@u.Code" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-toggles"></i> Services
+                    <a asp-action="Services" asp-route-code="@u.Code" class="au-icon-btn" title="Manage services" aria-label="Manage services">
+                        <svg class="hgi"><use href="#i-customize"></use></svg>
                     </a>
                     <form asp-action="ToggleActive" asp-route-code="@u.Code" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
-                        <button class="btn btn-outline-secondary btn-sm" title="@(u.IsActive ? "Deactivate" : "Activate")">
-                            <i class="bi @(u.IsActive ? "bi-pause-fill" : "bi-play-fill")"></i>
+                        <button class="au-icon-btn" title="@(u.IsActive ? "Deactivate" : "Activate")" aria-label="@(u.IsActive ? "Deactivate" : "Activate")">
+                            <svg class="hgi"><use href="@(u.IsActive ? "#i-pause" : "#i-play")"></use></svg>
                         </button>
                     </form>
                     <form asp-action="Delete" asp-route-code="@u.Code" method="post" class="d-inline"
                           data-confirm="Permanently delete @u.Name and all its courses, students, and enabled services? This can't be undone.">
                         @Html.AntiForgeryToken()
-                        <button class="btn btn-outline-danger btn-sm" title="Delete university">
-                            <i class="bi bi-trash"></i>
+                        <button class="au-icon-btn au-icon-btn-danger" title="Delete university" aria-label="Delete university">
+                            <svg class="hgi"><use href="#i-trash"></use></svg>
                         </button>
                     </form>
                 </div>
             </div>
         }
+        <p class="text-muted small mt-2 mb-0" id="auNoResults" hidden>No universities match your search.</p>
     </div>
+}
+
+@section Scripts {
+    <script src="~/js/pages/admin-universities.js" asp-append-version="true"></script>
 }

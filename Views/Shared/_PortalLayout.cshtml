@@ -11,6 +11,16 @@
 
     var portalUser = await PortalUserManager.GetUserAsync(User);
     var unreadCount = portalUser is null ? 0 : await PortalDb.Notifications.CountAsync(n => n.UserId == portalUser.Id && !n.IsRead);
+    var isAdmin = User.IsInRole("Admin");
+
+    // Real per-university context for the topbar pill — an Admin manages
+    // every university (Super Admin scope), so there's no single "current"
+    // one to show; everyone else (staff/company) belongs to exactly one.
+    string? universityName = null;
+    if (!isAdmin && portalUser is not null)
+        universityName = (await PortalDb.Universities.FindAsync(portalUser.UniversityCode))?.Name;
+
+    var initial = string.IsNullOrEmpty(portalUser?.FullName) ? "?" : portalUser.FullName.Substring(0, 1).ToUpperInvariant();
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -29,48 +39,56 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="portal-body">
+    <partial name="_Icons" />
+
     <div class="portal-shell">
-        <aside class="portal-sidebar">
+        <span class="portal-backdrop" data-portal-backdrop aria-hidden="true"></span>
+
+        <aside class="portal-sidebar" data-portal-sidebar>
             <a class="portal-brand" asp-controller="Home" asp-action="Index">
-                <span class="uc-brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+                <span class="uc-brand-mark"><svg class="hgi"><use href="#i-graduation"></use></svg></span>
                 <span>Uni<b>Connect</b> <small>Portal</small></span>
             </a>
 
             <nav class="portal-nav">
-                <p class="portal-nav-label">Workspace</p>
-                <a class="portal-nav-link disabled" href="#" title="Coming soon">
-                    <i class="bi bi-grid-1x2"></i>Dashboard
-                </a>
                 @if (User.IsInRole("DepartmentStaff"))
                 {
+                    <p class="portal-nav-label">Workspace</p>
                     <a class="portal-nav-link @NavActive("StaffTickets")" asp-controller="StaffTickets" asp-action="Index">
-                        <i class="bi bi-ticket-detailed"></i>Tickets
+                        <svg class="hgi hgi-sm"><use href="#i-ticket"></use></svg>Tickets
                         <span class="portal-nav-badge" id="portalPendingBadge" hidden></span>
                     </a>
                 }
                 @if (User.IsInRole("Company"))
                 {
+                    <p class="portal-nav-label">Workspace</p>
                     <a class="portal-nav-link @NavActive("Company")" asp-controller="Company" asp-action="Index">
-                        <i class="bi bi-briefcase"></i>My Internships
+                        <svg class="hgi hgi-sm"><use href="#i-briefcase"></use></svg>My Internships
                     </a>
                 }
-                @if (User.IsInRole("Admin"))
+                @if (isAdmin)
                 {
+                    <p class="portal-nav-label">Platform Administration</p>
                     <a class="portal-nav-link @NavActive("AdminUniversities")" asp-controller="AdminUniversities" asp-action="Index">
-                        <i class="bi bi-bank"></i>Universities
+                        <svg class="hgi hgi-sm"><use href="#i-building"></use></svg>Universities
                     </a>
                     <a class="portal-nav-link @NavActive("AdminUsers")" asp-controller="AdminUsers" asp-action="Index">
-                        <i class="bi bi-people"></i>Users
+                        <svg class="hgi hgi-sm"><use href="#i-user-multiple"></use></svg>Users
                     </a>
                     <a class="portal-nav-link @NavActive("AdminReports")" asp-controller="AdminReports" asp-action="Index">
-                        <i class="bi bi-bar-chart"></i>Reports
+                        <svg class="hgi hgi-sm"><use href="#i-chart"></use></svg>Reports
+                    </a>
+                    <a class="portal-nav-link @NavActive("AdminAuditLog")" asp-controller="AdminAuditLog" asp-action="Index">
+                        <svg class="hgi hgi-sm"><use href="#i-info"></use></svg>Audit Log
                     </a>
                     <a class="portal-nav-link @NavActive("AdminExternalApiSimulator")" asp-controller="AdminExternalApiSimulator" asp-action="Index">
-                        <i class="bi bi-cloud-arrow-down"></i>External API Simulator
+                        <svg class="hgi hgi-sm"><use href="#i-cloud-sync"></use></svg>External API Simulator
                     </a>
                 }
+
+                <p class="portal-nav-label">General</p>
                 <a class="portal-nav-link @NavActive("Notifications")" asp-controller="Notifications" asp-action="Index">
-                    <i class="bi bi-bell"></i>Notifications
+                    <svg class="hgi hgi-sm"><use href="#i-bell"></use></svg>Notifications
                     @if (unreadCount > 0)
                     {
                         <span class="portal-nav-badge">@unreadCount</span>
@@ -79,11 +97,11 @@
             </nav>
 
             <div class="portal-user">
-                <div class="portal-user-avatar">@(portalUser?.FullName?.Substring(0, 1) ?? "?")</div>
+                <div class="portal-user-avatar">@initial</div>
                 <div class="portal-user-info">
                     <strong>@portalUser?.FullName</strong>
                     <small>
-                        @if (User.IsInRole("Admin"))
+                        @if (isAdmin)
                         {
                             <text>Platform Admin</text>
                         }
@@ -101,7 +119,7 @@
             <form class="portal-logout" asp-area="Identity" asp-page="/Account/Logout"
                   asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
                 <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
-                    <i class="bi bi-box-arrow-right me-1"></i>Log out
+                    <svg class="hgi hgi-sm me-1"><use href="#i-logout"></use></svg>Log out
                 </button>
             </form>
             <div class="d-none" data-current-user-id="@portalUser?.Id" id="notificationUserConfig"></div>
@@ -109,11 +127,23 @@
 
         <div class="portal-main-wrap">
             <header class="portal-topbar">
-                <div class="portal-topbar-title">
-                    <h1>@ViewData["Title"]</h1>
+                <div class="portal-topbar-left">
+                    <button type="button" class="portal-sidebar-toggle" data-portal-toggle aria-label="Toggle menu" aria-expanded="false">
+                        <svg class="hgi"><use href="#i-menu"></use></svg>
+                    </button>
+                    <div class="portal-topbar-title">
+                        <h1>@ViewData["Title"]</h1>
+                    </div>
                 </div>
                 <div class="portal-topbar-right">
-                    <span class="uc-pill uc-pill-green"><i class="bi bi-mortarboard-fill"></i>UniConnect Demo University</span>
+                    @if (isAdmin)
+                    {
+                        <span class="uc-pill uc-pill-green"><svg class="hgi hgi-sm"><use href="#i-shield"></use></svg>Platform-wide access</span>
+                    }
+                    else if (universityName is not null)
+                    {
+                        <span class="uc-pill uc-pill-green"><svg class="hgi hgi-sm"><use href="#i-building"></use></svg>@universityName</span>
+                    }
                 </div>
             </header>
 

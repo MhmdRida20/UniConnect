@@ -8,63 +8,107 @@
     <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
 }
 
-<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to universities</a>
+<a asp-action="Index" class="form-back mb-3 d-inline-flex align-items-center gap-1">
+    <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to universities
+</a>
 
-<div class="uc-form-card au-form-card">
-    <form asp-action="Create" method="post" data-loading>
-        @Html.AntiForgeryToken()
-        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+<div class="au-create-layout">
+    <div class="uc-form-card au-form-card">
+        <form asp-action="Create" method="post" data-loading>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-        <div class="mb-3">
-            <label asp-for="Name" class="form-label"></label>
-            <input asp-for="Name" class="form-control" placeholder="e.g. American University of Beirut" />
-            <span asp-validation-for="Name" class="text-danger"></span>
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="Code" class="form-label"></label>
-            <input asp-for="Code" class="form-control" placeholder="e.g. AUB" style="text-transform:uppercase" />
-            <small class="text-muted">A short unique code — used internally to identify this university.</small>
-            <span asp-validation-for="Code" class="text-danger"></span>
-        </div>
-
-        <div class="mb-3" id="apiUrlField">
-            <label asp-for="ApiBaseUrl" class="form-label"></label>
-            <input asp-for="ApiBaseUrl" class="form-control" placeholder="https://api.example-university.edu" />
-            <span asp-validation-for="ApiBaseUrl" class="text-danger"></span>
-            <small class="text-muted d-block mt-1">
-                No real university API to point at yet? This project includes a working simulated one —
-                use <code>@Context.Request.Scheme://@Context.Request.Host/external-api/v1</code> to try the integration end-to-end.
-            </small>
-
-            <label asp-for="ApiKey" class="form-label mt-2"></label>
-            <div class="input-group">
-                <input asp-for="ApiKey" id="ApiKeyInput" class="form-control" placeholder="Click Generate →" readonly />
-                <button type="button" class="btn btn-outline-secondary" id="generateApiKeyBtn" data-url="@Url.Action("GenerateApiKey", "AdminUniversities")">
-                    <i class="bi bi-magic me-1"></i>Generate
-                </button>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <div class="uc-input-icon">
+                    <svg class="hgi hgi-sm"><use href="#i-building"></use></svg>
+                    <input asp-for="Name" class="form-control" placeholder="e.g. American University of Beirut" />
+                </div>
+                <span asp-validation-for="Name" class="text-danger"></span>
             </div>
-            <span asp-validation-for="ApiKey" class="text-danger"></span>
-            <small class="text-muted d-block mt-1" id="apiKeyHint">
-                Generates a unique key AND provisions a fresh, independent set of at least 5 students (each enrolled
-                in at least 4 courses) for it — every university gets its own data, never shared with another.
-            </small>
-        </div>
 
-        <div class="mb-3">
-            <label asp-for="CareerServicesEmail" class="form-label"></label>
-            <input asp-for="CareerServicesEmail" class="form-control" placeholder="careers@university.edu" />
-            <span asp-validation-for="CareerServicesEmail" class="text-danger"></span>
-            <small class="text-muted d-block mt-1">
-                Creates this university's internship-posting login automatically, using this real address —
-                a one-time password will be shown after you submit, so save it before navigating away.
-            </small>
-        </div>
+            <div class="mb-3">
+                <label asp-for="Code" class="form-label"></label>
+                <div class="uc-input-icon">
+                    <svg class="hgi hgi-sm"><use href="#i-id"></use></svg>
+                    <input asp-for="Code" class="form-control" placeholder="e.g. AUB" style="text-transform:uppercase" />
+                </div>
+                <small class="text-muted">A short unique code — used internally to identify this university.</small>
+                <span asp-validation-for="Code" class="text-danger"></span>
+            </div>
 
-        <button type="submit" class="btn btn-primary w-100" data-loading-text="Adding…">
-            <i class="bi bi-plus-lg me-1"></i>Add University
-        </button>
-    </form>
+            <div class="mb-3" id="apiUrlField">
+                <label asp-for="ApiBaseUrl" class="form-label"></label>
+                <div class="uc-input-icon">
+                    <svg class="hgi hgi-sm"><use href="#i-cloud-sync"></use></svg>
+                    <input asp-for="ApiBaseUrl" class="form-control" placeholder="https://api.example-university.edu" />
+                </div>
+                <span asp-validation-for="ApiBaseUrl" class="text-danger"></span>
+                <small class="text-muted d-block mt-1">
+                    No real university API to point at yet? This project includes a working simulated one —
+                    use <code>@Context.Request.Scheme://@Context.Request.Host/external-api/v1</code> to try the integration end-to-end.
+                </small>
+
+                <label asp-for="ApiKey" class="form-label mt-3"></label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><svg class="hgi hgi-sm text-muted"><use href="#i-shield"></use></svg></span>
+                    <input asp-for="ApiKey" id="ApiKeyInput" class="form-control" placeholder="Click Generate →" readonly />
+                    <button type="button" class="btn btn-outline-secondary" id="generateApiKeyBtn" data-url="@Url.Action("GenerateApiKey", "AdminUniversities")">
+                        <svg class="hgi hgi-sm me-1"><use href="#i-magic"></use></svg>Generate
+                    </button>
+                </div>
+                <span asp-validation-for="ApiKey" class="text-danger"></span>
+                <small class="text-muted d-block mt-1" id="apiKeyHint">
+                    Generates a unique key AND provisions a fresh, independent set of at least 5 students (each enrolled
+                    in at least 4 courses) for it — every university gets its own data, never shared with another.
+                </small>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CareerServicesEmail" class="form-label"></label>
+                <div class="uc-input-icon">
+                    <svg class="hgi hgi-sm"><use href="#i-mail"></use></svg>
+                    <input asp-for="CareerServicesEmail" class="form-control" placeholder="careers@university.edu" />
+                </div>
+                <span asp-validation-for="CareerServicesEmail" class="text-danger"></span>
+                <small class="text-muted d-block mt-1">
+                    Creates this university's internship-posting login automatically, using this real address —
+                    a one-time password will be shown after you submit, so save it before navigating away.
+                </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100" data-loading-text="Adding…">
+                <svg class="hgi hgi-sm me-1"><use href="#i-plus"></use></svg>Add University
+            </button>
+        </form>
+    </div>
+
+    <aside class="au-whathappens">
+        <h3><svg class="hgi hgi-sm"><use href="#i-info"></use></svg>What happens next</h3>
+        <ol>
+            <li>
+                <span class="au-wh-ico"><svg class="hgi"><use href="#i-cloud-sync"></use></svg></span>
+                <div>
+                    <strong>Immediate sync</strong>
+                    <small>UniConnect calls this university's API right away, so you see whether the connection works without waiting for the next scheduled cycle.</small>
+                </div>
+            </li>
+            <li>
+                <span class="au-wh-ico"><svg class="hgi"><use href="#i-briefcase"></use></svg></span>
+                <div>
+                    <strong>Career services login created</strong>
+                    <small>A one-time password is generated for the internship-posting account — you'll only see it once, right after submitting.</small>
+                </div>
+            </li>
+            <li>
+                <span class="au-wh-ico"><svg class="hgi"><use href="#i-customize"></use></svg></span>
+                <div>
+                    <strong>Choose services next</strong>
+                    <small>You'll land on the service catalog for this university — nothing is visible to its students or staff until you enable it there.</small>
+                </div>
+            </li>
+        </ol>
+    </aside>
 </div>
 
 @section Scripts {
