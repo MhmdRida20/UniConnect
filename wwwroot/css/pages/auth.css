@@ -498,3 +498,20 @@
     .auth-quote { animation: none; position: static; opacity: 1 !important; }
     .auth-quote:not(:first-child) { display: none; }
 }
+
+/* FR-03: SSO option below the standard login form — only rendered when a
+   real university identity provider is actually configured. */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin: 1.1rem 0;
+    color: var(--auth-muted, #8a93a6);
+    font-size: .82rem;
+}
+.auth-divider::before, .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--auth-border, #e5e8ef);
+}

@@ -13,6 +13,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using UniConnect.Models;
@@ -27,16 +28,23 @@ namespace UniConnect.Areas.Identity.Pages.Account
         private readonly ILogger<LoginModel> _logger;
         private readonly AuditLogService _auditLog;
 
+        // FR-03: read here in the code-behind (not via @inject in the .cshtml)
+        // deliberately — exposed as a plain bool property so the view just
+        // reads @Model.SsoConfigured, no additional Razor directives needed.
+        public bool SsoConfigured { get; }
+
         public LoginModel(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             ILogger<LoginModel> logger,
-            AuditLogService auditLog)
+            AuditLogService auditLog,
+            IConfiguration configuration)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _logger = logger;
             _auditLog = auditLog;
+            SsoConfigured = !string.IsNullOrWhiteSpace(configuration["Oidc:Authority"]);
         }
 
         [BindProperty] public InputModel Input { get; set; } = new();

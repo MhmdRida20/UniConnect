@@ -496,6 +496,17 @@ a:focus-visible, button:focus-visible {
 }
 .uc-pill-green  { background: var(--uc-primary-soft); color: var(--uc-primary-darker); }
 .uc-pill-amber  { background: #fef3c7; color: #92400e; }
+
+/* FR-17 reduced-functionality banner — shown site-wide when a student's
+   university's last sync failed, so stale data doesn't look like a bug. */
+.uc-sync-banner {
+    background: #fef3c7;
+    color: #92400e;
+    padding: .6rem 0;
+    font-size: .85rem;
+    border-bottom: 1px solid #fde68a;
+}
+.uc-sync-banner svg { flex: none; }
 .uc-pill-red    { background: #fee2e2; color: #991b1b; }
 .uc-pill-blue   { background: var(--uc-accent-soft); color: #115e59; }
 .uc-pill-grey   { background: #e2e8f0; color: #475569; }

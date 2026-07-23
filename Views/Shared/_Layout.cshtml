@@ -1,9 +1,11 @@
 @using Microsoft.AspNetCore.Identity
 @using UniConnect.Models
 @using UniConnect.Services
+@using Microsoft.EntityFrameworkCore
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject IServiceCatalogService ServiceCatalog
+@inject UniConnect.Data.ApplicationDbContext Db
 @{
     var routeData = ViewContext.RouteData.Values;
     var currentController = routeData["controller"]?.ToString();
@@ -16,11 +18,26 @@
     // services for the university"). Anonymous visitors still see everything,
     // since there's no university context to filter by until they log in.
     var enabledServices = new List<string>();
+    // FR-17: "flag reduced functionality" — if the last sync with this
+    // student's university genuinely failed, some course/enrollment/major
+    // data shown around the site may be stale until the next successful
+    // sync. This is informational, not an error the student caused.
+    string? syncBannerMessage = null;
     if (SignInManager.IsSignedIn(User))
     {
         var navUser = await UserManager.GetUserAsync(User);
         if (navUser is not null)
+        {
             enabledServices = await ServiceCatalog.GetEnabledServiceCodesAsync(navUser.UniversityCode);
+
+            var navUniversity = await Db.Universities.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Code == navUser.UniversityCode);
+            if (navUniversity?.LastSyncStatus == "Failed")
+            {
+                syncBannerMessage = "We're having trouble syncing with your university's system right now — " +
+                    "course, enrollment, and major information shown here may be temporarily out of date.";
+            }
+        }
     }
     bool ShowNav(string serviceCode) => !SignInManager.IsSignedIn(User) || enabledServices.Contains(serviceCode);
 }
@@ -81,6 +98,11 @@
                                     <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>Rides
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link @NavActive("Vehicles")" asp-controller="Vehicles" asp-action="Index">
+                                    <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>My Vehicles
+                                </a>
+                            </li>
                         }
                         @if (ShowNav(ServiceCodes.Tickets))
                         {
@@ -129,6 +151,16 @@
             </div>
         </nav>
     </header>
+
+    @if (syncBannerMessage is not null)
+    {
+        <div class="uc-sync-banner">
+            <div class="container d-flex align-items-center gap-2">
+                <svg class="hgi hgi-sm"><use href="#i-info"></use></svg>
+                <span>@syncBannerMessage</span>
+            </div>
+        </div>
+    }
 
     <main role="main">
         <div class="container">

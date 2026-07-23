@@ -27,18 +27,21 @@ namespace UniConnect.Controllers
         private readonly IGeocodingService _geocoder;
         private readonly IHubContext<RideTrackingHub> _trackingHub;
         private readonly UniConnect.Services.AuditLogService _auditLog;
+        private readonly UniConnect.Services.NotificationService _notifications;
 
         public RidesController(ApplicationDbContext db,
                                UserManager<ApplicationUser> userManager,
                                IGeocodingService geocoder,
                                IHubContext<RideTrackingHub> trackingHub,
-                               UniConnect.Services.AuditLogService auditLog)
+                               UniConnect.Services.AuditLogService auditLog,
+                               UniConnect.Services.NotificationService notifications)
         {
             _db = db;
             _userManager = userManager;
             _geocoder = geocoder;
             _trackingHub = trackingHub;
             _auditLog = auditLog;
+            _notifications = notifications;
         }
 
         // Notifies anyone currently viewing the Available Rides list that
@@ -57,6 +60,7 @@ namespace UniConnect.Controllers
             // AT MY OWN UNIVERSITY, that haven't already departed.
             var rides = await _db.Rides
                 .Include(r => r.Driver)
+                .Include(r => r.Vehicle)
                 .Where(r => r.UniversityCode == user.UniversityCode
                             && r.Status == RideStatus.Active
                             && r.AvailableSeats > 0
@@ -76,8 +80,26 @@ namespace UniConnect.Controllers
         }
 
         // ---------- CREATE (GET) — UC-03 ------------------------------------------
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Challenge();
+
+            // FR-55: a student must register at least one Active vehicle
+            // before they can offer a ride — that registration IS what
+            // "becoming a driver student" means here (see VehiclesController).
+            var activeVehicles = await _db.Vehicles
+                .Where(v => v.UserId == user.Id && v.Status == VehicleStatus.Active)
+                .OrderByDescending(v => v.CreatedAt)
+                .ToListAsync();
+
+            if (activeVehicles.Count == 0)
+            {
+                TempData["Error"] = "You need to register a vehicle before you can offer a ride.";
+                return RedirectToAction("Create", "Vehicles");
+            }
+
+            ViewBag.Vehicles = activeVehicles;
             return View(new RideCreateVM());
         }
 
@@ -99,8 +121,24 @@ namespace UniConnect.Controllers
                 ModelState.AddModelError(nameof(vm.Destination),
                     "Destination must be different from the departure location.");
 
+            // The selected vehicle must genuinely belong to this student and
+            // still be Active — defends against a tampered form post picking
+            // someone else's vehicle, or one they since deactivated.
+            var vehicle = await _db.Vehicles.FirstOrDefaultAsync(
+                v => v.Id == vm.VehicleId && v.UserId == user.Id && v.Status == VehicleStatus.Active);
+            if (vehicle is null)
+                ModelState.AddModelError(nameof(vm.VehicleId), "Please select one of your registered, active vehicles.");
+            else if (vm.TotalSeats > vehicle.SeatCapacity)
+                ModelState.AddModelError(nameof(vm.TotalSeats), $"This vehicle only seats {vehicle.SeatCapacity}.");
+
             if (!ModelState.IsValid)
+            {
+                ViewBag.Vehicles = await _db.Vehicles
+                    .Where(v => v.UserId == user.Id && v.Status == VehicleStatus.Active)
+                    .OrderByDescending(v => v.CreatedAt)
+                    .ToListAsync();
                 return View(vm);
+            }
 
             var ride = new Ride
             {
@@ -109,7 +147,7 @@ namespace UniConnect.Controllers
                 DepartureLocation = vm.DepartureLocation.Trim(),
                 Destination = vm.Destination.Trim(),
                 DepartureTime = vm.DepartureTime,
-                VehicleType = vm.VehicleType.Trim(),
+                VehicleId = vehicle!.Id,
                 TotalSeats = vm.TotalSeats,
                 AvailableSeats = vm.TotalSeats,   // all seats free at creation (FR-15)
                 Status = RideStatus.Active,
@@ -168,6 +206,7 @@ namespace UniConnect.Controllers
 
             var ride = await _db.Rides
                 .Include(r => r.Driver)
+                .Include(r => r.Vehicle)
                 .Include(r => r.Requests).ThenInclude(rr => rr.Passenger)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
@@ -201,11 +240,16 @@ namespace UniConnect.Controllers
 
             // Edge Case: "Excessive ride requests — a student sends too many
             // ride requests in a short period. The system shall apply
-            // request rate limits."
-            var rateLimitWindow = DateTime.UtcNow.AddMinutes(-10);
+            // request rate limits." FR-11: the actual limit/window is
+            // configurable per university rather than hardcoded.
+            var settings = await _db.UniversitySettings.FindAsync(user.UniversityCode);
+            var maxRequests = settings?.MaxRideRequestsPerWindow ?? 5;
+            var windowMinutes = settings?.RideRequestWindowMinutes ?? 10;
+
+            var rateLimitWindow = DateTime.UtcNow.AddMinutes(-windowMinutes);
             var recentRequestCount = await _db.RideRequests.CountAsync(
                 rr => rr.PassengerId == user.Id && rr.RequestedAt >= rateLimitWindow);
-            if (recentRequestCount >= 5)
+            if (recentRequestCount >= maxRequests)
             {
                 TempData["Error"] = "You've sent a lot of ride requests recently — please wait a few minutes before requesting another.";
                 return RedirectToAction(nameof(Details), new { id });
@@ -293,6 +337,11 @@ namespace UniConnect.Controllers
                 requestId = newRequest.Id,
                 passengerName = user.FullName ?? "A student"
             });
+            await _notifications.NotifyAsync(
+                ride.DriverId,
+                "New ride request",
+                $"{user.FullName} wants to join your ride to {ride.Destination}.",
+                $"/Rides/Details/{ride.Id}");
             await BroadcastRideListChanged();
 
             TempData["Success"] = "Ride request sent to the driver.";
@@ -395,6 +444,12 @@ namespace UniConnect.Controllers
                     entityId: request.Id.ToString(),
                     details: $"Ride {request.RideId}, passenger {request.PassengerId}");
 
+                await _notifications.NotifyAsync(
+                    request.PassengerId,
+                    "Ride request accepted",
+                    $"Your request to join the ride to {request.Ride.Destination} was accepted.",
+                    $"/Rides/Details/{request.RideId}");
+
                 TempData["Success"] = "Request accepted.";
             }
 
@@ -431,6 +486,11 @@ namespace UniConnect.Controllers
                 passengerId = request.PassengerId,
                 status = request.Status.ToString()
             });
+            await _notifications.NotifyAsync(
+                request.PassengerId,
+                "Ride request declined",
+                $"Your request to join the ride to {request.Ride.Destination} was declined.",
+                "/Rides/Index");
             await BroadcastRideListChanged();
 
             TempData["Success"] = "Request rejected.";

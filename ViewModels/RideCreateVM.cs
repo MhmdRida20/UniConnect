@@ -17,9 +17,9 @@ namespace UniConnect.ViewModels
         [DataType(DataType.DateTime)]
         public DateTime DepartureTime { get; set; } = DateTime.Now.AddHours(1);
 
-        [Required, StringLength(50)]
-        [Display(Name = "Vehicle Type")]
-        public string VehicleType { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Please select which vehicle you're using for this ride.")]
+        [Display(Name = "Vehicle")]
+        public int VehicleId { get; set; }
 
         [Range(1, 8)]
         [Display(Name = "Total Seats")]

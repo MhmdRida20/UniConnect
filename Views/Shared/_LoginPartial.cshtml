@@ -23,19 +23,40 @@
         <li class="nav-item dropdown uc-account-item">
             <a class="nav-link uc-account-toggle d-inline-flex align-items-center" href="#" role="button"
                data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="uc-account-avatar">@initial</span>
+                @if (!string.IsNullOrWhiteSpace(currentUser?.ProfilePicturePath))
+                {
+                    <span class="uc-account-avatar" style="padding:0; overflow:hidden;">
+                        <img src="@currentUser.ProfilePicturePath" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                    </span>
+                }
+                else
+                {
+                    <span class="uc-account-avatar">@initial</span>
+                }
                 <span class="uc-account-name d-none d-xl-inline">@currentUser?.FullName</span>
                 <svg class="hgi hgi-sm uc-account-caret"><use href="#i-arrow-right"></use></svg>
             </a>
             <div class="dropdown-menu dropdown-menu-end uc-account-menu">
                 <div class="uc-account-menu-head">
-                    <span class="uc-account-avatar uc-account-avatar-lg">@initial</span>
+                    @if (!string.IsNullOrWhiteSpace(currentUser?.ProfilePicturePath))
+                    {
+                        <span class="uc-account-avatar uc-account-avatar-lg" style="padding:0; overflow:hidden;">
+                            <img src="@currentUser.ProfilePicturePath" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="uc-account-avatar uc-account-avatar-lg">@initial</span>
+                    }
                     <div>
                         <strong>@currentUser?.FullName</strong>
                         <small>@currentUser?.Email</small>
                     </div>
                 </div>
                 <div class="uc-account-menu-body">
+                    <a class="uc-account-menu-link" asp-controller="Profile" asp-action="Index">
+                        <svg class="hgi hgi-sm"><use href="#i-user-circle"></use></svg>My Profile
+                    </a>
                     <a class="uc-account-menu-link" asp-area="Identity" asp-page="/Account/Manage/Index">
                         <svg class="hgi hgi-sm"><use href="#i-user-circle"></use></svg>Manage account
                     </a>

@@ -17,8 +17,21 @@
     // every university (Super Admin scope), so there's no single "current"
     // one to show; everyone else (staff/company) belongs to exactly one.
     string? universityName = null;
+    string? syncBannerMessage = null;
     if (!isAdmin && portalUser is not null)
-        universityName = (await PortalDb.Universities.FindAsync(portalUser.UniversityCode))?.Name;
+    {
+        var portalUniversity = await PortalDb.Universities.FindAsync(portalUser.UniversityCode);
+        universityName = portalUniversity?.Name;
+
+        // FR-17: same reduced-functionality notice as the student layout —
+        // staff/instructors rely on the same synced data (rosters, course
+        // lists) and are just as affected by a failed sync.
+        if (portalUniversity?.LastSyncStatus == "Failed")
+        {
+            syncBannerMessage = "We're having trouble syncing with the university's system right now — " +
+                "some course, roster, or enrollment information may be temporarily out of date.";
+        }
+    }
 
     var initial = string.IsNullOrEmpty(portalUser?.FullName) ? "?" : portalUser.FullName.Substring(0, 1).ToUpperInvariant();
 }
@@ -85,6 +98,22 @@
                         <svg class="hgi hgi-sm"><use href="#i-cloud-sync"></use></svg>External API Simulator
                     </a>
                 }
+                @if (User.IsInRole("UniversityAdmin"))
+                {
+                    <p class="portal-nav-label">University Administration</p>
+                    <a class="portal-nav-link @NavActive("AdminUniversities")" asp-controller="AdminUniversities" asp-action="Index">
+                        <svg class="hgi hgi-sm"><use href="#i-building"></use></svg>My University
+                    </a>
+                    <a class="portal-nav-link @NavActive("AdminUsers")" asp-controller="AdminUsers" asp-action="Index">
+                        <svg class="hgi hgi-sm"><use href="#i-user-multiple"></use></svg>Users
+                    </a>
+                    <a class="portal-nav-link @NavActive("AdminReports")" asp-controller="AdminReports" asp-action="Index">
+                        <svg class="hgi hgi-sm"><use href="#i-chart"></use></svg>Reports
+                    </a>
+                    <a class="portal-nav-link @NavActive("AdminAuditLog")" asp-controller="AdminAuditLog" asp-action="Index">
+                        <svg class="hgi hgi-sm"><use href="#i-info"></use></svg>Audit Log
+                    </a>
+                }
 
                 <p class="portal-nav-label">General</p>
                 <a class="portal-nav-link @NavActive("Notifications")" asp-controller="Notifications" asp-action="Index">
@@ -97,7 +126,16 @@
             </nav>
 
             <div class="portal-user">
-                <div class="portal-user-avatar">@initial</div>
+                @if (!string.IsNullOrWhiteSpace(portalUser?.ProfilePicturePath))
+                {
+                    <div class="portal-user-avatar" style="padding:0; overflow:hidden;">
+                        <img src="@portalUser.ProfilePicturePath" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                    </div>
+                }
+                else
+                {
+                    <div class="portal-user-avatar">@initial</div>
+                }
                 <div class="portal-user-info">
                     <strong>@portalUser?.FullName</strong>
                     <small>
@@ -116,6 +154,9 @@
                     </small>
                 </div>
             </div>
+            <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                <svg class="hgi hgi-sm me-1"><use href="#i-user-circle"></use></svg>My Profile
+            </a>
             <form class="portal-logout" asp-area="Identity" asp-page="/Account/Logout"
                   asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
                 <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
@@ -146,6 +187,16 @@
                     }
                 </div>
             </header>
+
+            @if (syncBannerMessage is not null)
+            {
+                <div class="uc-sync-banner">
+                    <div class="d-flex align-items-center gap-2">
+                        <svg class="hgi hgi-sm"><use href="#i-info"></use></svg>
+                        <span>@syncBannerMessage</span>
+                    </div>
+                </div>
+            }
 
             <main class="portal-main" role="main">
                 @if (TempData["Success"] != null)

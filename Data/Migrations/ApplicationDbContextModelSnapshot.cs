@@ -213,6 +213,10 @@ namespace UniConnect.Data.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("ProfilePicturePath")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -1152,16 +1156,16 @@ namespace UniConnect.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("VehicleType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("DriverId");
 
                     b.HasIndex("UniversityCode");
+
+                    b.HasIndex("VehicleId");
 
                     b.ToTable("Rides");
                 });
@@ -1630,6 +1634,81 @@ namespace UniConnect.Data.Migrations
                     b.ToTable("UniversityServices");
                 });
 
+            modelBuilder.Entity("UniConnect.Models.UniversitySettings", b =>
+                {
+                    b.Property<string>("UniversityCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("DefaultAttendanceGpsRadiusMeters")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DefaultAttendanceGraceMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaxClubMembers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxRideRequestsPerWindow")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxStudyGroupMembers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RideRequestWindowMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UniversityCode");
+
+                    b.ToTable("UniversitySettings");
+                });
+
+            modelBuilder.Entity("UniConnect.Models.Vehicle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PlateNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("SeatCapacity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("VehicleType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Vehicles");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1976,9 +2055,17 @@ namespace UniConnect.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("UniConnect.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Driver");
 
                     b.Navigation("University");
+
+                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("UniConnect.Models.RideRequest", b =>
@@ -2160,6 +2247,28 @@ namespace UniConnect.Data.Migrations
                     b.Navigation("Service");
 
                     b.Navigation("University");
+                });
+
+            modelBuilder.Entity("UniConnect.Models.UniversitySettings", b =>
+                {
+                    b.HasOne("UniConnect.Models.University", "University")
+                        .WithOne()
+                        .HasForeignKey("UniConnect.Models.UniversitySettings", "UniversityCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("University");
+                });
+
+            modelBuilder.Entity("UniConnect.Models.Vehicle", b =>
+                {
+                    b.HasOne("UniConnect.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("UniConnect.Models.ApplicationUser", b =>

@@ -1,0 +1,55 @@
+@model UniConnect.ViewModels.VehicleCreateVM
+@{
+    ViewData["Title"] = "Register Vehicle";
+}
+
+<div class="container" style="padding-top:1.5rem; max-width:520px;">
+    <a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to my vehicles</a>
+
+    <div class="uc-form-card">
+        <h3 class="mb-3">Register a Vehicle</h3>
+        <form asp-action="Create" method="post" data-loading>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="VehicleType" class="form-label"></label>
+                <select asp-for="VehicleType" class="form-select">
+                    <option value="">-- Select --</option>
+                    <option>Sedan</option>
+                    <option>SUV</option>
+                    <option>Hatchback</option>
+                    <option>Van</option>
+                    <option>Motorcycle</option>
+                </select>
+                <span asp-validation-for="VehicleType" class="text-danger"></span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label asp-for="PlateNumber" class="form-label"></label>
+                    <input asp-for="PlateNumber" class="form-control" placeholder="e.g. 123456" />
+                    <span asp-validation-for="PlateNumber" class="text-danger"></span>
+                </div>
+                <div class="col-sm-6">
+                    <label asp-for="Color" class="form-label"></label>
+                    <input asp-for="Color" class="form-control" placeholder="e.g. White" />
+                    <span asp-validation-for="Color" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3 mt-3">
+                <label asp-for="SeatCapacity" class="form-label"></label>
+                <input asp-for="SeatCapacity" type="number" min="1" max="8" class="form-control" />
+                <span asp-validation-for="SeatCapacity" class="text-danger"></span>
+                <small class="text-muted d-block mt-1">This caps how many seats you can offer on any ride using this vehicle.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-2"><i class="bi bi-check-lg me-1"></i>Register Vehicle</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

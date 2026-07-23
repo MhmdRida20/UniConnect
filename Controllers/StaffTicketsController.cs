@@ -23,17 +23,20 @@ namespace UniConnect.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHubContext<TicketHub> _hub;
         private readonly UniConnect.Services.AuditLogService _auditLog;
+        private readonly UniConnect.Services.NotificationService _notifications;
 
         public StaffTicketsController(
             ApplicationDbContext db,
             UserManager<ApplicationUser> userManager,
             IHubContext<TicketHub> hub,
-            UniConnect.Services.AuditLogService auditLog)
+            UniConnect.Services.AuditLogService auditLog,
+            UniConnect.Services.NotificationService notifications)
         {
             _db = db;
             _userManager = userManager;
             _hub = hub;
             _auditLog = auditLog;
+            _notifications = notifications;
         }
 
         // ---------- INDEX: department queue, sorted by priority then date (UC-06) --
@@ -168,6 +171,15 @@ namespace UniConnect.Controllers
             }
 
             await BroadcastTicketChanged(ticket);
+
+            await _notifications.NotifyAsync(
+                ticket.SubmitterId,
+                previousStatus.HasValue ? "Ticket status updated" : "New response on your ticket",
+                previousStatus.HasValue
+                    ? $"\"{ticket.Title}\" is now: {ticket.Status}."
+                    : $"You have a new response on \"{ticket.Title}\".",
+                $"/Tickets/Details/{ticket.Id}");
+
             TempData["Success"] = "Response sent.";
             return RedirectToAction(nameof(Details), new { id });
         }

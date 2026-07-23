@@ -14,14 +14,17 @@ namespace UniConnect.Controllers
     /// (Services.docx: "Service catalog management", "Per-university service
     /// enablement and configuration").
     ///
-    /// Scope note: this implements a single "Admin" role acting as what your
-    /// ER diagram calls a Super Admin (manages ALL universities). The separate
-    /// "University Admin" role (scoped to just their own university) isn't
-    /// built yet — a reasonable next step, not an oversight, since the access
-    /// pattern here (manage everything vs. manage-your-own) is a small filter
-    /// away from what already exists.
+    /// Two roles reach this controller now:
+    ///   Admin           — Super Admin, manages EVERY university.
+    ///   UniversityAdmin — scoped to exactly one university (their own,
+    ///                     via ApplicationUser.UniversityCode). Can manage
+    ///                     their own services/sync, but cannot create,
+    ///                     delete, activate/deactivate, or view any OTHER
+    ///                     university — those stay Super-Admin-only, gated
+    ///                     with an explicit [Authorize(Roles = "Admin")] on
+    ///                     the specific actions below.
     /// </summary>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,UniversityAdmin")]
     public class AdminUniversitiesController : Controller
     {
         private readonly ApplicationDbContext _db;
@@ -44,14 +47,23 @@ namespace UniConnect.Controllers
             _auditLog = auditLog;
         }
 
-        // ---------- GENERATE API KEY (AJAX) ------------------------------------
-        // Called from the Create form's "Generate" button. Creates a unique key
-        // AND immediately provisions a fresh, independent, PERSISTED dataset
-        // for it — so a brand new university has its own distinct students/
-        // courses the moment it's created, and that data survives app restarts
-        // (it's no longer just an in-memory dictionary).
+        private bool IsSuperAdmin => User.IsInRole("Admin");
+
+        // A UniversityAdmin may only manage their OWN university; a Super
+        // Admin may manage any of them.
+        private async Task<bool> CanManageAsync(string universityCode)
+        {
+            if (IsSuperAdmin) return true;
+            var currentUser = await _userManager.GetUserAsync(User);
+            return currentUser is not null && currentUser.UniversityCode == universityCode;
+        }
+
+        // ---------- GENERATE API KEY (AJAX) — Super Admin only -----------------
+        // Only relevant when CREATING a brand new university, which is itself
+        // Super-Admin-only (see Create below).
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GenerateApiKey(string? universityName)
         {
             string key;
@@ -70,9 +82,19 @@ namespace UniConnect.Controllers
             });
         }
 
-        // ---------- INDEX: all universities on the platform -------------------
+        // ---------- INDEX: all universities on the platform (Super Admin) -----
+        // A UniversityAdmin doesn't manage a LIST of universities — they only
+        // ever have the one — so send them straight to its Services page
+        // instead of a one-row list.
         public async Task<IActionResult> Index()
         {
+            if (!IsSuperAdmin)
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser is null) return Challenge();
+                return RedirectToAction(nameof(Services), new { code = currentUser.UniversityCode });
+            }
+
             var universities = await _db.Universities
                 .OrderBy(u => u.Name)
                 .ToListAsync();
@@ -90,12 +112,16 @@ namespace UniConnect.Controllers
             return View(universities);
         }
 
-        // ---------- CREATE (GET) ---------------------------------------------
+        // ---------- CREATE (GET/POST) — Super Admin only ------------------------
+        // Creating a brand new university is a platform-level action; a
+        // UniversityAdmin managing their own institution has no reason to
+        // create a SECOND one.
+        [Authorize(Roles = "Admin")]
         public IActionResult Create() => View(new UniversityCreateVM());
 
-        // ---------- CREATE (POST) --------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(UniversityCreateVM vm)
         {
             if (string.IsNullOrWhiteSpace(vm.ApiBaseUrl))
@@ -117,6 +143,16 @@ namespace UniConnect.Controllers
                 ModelState.AddModelError(nameof(vm.CareerServicesEmail), "An account already exists for this email.");
                 return View(vm);
             }
+            if (await _userManager.FindByEmailAsync(vm.UniversityAdminEmail) is not null)
+            {
+                ModelState.AddModelError(nameof(vm.UniversityAdminEmail), "An account already exists for this email.");
+                return View(vm);
+            }
+            if (string.Equals(vm.CareerServicesEmail.Trim(), vm.UniversityAdminEmail.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(nameof(vm.UniversityAdminEmail), "The university admin and career services emails must be different.");
+                return View(vm);
+            }
 
             var university = new University
             {
@@ -127,17 +163,20 @@ namespace UniConnect.Controllers
                 IsActive = true
             };
             _db.Universities.Add(university);
+            _db.UniversitySettings.Add(new UniversitySettings { UniversityCode = code });
             await _db.SaveChangesAsync();
 
             // Don't make the admin wait for the next scheduled sync cycle to
             // see whether the connection actually works.
             await _syncRunner.SyncOneUniversityAsync(university);
 
+            var credentialMessages = new List<string>();
+
             // Every university gets exactly one internship-posting account,
             // created automatically here rather than through self-registration
             // — a real university partner already has a real career services
             // department and email; there's no separate "company" to sign up.
-            var generatedPassword = GenerateSecurePassword();
+            var careerPassword = GenerateSecurePassword();
             var careerServicesUser = new ApplicationUser
             {
                 UserName = vm.CareerServicesEmail.Trim(),
@@ -147,8 +186,8 @@ namespace UniConnect.Controllers
                 UniversityCode = university.Code,
                 UniversityId = $"CAREER-{code}",
             };
-            var createResult = await _userManager.CreateAsync(careerServicesUser, generatedPassword);
-            if (createResult.Succeeded)
+            var careerCreateResult = await _userManager.CreateAsync(careerServicesUser, careerPassword);
+            if (careerCreateResult.Succeeded)
             {
                 await _userManager.AddToRoleAsync(careerServicesUser, "Company");
                 _db.Companies.Add(new Company
@@ -170,15 +209,48 @@ namespace UniConnect.Controllers
                     entityId: careerServicesUser.Id,
                     details: $"Email: {vm.CareerServicesEmail}");
 
-                TempData["Success"] = $"{university.Name} added and synced (status: {university.LastSyncStatus}). " +
-                    $"Career services login created — email: {vm.CareerServicesEmail}, password: {generatedPassword} " +
-                    "(save this now, it won't be shown again). Now choose which services to enable.";
+                credentialMessages.Add($"Career services — email: {vm.CareerServicesEmail}, password: {careerPassword}");
             }
             else
             {
-                TempData["Success"] = $"{university.Name} added and synced (status: {university.LastSyncStatus}), " +
-                    "but creating its career services login failed — you can add one manually later.";
+                credentialMessages.Add("Career services login creation FAILED — you can add one manually later.");
             }
+
+            // The university's own scoped admin — distinct from Super Admin,
+            // can only ever manage this one institution (see CanManageAsync).
+            var uniAdminPassword = GenerateSecurePassword();
+            var universityAdminUser = new ApplicationUser
+            {
+                UserName = vm.UniversityAdminEmail.Trim(),
+                Email = vm.UniversityAdminEmail.Trim(),
+                EmailConfirmed = true,
+                FullName = $"{university.Name} — Admin",
+                UniversityCode = university.Code,
+                UniversityId = $"UNIADMIN-{code}",
+            };
+            var uniAdminCreateResult = await _userManager.CreateAsync(universityAdminUser, uniAdminPassword);
+            if (uniAdminCreateResult.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(universityAdminUser, "UniversityAdmin");
+
+                await _auditLog.LogAsync(
+                    "UniversityAdminAccountCreated",
+                    userId: _userManager.GetUserId(User),
+                    universityCode: university.Code,
+                    entityType: "User",
+                    entityId: universityAdminUser.Id,
+                    details: $"Email: {vm.UniversityAdminEmail}");
+
+                credentialMessages.Add($"University admin — email: {vm.UniversityAdminEmail}, password: {uniAdminPassword}");
+            }
+            else
+            {
+                credentialMessages.Add("University admin login creation FAILED — you can add one manually later.");
+            }
+
+            TempData["Success"] = $"{university.Name} added and synced (status: {university.LastSyncStatus}). " +
+                string.Join(" | ", credentialMessages) +
+                " (save these now, they won't be shown again). Now choose which services to enable.";
 
             return RedirectToAction(nameof(Services), new { code = university.Code });
         }
@@ -195,11 +267,13 @@ namespace UniConnect.Controllers
             return password + "Aa1!"; // guarantee every required character class is present
         }
 
-        // ---------- SYNC NOW (manual trigger) ----------------------------------
+        // ---------- SYNC NOW (manual trigger) — either role, own university only ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SyncNow(string code)
         {
+            if (!await CanManageAsync(code)) return Forbid();
+
             var university = await _db.Universities.FindAsync(code);
             if (university is null) return NotFound();
 
@@ -211,9 +285,13 @@ namespace UniConnect.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ---------- TOGGLE ACTIVE ---------------------------------------------
+        // ---------- TOGGLE ACTIVE — Super Admin only ----------------------------
+        // Deactivating a WHOLE university is a platform-level action — a
+        // University Admin self-service-disabling their own institution
+        // would be an odd, risky thing to allow.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ToggleActive(string code)
         {
             var university = await _db.Universities.FindAsync(code);
@@ -226,18 +304,10 @@ namespace UniConnect.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ---------- DELETE (full teardown) -------------------------------------
-        // Removes the university and everything scoped to it: courses,
-        // enrollments (cascade from students), tickets/ticket categories, the
-        // service-enablement rows, and any accounts registered under it.
-        //
-        // This is meant for cleaning up test universities you just created —
-        // if real activity exists (rides, study groups, ticket responses, etc.
-        // created by an account tied to this university), those tables still
-        // protect themselves with a Restrict delete rule, so this will fail
-        // safely with a clear message rather than silently orphaning data.
+        // ---------- DELETE (full teardown) — Super Admin only -------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(string code)
         {
             var university = await _db.Universities.FindAsync(code);
@@ -245,19 +315,14 @@ namespace UniConnect.Controllers
 
             try
             {
-                // Students first (their Enrollments cascade automatically).
                 var students = await _db.Students.Where(s => s.UniversityCode == code).ToListAsync();
                 _db.Students.RemoveRange(students);
                 await _db.SaveChangesAsync();
 
-                // Any login accounts registered under this university —
-                // UserManager handles Identity's own related tables correctly.
                 var accounts = await _userManager.Users.Where(u => u.UniversityCode == code).ToListAsync();
                 foreach (var account in accounts)
                     await _userManager.DeleteAsync(account);
 
-                // The university itself — Courses, UniversityServices, and
-                // TicketCategories all cascade-delete automatically.
                 _db.Universities.Remove(university);
                 await _db.SaveChangesAsync();
 
@@ -276,6 +341,8 @@ namespace UniConnect.Controllers
         // ---------- SERVICES (GET): the enablement checklist for one university ---
         public async Task<IActionResult> Services(string code)
         {
+            if (!await CanManageAsync(code)) return Forbid();
+
             var university = await _db.Universities.FindAsync(code);
             if (university is null) return NotFound();
 
@@ -287,10 +354,8 @@ namespace UniConnect.Controllers
 
             ViewBag.University = university;
             ViewBag.EnabledCodes = enabledCodes;
+            ViewBag.IsSuperAdmin = IsSuperAdmin;
 
-            // Populated by the sync job (or the immediate sync right after
-            // creation) — reads whatever was most recently pulled from this
-            // university's external API and cached locally.
             ViewBag.SyncedStudents = await _db.Students
                 .Where(s => s.UniversityCode == code)
                 .OrderBy(s => s.UniversityId)
@@ -304,14 +369,13 @@ namespace UniConnect.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Services(string code, List<string>? enabledServiceCodes)
         {
+            if (!await CanManageAsync(code)) return Forbid();
+
             var university = await _db.Universities.FindAsync(code);
             if (university is null) return NotFound();
 
             enabledServiceCodes ??= new List<string>();
 
-            // A university can only actually ENABLE a service that's really
-            // built — defense in depth in case the posted list is tampered
-            // with, matching the same rule ServiceCatalogService enforces.
             var implementedCodes = await _db.Services
                 .Where(s => s.IsImplemented)
                 .Select(s => s.Code)
@@ -356,7 +420,79 @@ namespace UniConnect.Controllers
                 details: $"Enabled services: {string.Join(", ", toEnable)}");
 
             TempData["Success"] = $"Services updated for {university.Name}.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(IsSuperAdmin ? nameof(Index) : nameof(Services), IsSuperAdmin ? null : new { code });
+        }
+
+        // ---------- UNIVERSITY SETTINGS (GET/POST) — FR-11 ----------------------
+        public async Task<IActionResult> Settings(string code)
+        {
+            if (!await CanManageAsync(code)) return Forbid();
+
+            var university = await _db.Universities.FindAsync(code);
+            if (university is null) return NotFound();
+
+            var settings = await GetOrCreateSettingsAsync(code);
+            ViewBag.University = university;
+            ViewBag.IsSuperAdmin = IsSuperAdmin;
+
+            return View(new UniversitySettingsEditVM
+            {
+                MaxStudyGroupMembers = settings.MaxStudyGroupMembers,
+                DefaultAttendanceGpsRadiusMeters = settings.DefaultAttendanceGpsRadiusMeters,
+                DefaultAttendanceGraceMinutes = settings.DefaultAttendanceGraceMinutes,
+                MaxClubMembers = settings.MaxClubMembers,
+                MaxRideRequestsPerWindow = settings.MaxRideRequestsPerWindow,
+                RideRequestWindowMinutes = settings.RideRequestWindowMinutes
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Settings(string code, UniversitySettingsEditVM vm)
+        {
+            if (!await CanManageAsync(code)) return Forbid();
+
+            var university = await _db.Universities.FindAsync(code);
+            if (university is null) return NotFound();
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.University = university;
+                ViewBag.IsSuperAdmin = IsSuperAdmin;
+                return View(vm);
+            }
+
+            var settings = await GetOrCreateSettingsAsync(code);
+            settings.MaxStudyGroupMembers = vm.MaxStudyGroupMembers;
+            settings.DefaultAttendanceGpsRadiusMeters = vm.DefaultAttendanceGpsRadiusMeters;
+            settings.DefaultAttendanceGraceMinutes = vm.DefaultAttendanceGraceMinutes;
+            settings.MaxClubMembers = vm.MaxClubMembers;
+            settings.MaxRideRequestsPerWindow = vm.MaxRideRequestsPerWindow;
+            settings.RideRequestWindowMinutes = vm.RideRequestWindowMinutes;
+            settings.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            await _auditLog.LogAsync(
+                "UniversitySettingsChanged",
+                userId: _userManager.GetUserId(User),
+                universityCode: code,
+                entityType: "UniversitySettings",
+                entityId: code);
+
+            TempData["Success"] = $"Settings updated for {university.Name}.";
+            return RedirectToAction(nameof(Settings), new { code });
+        }
+
+        private async Task<UniversitySettings> GetOrCreateSettingsAsync(string code)
+        {
+            var settings = await _db.UniversitySettings.FindAsync(code);
+            if (settings is null)
+            {
+                settings = new UniversitySettings { UniversityCode = code };
+                _db.UniversitySettings.Add(settings);
+                await _db.SaveChangesAsync();
+            }
+            return settings;
         }
     }
 }

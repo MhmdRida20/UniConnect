@@ -84,16 +84,18 @@
 
                     <div class="row g-3">
                         <div class="col-sm-7">
-                            <label asp-for="VehicleType" class="form-label"></label>
-                            <select asp-for="VehicleType" class="form-select">
+                            <label asp-for="VehicleId" class="form-label"></label>
+                            <select asp-for="VehicleId" class="form-select">
                                 <option value="">-- Select --</option>
-                                <option>Sedan</option>
-                                <option>SUV</option>
-                                <option>Hatchback</option>
-                                <option>Van</option>
-                                <option>Motorcycle</option>
+                                @foreach (var v in (ViewBag.Vehicles as List<UniConnect.Models.Vehicle> ?? new()))
+                                {
+                                    <option value="@v.Id">@v.VehicleType — @v.Color (@v.PlateNumber, @v.SeatCapacity seats)</option>
+                                }
                             </select>
-                            <span asp-validation-for="VehicleType" class="text-danger"></span>
+                            <span asp-validation-for="VehicleId" class="text-danger"></span>
+                            <small class="text-muted d-block mt-1">
+                                <a asp-controller="Vehicles" asp-action="Create">Register another vehicle</a>
+                            </small>
                         </div>
                         <div class="col-sm-5">
                             <label asp-for="TotalSeats" class="form-label"></label>

@@ -4,7 +4,14 @@
     Layout = "~/Views/Shared/_PortalLayout.cshtml";
     var roleNames = ViewBag.RoleNames as Dictionary<string, List<string>> ?? new();
     var currentUserId = ViewBag.CurrentUserId as string;
+    var isSuperAdmin = ViewBag.IsSuperAdmin is true;
     var users = Model.ToList();
+
+    // Mirrors AdminUsersController's own allow-lists — kept in sync so the
+    // dropdown never offers a role the server would reject anyway.
+    var assignableRoles = isSuperAdmin
+        ? new[] { "Student", "Instructor", "DepartmentStaff", "UniversityAdmin" }
+        : new[] { "Student", "Instructor", "DepartmentStaff" };
 }
 
 @section Styles {
@@ -17,7 +24,7 @@
 </form>
 
 <div class="st-table">
-    <div class="st-table-head" style="grid-template-columns: 1.3fr 1.2fr .9fr .9fr 130px !important;">
+    <div class="st-table-head" style="grid-template-columns: 1.2fr 1.1fr .8fr .7fr 260px !important;">
         <span>Name</span>
         <span>Email</span>
         <span>Role</span>
@@ -27,7 +34,11 @@
     @foreach (var u in users)
     {
         var roles = roleNames.TryGetValue(u.Id, out var r) ? r : new List<string>();
-        <div class="st-table-row" style="cursor:default; grid-template-columns: 1.3fr 1.2fr .9fr .9fr 130px !important;">
+        var isChangeable = u.Id != currentUserId
+            && !roles.Contains("Admin") && !roles.Contains("Company")
+            && (isSuperAdmin || !roles.Contains("UniversityAdmin"));
+
+        <div class="st-table-row" style="cursor:default; grid-template-columns: 1.2fr 1.1fr .8fr .7fr 260px !important;">
             <span class="st-title-cell">@u.FullName</span>
             <span class="text-muted small">@u.Email</span>
             <span>@(roles.Any() ? string.Join(", ", roles) : "Student")</span>
@@ -39,20 +50,38 @@
             {
                 <span class="uc-pill uc-pill-green">Active</span>
             }
+
             @if (u.Id == currentUserId)
             {
                 <span class="text-muted small">(you)</span>
             }
             else
             {
-                <form asp-action="ToggleSuspend" method="post"
-                      data-confirm="@(u.IsSuspended ? "Reactivate" : "Suspend") @u.FullName's account?">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="userId" value="@u.Id" />
-                    <button class="btn btn-sm @(u.IsSuspended ? "btn-outline-success" : "btn-outline-danger")">
-                        @(u.IsSuspended ? "Reactivate" : "Suspend")
-                    </button>
-                </form>
+                <div class="d-flex flex-wrap gap-1 justify-content-end">
+                    @if (isChangeable)
+                    {
+                        <form asp-action="ChangeRole" method="post" class="d-flex gap-1" data-loading
+                              data-confirm="Change @u.FullName's role?">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@u.Id" />
+                            <select name="newRole" class="form-select form-select-sm" style="width:auto;">
+                                @foreach (var role in assignableRoles)
+                                {
+                                    <option value="@role">@role</option>
+                                }
+                            </select>
+                            <button class="btn btn-outline-secondary btn-sm">Set</button>
+                        </form>
+                    }
+                    <form asp-action="ToggleSuspend" method="post"
+                          data-confirm="@(u.IsSuspended ? "Reactivate" : "Suspend") @u.FullName's account?">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userId" value="@u.Id" />
+                        <button class="btn btn-sm @(u.IsSuspended ? "btn-outline-success" : "btn-outline-danger")">
+                            @(u.IsSuspended ? "Reactivate" : "Suspend")
+                        </button>
+                    </form>
+                </div>
             }
         </div>
     }

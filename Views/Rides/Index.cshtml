@@ -21,7 +21,7 @@
             time = r.DepartureTime.ToString("ddd, MMM dd · HH:mm"),
             seats = r.AvailableSeats,
             totalSeats = r.TotalSeats,
-            vehicle = r.VehicleType,
+            vehicle = r.Vehicle != null ? r.Vehicle.VehicleType : "",
             url = Url.Action("Details", "Rides", new { id = r.Id })
         })
         .ToList();
@@ -117,11 +117,11 @@
                     || rr.Status == UniConnect.Models.RideRequestStatus.Accepted));
                     var soon = r.DepartureTime <= DateTime.Now.AddHours(6) && r.DepartureTime >= DateTime.Now;
                     var searchKey = ((r.DepartureLocation ?? "") + " " + (r.Destination ?? "") + " "
-                    + (r.VehicleType ?? "") + " " + (r.Driver?.FullName ?? "")).ToLower();
+                    + (r.Vehicle != null ? r.Vehicle.VehicleType : "") + " " + (r.Driver?.FullName ?? "")).ToLower();
                     <div class="col-12 col-sm-6 col-xl-4 ride-col" data-search="@searchKey">
                         <div class="ride-card uc-card uc-hover-lift" style="animation-delay:@(idx * 60)ms">
                             <div class="ride-card-head">
-                                <span class="ride-vehicle"><i class="bi bi-car-front"></i>@r.VehicleType</span>
+                                <span class="ride-vehicle"><i class="bi bi-car-front"></i>@r.Vehicle?.VehicleType</span>
                                 @if (soon)
                                 {
                                     <span class="uc-pill uc-pill-amber"><i class="bi bi-clock-fill"></i>Soon</span>

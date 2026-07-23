@@ -82,9 +82,16 @@ namespace UniConnect.Controllers
             var provider = await _providerResolver.GetProviderAsync(user.UniversityCode);
             var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.Id);
 
+            // FR-11: pre-fill with this university's configured defaults —
+            // the instructor can still adjust either value for this
+            // specific session before submitting.
+            var settings = await _db.UniversitySettings.FindAsync(user.UniversityCode);
+
             var vm = new AttendanceSessionCreateVM
             {
-                AvailableCourses = new SelectList(courses, "CourseCode", "CourseName")
+                AvailableCourses = new SelectList(courses, "CourseCode", "CourseName"),
+                GpsRadiusMeters = settings?.DefaultAttendanceGpsRadiusMeters ?? 100,
+                GracePeriodMinutes = settings?.DefaultAttendanceGraceMinutes ?? 10
             };
             return View(vm);
         }

@@ -74,7 +74,7 @@
 @* ── Header ── *@
 <div class="rd-header">
     <div class="rd-route">
-        <span class="ride-vehicle"><i class="bi bi-car-front"></i>@Model.VehicleType</span>
+        <span class="ride-vehicle"><i class="bi bi-car-front"></i>@Model.Vehicle?.VehicleType</span>
         <h1>
             @Model.DepartureLocation
             <i class="bi bi-arrow-right rd-arrow"></i>
@@ -132,7 +132,7 @@
         <div class="rd-panel">
             <h2 class="rd-panel-title"><i class="bi bi-info-circle"></i> Ride Info</h2>
             <div class="rd-info-grid">
-                <div class="rd-info"><span class="rd-info-lbl">Vehicle</span><span class="rd-info-val">@Model.VehicleType</span></div>
+                <div class="rd-info"><span class="rd-info-lbl">Vehicle</span><span class="rd-info-val">@Model.Vehicle?.VehicleType (@Model.Vehicle?.Color, plate @Model.Vehicle?.PlateNumber)</span></div>
                 <div class="rd-info"><span class="rd-info-lbl">Seats available</span><span class="rd-info-val">@Model.AvailableSeats of @Model.TotalSeats</span></div>
                 <div class="rd-info"><span class="rd-info-lbl">Departs</span><span class="rd-info-val">@Model.DepartureTime.ToString("MMM dd, HH:mm")</span></div>
                 <div class="rd-info"><span class="rd-info-lbl">Status</span><span class="rd-info-val">@Model.Status</span></div>

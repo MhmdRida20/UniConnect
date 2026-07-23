@@ -32,19 +32,22 @@ namespace UniConnect.Controllers
         private readonly IHubContext<StudyGroupHub> _hub;
         private readonly IUniversityProviderResolver _providerResolver;
         private readonly UniConnect.Services.AuditLogService _auditLog;
+        private readonly UniConnect.Services.NotificationService _notifications;
 
         public StudyGroupsController(
             ApplicationDbContext db,
             UserManager<ApplicationUser> userManager,
             IHubContext<StudyGroupHub> hub,
             IUniversityProviderResolver providerResolver,
-            UniConnect.Services.AuditLogService auditLog)
+            UniConnect.Services.AuditLogService auditLog,
+            UniConnect.Services.NotificationService notifications)
         {
             _db = db;
             _userManager = userManager;
             _hub = hub;
             _providerResolver = providerResolver;
             _auditLog = auditLog;
+            _notifications = notifications;
         }
 
         // Broadcasts to everyone currently viewing this group's Details page —
@@ -131,6 +134,15 @@ namespace UniConnect.Controllers
             if (vm.MinMembers > vm.MaxMembers)
                 ModelState.AddModelError(nameof(vm.MinMembers),
                     "Minimum members cannot exceed maximum members.");
+
+            // FR-11: enforce the university's configured ceiling — a
+            // student can still choose a SMALLER max for their own group,
+            // never a larger one than the institution allows.
+            var settings = await _db.UniversitySettings.FindAsync(user.UniversityCode);
+            var maxAllowed = settings?.MaxStudyGroupMembers ?? 10;
+            if (vm.MaxMembers > maxAllowed)
+                ModelState.AddModelError(nameof(vm.MaxMembers),
+                    $"Your university caps study groups at {maxAllowed} members.");
 
             if (!ModelState.IsValid)
             {
@@ -292,6 +304,12 @@ namespace UniConnect.Controllers
             await BroadcastGroupUpdated(id);
             await BroadcastListChanged();
 
+            await _notifications.NotifyAsync(
+                group.CreatorId,
+                "New join request",
+                $"{user.FullName} wants to join \"{group.GroupName}\".",
+                $"/StudyGroups/Details/{id}");
+
             TempData["Success"] = "Your request to join has been sent to the group creator.";
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -359,6 +377,12 @@ namespace UniConnect.Controllers
             await BroadcastGroupUpdated(group.Id);
             await BroadcastListChanged();
 
+            await _notifications.NotifyAsync(
+                membership.UserId,
+                "Study group request approved",
+                $"You've been approved to join \"{group.GroupName}\".",
+                $"/StudyGroups/Details/{group.Id}");
+
             TempData["Success"] = "Member approved.";
             return RedirectToAction(nameof(Details), new { id = group.Id });
         }
@@ -387,11 +411,18 @@ namespace UniConnect.Controllers
 
             // Remove the request outright rather than leaving a "Rejected" row
             // lying around — the requester can request again later if they want.
+            var rejectedUserId = membership.UserId;
             _db.StudyGroupMembers.Remove(membership);
             await _db.SaveChangesAsync();
 
             await BroadcastGroupUpdated(group.Id);
             await BroadcastListChanged();
+
+            await _notifications.NotifyAsync(
+                rejectedUserId,
+                "Study group request declined",
+                $"Your request to join \"{group.GroupName}\" was declined.",
+                "/StudyGroups/Index");
 
             TempData["Success"] = "Request rejected.";
             return RedirectToAction(nameof(Details), new { id = group.Id });

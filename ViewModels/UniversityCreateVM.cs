@@ -32,5 +32,15 @@ namespace UniConnect.ViewModels
         [StringLength(150)]
         [Display(Name = "Career Services Email")]
         public string CareerServicesEmail { get; set; } = string.Empty;
+
+        // Auto-creates this university's own scoped "University Admin"
+        // account — distinct from the global Super Admin — so the
+        // institution can manage its own services/users/reports without
+        // needing platform-wide access.
+        [Required(ErrorMessage = "Please enter the university admin's real email address.")]
+        [EmailAddress]
+        [StringLength(150)]
+        [Display(Name = "University Admin Email")]
+        public string UniversityAdminEmail { get; set; } = string.Empty;
     }
 }

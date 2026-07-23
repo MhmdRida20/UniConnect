@@ -25,6 +25,8 @@ namespace UniConnect.Controllers
             {
                 if (User.IsInRole("Admin"))
                     return RedirectToAction("Index", "AdminUniversities");
+                if (User.IsInRole("UniversityAdmin"))
+                    return RedirectToAction("Index", "AdminUniversities");
                 if (User.IsInRole("DepartmentStaff"))
                     return RedirectToAction("Index", "StaffTickets");
                 if (User.IsInRole("Company"))

@@ -61,6 +61,16 @@
     </div>
 </form>
 
+@if (Model.SsoConfigured)
+{
+    <div class="auth-divider"><span>or</span></div>
+    <form asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+        <button type="submit" class="btn btn-outline-secondary w-100" name="provider" value="OIDC">
+            <svg class="hgi hgi-sm me-1"><use href="#i-building"></use></svg>Sign in with University SSO
+        </button>
+    </form>
+}
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }

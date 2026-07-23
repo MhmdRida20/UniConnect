@@ -46,6 +46,13 @@ namespace UniConnect.Models
         // lifetime remains.
         public bool IsSuspended { get; set; } = false;
 
+        // FR-06: editable profile field — a relative path under
+        // wwwroot/uploads/profiles/, or null if the user hasn't set one.
+        // PhoneNumber itself is already provided by the IdentityUser base
+        // class; only this and its editing UI were actually missing.
+        [StringLength(300)]
+        public string? ProfilePicturePath { get; set; }
+
         // Navigation: study groups this user has joined
         public virtual ICollection<StudyGroupMember> StudyGroupMemberships { get; set; }
             = new List<StudyGroupMember>();

@@ -3,7 +3,8 @@
     ViewData["Title"] = Model.Title;
     Layout = "~/Views/Shared/_PortalLayout.cshtml";
     var universities = ViewBag.Universities as List<UniConnect.Models.University> ?? new();
-    var showUniversityFilter = ViewBag.Type as string != "Internships" && ViewBag.Type as string != "Notifications";
+    var isSuperAdmin = ViewBag.IsSuperAdmin is true;
+    var showUniversityFilter = isSuperAdmin && ViewBag.Type as string != "Internships" && ViewBag.Type as string != "Notifications";
 }
 
 @section Styles {

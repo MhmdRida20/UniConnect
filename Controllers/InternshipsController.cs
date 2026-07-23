@@ -85,9 +85,11 @@ namespace UniConnect.Controllers
 
             var internships = await query.ToListAsync();
 
-            // Fetched once for the whole request — see GetStudentMajorAsync's
-            // own comment for why this must not happen inside the loop below.
+            // Fetched/built once for the whole request — see
+            // GetStudentMajorAsync's and BuildCorpusAsync's own comments for
+            // why these must not happen inside the loop below.
             var studentMajor = await GetStudentMajorAsync(user);
+            var corpus = await _matching.BuildCorpusAsync();
 
             // "Show only internships for my major" — only actually filters
             // if we know the student's major; if we don't (undeclared, or
@@ -114,7 +116,7 @@ namespace UniConnect.Controllers
             var scored = new List<(Internship Internship, int Score, bool CourseDataAvailable)>();
             foreach (var i in internships)
             {
-                var result = await _matching.CalculateAsync(user, i, studentMajor);
+                var result = await _matching.CalculateAsync(user, i, studentMajor, corpus);
                 scored.Add((i, result.Score, result.CourseDataAvailable));
             }
 
@@ -159,7 +161,8 @@ namespace UniConnect.Controllers
                 return NotFound();
 
             var studentMajor = await GetStudentMajorAsync(user);
-            var result = await _matching.CalculateAsync(user, internship, studentMajor);
+            var corpus = await _matching.BuildCorpusAsync();
+            var result = await _matching.CalculateAsync(user, internship, studentMajor, corpus);
             ViewBag.Score = result.Score;
             ViewBag.CourseDataAvailable = result.CourseDataAvailable;
 
@@ -242,7 +245,8 @@ namespace UniConnect.Controllers
             }
 
             var studentMajor = await GetStudentMajorAsync(user);
-            var scoreResult = await _matching.CalculateAsync(user, internship, studentMajor);
+            var corpus = await _matching.BuildCorpusAsync();
+            var scoreResult = await _matching.CalculateAsync(user, internship, studentMajor, corpus);
 
             var application = new InternshipApplication
             {

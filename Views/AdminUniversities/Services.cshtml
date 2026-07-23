@@ -6,6 +6,7 @@
     var enabledCodes = ViewBag.EnabledCodes as List<string> ?? new();
     var services = Model.ToList();
     var syncedStudents = ViewBag.SyncedStudents as List<UniConnect.Models.Student>;
+    var isSuperAdmin = ViewBag.IsSuperAdmin is true;
 
     // The Service catalog stores a Bootstrap-Icons class (e.g. "bi-people")
     // for the legacy icon font — mapped here to this page's Hugeicons
@@ -26,9 +27,19 @@
     <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
 }
 
-<a asp-action="Index" class="form-back mb-3 d-inline-flex align-items-center gap-1">
-    <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to universities
-</a>
+@if (isSuperAdmin)
+{
+    <a asp-action="Index" class="form-back mb-3 d-inline-flex align-items-center gap-1">
+        <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to universities
+    </a>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="mb-0">Services — @university?.Name</h2>
+    <a asp-action="Settings" asp-route-code="@university?.Code" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-sliders me-1"></i>Service Settings
+    </a>
+</div>
 
 @if (syncedStudents is { Count: > 0 })
 {

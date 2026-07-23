@@ -20,6 +20,7 @@ namespace UniConnect.Data
 
         // Multi-university adapter core
         public DbSet<University> Universities => Set<University>();
+        public DbSet<UniversitySettings> UniversitySettings => Set<UniversitySettings>();
         public DbSet<Service> Services => Set<Service>();
         public DbSet<UniversityService> UniversityServices => Set<UniversityService>();
 
@@ -35,6 +36,7 @@ namespace UniConnect.Data
         // Ride Sharing module
         public DbSet<Ride> Rides => Set<Ride>();
         public DbSet<RideRequest> RideRequests => Set<RideRequest>();
+        public DbSet<Vehicle> Vehicles => Set<Vehicle>();
 
         // Complaints & Ticketing module
         public DbSet<TicketCategory> TicketCategories => Set<TicketCategory>();
@@ -201,6 +203,27 @@ namespace UniConnect.Data
                 .WithMany()
                 .HasForeignKey(r => r.DriverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // A vehicle can't be deleted while a ride still references it —
+            // protects historical ride data, same philosophy as University
+            // deletion's own safety check elsewhere in this file.
+            builder.Entity<Ride>()
+                .HasOne(r => r.Vehicle)
+                .WithMany()
+                .HasForeignKey(r => r.VehicleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Vehicle>()
+                .HasOne(v => v.User)
+                .WithMany()
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UniversitySettings>()
+                .HasOne(s => s.University)
+                .WithOne()
+                .HasForeignKey<UniversitySettings>(s => s.UniversityCode)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<RideRequest>()
                 .HasOne(rr => rr.Ride)

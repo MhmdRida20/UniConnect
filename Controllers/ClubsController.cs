@@ -30,6 +30,7 @@ namespace UniConnect.Controllers
         private readonly IHubContext<ClubHub> _hub;
         private readonly IWebHostEnvironment _env;
         private readonly UniConnect.Services.AuditLogService _auditLog;
+        private readonly UniConnect.Services.NotificationService _notifications;
 
         private static readonly string[] OfficerRoleNames = { "President", "VicePresident", "Officer" };
 
@@ -38,13 +39,15 @@ namespace UniConnect.Controllers
             UserManager<ApplicationUser> userManager,
             IHubContext<ClubHub> hub,
             IWebHostEnvironment env,
-            UniConnect.Services.AuditLogService auditLog)
+            UniConnect.Services.AuditLogService auditLog,
+            UniConnect.Services.NotificationService notifications)
         {
             _db = db;
             _userManager = userManager;
             _hub = hub;
             _env = env;
             _auditLog = auditLog;
+            _notifications = notifications;
         }
 
         private Task BroadcastClubUpdated(int clubId)
@@ -84,6 +87,13 @@ namespace UniConnect.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             if (user is null) return Challenge();
+
+            // FR-11: enforce the university's configured ceiling, if one is
+            // set — a club can still choose a SMALLER cap for itself, or
+            // none at all, never a larger one than the institution allows.
+            var settings = await _db.UniversitySettings.FindAsync(user.UniversityCode);
+            if (settings?.MaxClubMembers is int universityMax && vm.MaxMembers is int requested && requested > universityMax)
+                ModelState.AddModelError(nameof(vm.MaxMembers), $"Your university caps club membership at {universityMax}.");
 
             if (!ModelState.IsValid) return View(vm);
 
@@ -243,6 +253,18 @@ namespace UniConnect.Controllers
             await BroadcastClubUpdated(id);
             await BroadcastListChanged();
 
+            // Notify every current officer, not just one — any of them can
+            // approve/reject, so all of them should know a request is waiting.
+            var officers = club.Members.Where(m => m.Status == ClubMembershipStatus.Approved && OfficerRoleNames.Contains(m.Role.ToString()));
+            foreach (var officer in officers)
+            {
+                await _notifications.NotifyAsync(
+                    officer.UserId,
+                    "New club join request",
+                    $"{user.FullName} wants to join \"{club.ClubName}\".",
+                    $"/Clubs/Details/{id}");
+            }
+
             TempData["Success"] = "Your request to join has been sent to the club officers.";
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -348,6 +370,13 @@ namespace UniConnect.Controllers
             });
             await BroadcastClubUpdated(club.Id);
             await BroadcastListChanged();
+
+            await _notifications.NotifyAsync(
+                membership.UserId,
+                "Club join request approved",
+                $"You've been approved to join \"{club.ClubName}\".",
+                $"/Clubs/Details/{club.Id}");
+
             TempData["Success"] = "Member approved.";
             return RedirectToAction(nameof(Details), new { id = club.Id });
         }

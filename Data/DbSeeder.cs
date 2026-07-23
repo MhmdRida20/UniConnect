@@ -59,6 +59,12 @@ namespace UniConnect.Data
                 await db.SaveChangesAsync();
             }
 
+            if (!await db.UniversitySettings.AnyAsync(s => s.UniversityCode == DefaultUniversityCode))
+            {
+                db.UniversitySettings.Add(new UniversitySettings { UniversityCode = DefaultUniversityCode });
+                await db.SaveChangesAsync();
+            }
+
             // ---- 0b. SERVICE CATALOG (Services.docx §"Service Extensibility") ---
             if (!await db.Services.AnyAsync())
             {
@@ -109,7 +115,8 @@ namespace UniConnect.Data
             const string AdminRole = "Admin";
             const string InstructorRole = "Instructor";
             const string CompanyRole = "Company";
-            foreach (var roleName in new[] { StudentRole, DepartmentStaffRole, AdminRole, InstructorRole, CompanyRole })
+            const string UniversityAdminRole = "UniversityAdmin";
+            foreach (var roleName in new[] { StudentRole, DepartmentStaffRole, AdminRole, InstructorRole, CompanyRole, UniversityAdminRole })
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                     await roleManager.CreateAsync(new IdentityRole(roleName));
@@ -284,6 +291,26 @@ namespace UniConnect.Data
                     }
                 );
                 await db.SaveChangesAsync();
+            }
+
+            // ---- 0j. DEFAULT UNIVERSITY'S UNIVERSITY ADMIN ACCOUNT --------------
+            // Scoped to just this one university — distinct from the global
+            // "Admin" (Super Admin) role, which manages every university.
+            const string universityAdminEmail = "universityadmin@uniconnectdemo.edu";
+            if (await userManager.FindByEmailAsync(universityAdminEmail) is null)
+            {
+                var universityAdminUser = new ApplicationUser
+                {
+                    UserName = universityAdminEmail,
+                    Email = universityAdminEmail,
+                    EmailConfirmed = true,
+                    FullName = "UniConnect Demo University — Admin",
+                    UniversityCode = DefaultUniversityCode,
+                    UniversityId = "UNIADMIN-DEFAULT",
+                };
+                var uniAdminCreateResult = await userManager.CreateAsync(universityAdminUser, "UniAdmin@12345");
+                if (uniAdminCreateResult.Succeeded)
+                    await userManager.AddToRoleAsync(universityAdminUser, UniversityAdminRole);
             }
 
             // ---- 1. COURSES -----------------------------------------------------

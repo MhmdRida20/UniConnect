@@ -1,0 +1,83 @@
+@model UniConnect.ViewModels.UniversitySettingsEditVM
+@{
+    var university = ViewBag.University as UniConnect.Models.University;
+    ViewData["Title"] = "Settings — " + university?.Name;
+    Layout = "~/Views/Shared/_PortalLayout.cshtml";
+    var isSuperAdmin = ViewBag.IsSuperAdmin is true;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
+}
+
+@if (isSuperAdmin)
+{
+    <a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to universities</a>
+}
+
+<h2 class="mb-1">Service Settings — @university?.Name</h2>
+<p class="text-muted small mb-4">
+    These are university-wide defaults and limits — individual students/instructors can still set their own
+    values within these bounds when creating a study group, attendance session, club, or ride request.
+</p>
+
+<div class="uc-form-card" style="max-width:640px;">
+    <form asp-action="Settings" asp-route-code="@university?.Code" method="post" data-loading>
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <h5 class="mb-2"><i class="bi bi-people me-1"></i>Study Groups</h5>
+        <div class="mb-3">
+            <label asp-for="MaxStudyGroupMembers" class="form-label"></label>
+            <input asp-for="MaxStudyGroupMembers" type="number" class="form-control" />
+            <span asp-validation-for="MaxStudyGroupMembers" class="text-danger"></span>
+            <small class="text-muted d-block mt-1">No group at this university can be created larger than this.</small>
+        </div>
+
+        <hr />
+        <h5 class="mb-2"><i class="bi bi-qr-code me-1"></i>Smart Attendance</h5>
+        <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+                <label asp-for="DefaultAttendanceGpsRadiusMeters" class="form-label"></label>
+                <input asp-for="DefaultAttendanceGpsRadiusMeters" type="number" class="form-control" />
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="DefaultAttendanceGraceMinutes" class="form-label"></label>
+                <input asp-for="DefaultAttendanceGraceMinutes" type="number" class="form-control" />
+            </div>
+        </div>
+        <small class="text-muted d-block mb-3">
+            Pre-filled when an instructor creates a new session — they can still adjust it for that specific session.
+        </small>
+
+        <hr />
+        <h5 class="mb-2"><i class="bi bi-flag me-1"></i>Clubs</h5>
+        <div class="mb-3">
+            <label asp-for="MaxClubMembers" class="form-label"></label>
+            <input asp-for="MaxClubMembers" type="number" class="form-control" placeholder="Leave blank for no limit" />
+            <span asp-validation-for="MaxClubMembers" class="text-danger"></span>
+        </div>
+
+        <hr />
+        <h5 class="mb-2"><i class="bi bi-car-front me-1"></i>Ride Sharing</h5>
+        <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+                <label asp-for="MaxRideRequestsPerWindow" class="form-label"></label>
+                <input asp-for="MaxRideRequestsPerWindow" type="number" class="form-control" />
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="RideRequestWindowMinutes" class="form-label"></label>
+                <input asp-for="RideRequestWindowMinutes" type="number" class="form-control" />
+            </div>
+        </div>
+        <small class="text-muted d-block mb-3">
+            Limits how many ride requests one student can send within this many minutes, to prevent spam.
+        </small>
+
+        <button type="submit" class="btn btn-primary w-100 mt-2"><i class="bi bi-check-lg me-1"></i>Save Settings</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

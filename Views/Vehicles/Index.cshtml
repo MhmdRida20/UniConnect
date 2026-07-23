@@ -1,0 +1,63 @@
+@model IEnumerable<UniConnect.Models.Vehicle>
+@{
+    ViewData["Title"] = "My Vehicles";
+    var vehicles = Model.ToList();
+    var inUseIds = ViewBag.VehicleIdsInUse as List<int> ?? new();
+}
+
+<div class="uc-hero" style="padding:1.5rem 0;">
+    <div class="uc-hero-inner d-flex justify-content-between align-items-end flex-wrap gap-2">
+        <div>
+            <p class="uc-eyebrow"><i class="bi bi-car-front"></i>Ride Sharing</p>
+            <h1 class="uc-hero-title mb-0" style="font-size:1.6rem;">My Vehicles</h1>
+        </div>
+        <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Register Vehicle</a>
+    </div>
+</div>
+
+<div class="container" style="padding-top:1.25rem; max-width:760px;">
+    <p class="text-muted small">
+        Registering a vehicle here is how you become a driver — once you have at least one
+        <strong>Active</strong> vehicle, you can offer rides with it.
+    </p>
+
+    @if (!vehicles.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-car-front"></i></span>
+            <h5>No vehicles registered yet</h5>
+            <p>Register a vehicle to start offering rides to other students.</p>
+            <a class="btn btn-primary mt-2" asp-action="Create">Register Vehicle</a>
+        </div>
+    }
+    else
+    {
+        @foreach (var v in vehicles)
+        {
+            var inUse = inUseIds.Contains(v.Id);
+            <div class="uc-form-card mb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <strong>@v.VehicleType</strong> · @v.Color
+                    <span class="uc-pill @(v.Status == UniConnect.Models.VehicleStatus.Active ? "uc-pill-green" : "uc-pill-grey") ms-2">@v.Status</span>
+                    <p class="text-muted small mb-0">Plate: @v.PlateNumber · @v.SeatCapacity seats</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form asp-action="ToggleStatus" method="post" data-loading>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@v.Id" />
+                        <button class="btn btn-outline-secondary btn-sm">
+                            @(v.Status == UniConnect.Models.VehicleStatus.Active ? "Set Inactive" : "Set Active")
+                        </button>
+                    </form>
+                    <form asp-action="Delete" method="post" data-confirm="Remove this vehicle?">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@v.Id" />
+                        <button class="btn btn-outline-danger btn-sm" @(inUse ? "disabled title=\"In use by an active ride\"" : "")>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+</div>

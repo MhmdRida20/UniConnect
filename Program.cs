@@ -8,6 +8,7 @@
 //      there is no mock data path anywhere in this project.
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using UniConnect.Data;
 using UniConnect.Models;
@@ -37,6 +38,38 @@ builder.Services
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// FR-03: SSO/OIDC as the primary login method — registered ONLY when a real
+// university identity provider's details are actually configured (appsettings
+// "Oidc" section, or environment/user-secrets in production). Left
+// unconfigured by default since there's no real IdP to connect to yet; the
+// Login page only shows the "Sign in with University SSO" button when this
+// is active (see Login.cshtml). The provider name "OIDC" here must match
+// whatever name the button's ExternalLogin challenge uses.
+//
+// IMPORTANT for whoever wires this up against a real IdP later: ASP.NET
+// Core Identity's DEFAULT external-login callback page (from
+// AddDefaultIdentity's Identity UI library, no custom file needed for it to
+// work) handles linking an external identity to a local account — but its
+// built-in "create a local account" step is generic and does NOT verify a
+// University ID against the adapter the way our custom Register page does.
+// That callback would need its own customization before a real go-live,
+// so a first-time SSO sign-in still gets properly verified against real
+// student records, not just trusted at face value.
+var oidcAuthority = builder.Configuration["Oidc:Authority"];
+if (!string.IsNullOrWhiteSpace(oidcAuthority))
+{
+    builder.Services.AddAuthentication().AddOpenIdConnect("OIDC", options =>
+    {
+        options.Authority = oidcAuthority;
+        options.ClientId = builder.Configuration["Oidc:ClientId"];
+        options.ClientSecret = builder.Configuration["Oidc:ClientSecret"];
+        options.ResponseType = "code";
+        options.SaveTokens = true;
+        options.Scope.Add("email");
+        options.Scope.Add("profile");
+    });
+}
+
 // FR-92 audit logging: "User login" — hooked here rather than in a
 // scaffolded Login page, since ASP.NET Core Identity's sign-in cookie
 // fires this event on every successful login regardless of which page
@@ -52,6 +85,14 @@ builder.Services.ConfigureApplicationCookie(options =>
         var user = await userManager.GetUserAsync(context.Principal!);
         if (user is not null)
             await auditLog.LogAsync("Login", userId: user.Id, universityCode: user.UniversityCode, entityType: "User", entityId: user.Id);
+
+        // Recorded so SessionAnomalyMiddleware can later notice if this same
+        // signed-in session starts being used from a very different IP —
+        // informational only, see that file's own comment for why it
+        // doesn't block or terminate anything automatically.
+        var loginIp = context.HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (!string.IsNullOrEmpty(loginIp))
+            context.Principal!.Identities.First().AddClaim(new System.Security.Claims.Claim("LoginIpAddress", loginIp));
     };
 });
 
@@ -87,6 +128,12 @@ builder.Services.AddScoped<UniConnect.Services.NotificationService>();
 builder.Services.AddScoped<UniConnect.Services.MatchingScoreService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UniConnect.Services.AuditLogService>();
+
+// FR-92 edge case: log unauthorized access attempts — wraps the default
+// authorization result handler to also record an audit entry whenever a
+// logged-in user is denied access for lacking the right role.
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler,
+    UniConnect.Middleware.AuditingAuthorizationMiddlewareResultHandler>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -135,6 +182,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseMiddleware<UniConnect.Middleware.SuspendedUserMiddleware>();
+app.UseMiddleware<UniConnect.Middleware.SessionAnomalyMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(

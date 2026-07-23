@@ -1,0 +1,89 @@
+@model UniConnect.ViewModels.ProfileEditVM
+@{
+    ViewData["Title"] = "My Profile";
+    var user = ViewBag.User as UniConnect.Models.ApplicationUser;
+    var isPortalRole = User.IsInRole("Admin") || User.IsInRole("UniversityAdmin") || User.IsInRole("DepartmentStaff") || User.IsInRole("Company");
+    if (isPortalRole) { Layout = "~/Views/Shared/_PortalLayout.cshtml"; }
+}
+
+<div class="container" style="padding-top:1.5rem; max-width:640px;">
+    <h2 class="mb-3">My Profile</h2>
+
+    <div class="uc-form-card mb-3">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            @if (!string.IsNullOrWhiteSpace(user?.ProfilePicturePath))
+            {
+                <img src="@user.ProfilePicturePath" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:50%;" />
+            }
+            else
+            {
+                <div style="width:72px;height:72px;border-radius:50%;background:var(--uc-primary-tint,#e8f5ee);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.5rem;color:var(--uc-primary,#16a34a);">
+                    @(user?.FullName?.Substring(0, 1).ToUpper() ?? "?")
+                </div>
+            }
+            <div>
+                <strong style="font-size:1.1rem;">@user?.FullName</strong>
+                <p class="text-muted small mb-0">@user?.Email</p>
+            </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+            <div class="col-sm-6"><span class="text-muted small">University ID</span><br /><strong>@user?.UniversityId</strong></div>
+            <div class="col-sm-6"><span class="text-muted small">University</span><br /><strong>@user?.UniversityCode</strong></div>
+        </div>
+        <small class="text-muted d-block mb-3">
+            <i class="bi bi-info-circle"></i> Name, ID, and email come from your university's own records and can't be edited here.
+        </small>
+
+        <form asp-action="Edit" method="post" enctype="multipart/form-data" data-loading>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="PhoneNumber" class="form-label"></label>
+                <input asp-for="PhoneNumber" class="form-control" placeholder="e.g. +961 71 234 567" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ProfilePicture" class="form-label"></label>
+                <input asp-for="ProfilePicture" type="file" class="form-control" accept=".png,.jpg,.jpeg" />
+                <small class="text-muted d-block mt-1">PNG or JPEG, max 2 MB.</small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+            </div>
+        </form>
+
+        @if (!string.IsNullOrWhiteSpace(user?.ProfilePicturePath))
+        {
+            <form asp-action="RemovePicture" method="post" data-confirm="Remove your profile picture?" class="mt-2">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-danger">Remove Picture</button>
+            </form>
+        }
+    </div>
+
+    @if (User.IsInRole("Student") && (ViewBag.ShowCareerProfile is true || ViewBag.ShowVehicles is true))
+    {
+        <div class="uc-form-card d-flex flex-wrap gap-2">
+            @if (ViewBag.ShowCareerProfile is true)
+            {
+                <a asp-controller="CareerProfile" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-person-badge me-1"></i>Career Profile
+                </a>
+            }
+            @if (ViewBag.ShowVehicles is true)
+            {
+                <a asp-controller="Vehicles" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-car-front me-1"></i>My Vehicles
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

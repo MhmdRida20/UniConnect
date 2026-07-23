@@ -8,11 +8,32 @@ namespace UniConnect.Services
     public record MatchingScoreResult(int Score, bool CourseDataAvailable);
 
     /// <summary>
+    /// A shared reference "vocabulary" used to weigh terms by how
+    /// distinctive they are — see TextSimilarity.BuildIdf. Built ONCE per
+    /// request (not once per internship shown) via BuildCorpusAsync, then
+    /// passed into every CalculateAsync call, since the corpus doesn't
+    /// depend on which student or which specific internship is being
+    /// scored — rebuilding it per-listing on the browse page would be a
+    /// wasteful, redundant database query repeated for every single result.
+    /// </summary>
+    public class MatchingCorpus
+    {
+        public Dictionary<string, double> ListIdf { get; set; } = new();
+        public Dictionary<string, double> WordIdf { get; set; } = new();
+    }
+
+    /// <summary>
     /// FR-41: "The system shall calculate a matching score for each
     /// student-internship pair," based on: student skills vs. required
     /// skills, completed courses vs. recommended courses, declared major vs.
     /// relevant majors, career interests vs. internship field, and location
     /// preferences.
+    ///
+    /// Every one of those five comparisons is done with the SAME technique
+    /// — TF-IDF + cosine similarity (see TextSimilarity.cs) — rather than
+    /// five different ad-hoc string checks. This is what "a simple AI model
+    /// doing the comparisons" means here concretely: a real, standard
+    /// information-retrieval technique, applied uniformly.
     ///
     /// Weighted 0-100: Skills 35, Courses 25, Major 20, Interests 10,
     /// Location 10.
@@ -22,17 +43,10 @@ namespace UniConnect.Services
     /// weights are scaled up proportionally to still sum to 100 — a
     /// "partial matching score excluding courses," not a broken/zero one.
     ///
-    /// Major is handled differently on purpose: a student with no major on
-    /// file (undeclared, or the adapter simply doesn't have it) is treated
-    /// as NEUTRAL — full credit for that component, same as "no skills were
-    /// required" — rather than penalized or flagged. This is a deliberate
-    /// choice: a missing major is a normal, common state (e.g. a first-year
-    /// undeclared student), not a system failure worth surfacing to anyone.
-    /// The caller (InternshipsController) is responsible for fetching the
-    /// student's major ONCE per request via the adapter and passing it in —
-    /// not re-fetched here — since this method is called once PER LISTING
-    /// on the browse page, and re-fetching the same student's major on every
-    /// single one of those calls would be a redundant, wasteful adapter call.
+    /// Major and Skills/Courses with nothing specified are still handled as
+    /// NEUTRAL (full credit) — a student with no major on file, or a
+    /// posting with no required skills, is never penalized or flagged; see
+    /// each section below.
     /// </summary>
     public class MatchingScoreService
     {
@@ -55,44 +69,86 @@ namespace UniConnect.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Builds the shared IDF "vocabulary" from every internship
+        /// currently in the system — two separate corpora, since list-type
+        /// fields (skills/courses/majors) and free-text fields
+        /// (title/description/location) are tokenized differently (see
+        /// TextSimilarity) and shouldn't be mixed into one vocabulary.
+        /// Call this ONCE per request; reuse the result across every
+        /// CalculateAsync call in that same request.
+        /// </summary>
+        public async Task<MatchingCorpus> BuildCorpusAsync()
+        {
+            var internships = await _db.Internships
+                .Select(i => new { i.RequiredSkills, i.RecommendedCourses, i.RelevantMajors, i.Title, i.Description, i.Location })
+                .ToListAsync();
+
+            var listDocs = new List<List<string>>();
+            var wordDocs = new List<List<string>>();
+
+            foreach (var i in internships)
+            {
+                var listTokens = TextSimilarity.TokenizeAsItems(i.RequiredSkills)
+                    .Concat(TextSimilarity.TokenizeAsItems(i.RecommendedCourses))
+                    .Concat(TextSimilarity.TokenizeAsItems(i.RelevantMajors))
+                    .ToList();
+                if (listTokens.Count > 0) listDocs.Add(listTokens);
+
+                var wordTokens = TextSimilarity.TokenizeAsWords($"{i.Title} {i.Description} {i.Location}");
+                if (wordTokens.Count > 0) wordDocs.Add(wordTokens);
+            }
+
+            return new MatchingCorpus
+            {
+                ListIdf = TextSimilarity.BuildIdf(listDocs),
+                WordIdf = TextSimilarity.BuildIdf(wordDocs)
+            };
+        }
+
         /// <param name="studentMajor">
         /// The student's declared major, or null if they have none on file
         /// (or it couldn't be retrieved) — the caller fetches this once via
         /// IUniversityProvider.GetStudentInfoAsync and passes it in.
         /// </param>
-        public async Task<MatchingScoreResult> CalculateAsync(ApplicationUser student, Internship internship, string? studentMajor)
+        /// <param name="corpus">Built once per request via BuildCorpusAsync — see that method's comment.</param>
+        public async Task<MatchingScoreResult> CalculateAsync(
+            ApplicationUser student, Internship internship, string? studentMajor, MatchingCorpus corpus)
         {
             var profile = await _db.CareerProfiles.FirstOrDefaultAsync(p => p.UserId == student.Id);
             var skills = await _db.StudentSkills.Where(s => s.UserId == student.Id).ToListAsync();
 
-            // ---------- Skills ----------
-            var requiredSkills = ParseList(internship.RequiredSkills);
+            // ---------- Skills (TF-IDF + cosine similarity) ----------
+            var requiredSkillTokens = TextSimilarity.TokenizeAsItems(internship.RequiredSkills);
             double skillsScore;
-            if (requiredSkills.Count > 0)
+            if (requiredSkillTokens.Count > 0)
             {
-                var studentSkillNames = skills.Select(s => s.SkillName.Trim().ToLowerInvariant()).ToHashSet();
-                var matched = requiredSkills.Count(rs => studentSkillNames.Contains(rs.ToLowerInvariant()));
-                skillsScore = (double)matched / requiredSkills.Count;
+                var studentSkillTokens = skills.Select(s => s.SkillName.Trim().ToLowerInvariant()).ToList();
+                var requiredVec = TextSimilarity.ComputeVector(requiredSkillTokens, corpus.ListIdf);
+                var studentVec = TextSimilarity.ComputeVector(studentSkillTokens, corpus.ListIdf);
+                skillsScore = TextSimilarity.CosineSimilarity(requiredVec, studentVec);
             }
             else
             {
                 skillsScore = 1; // no specific skills required — don't penalize
             }
 
-            // ---------- Courses (adapter-backed; can fail — Edge Case) ----------
-            var recommendedCourses = ParseList(internship.RecommendedCourses);
+            // ---------- Courses (TF-IDF + cosine similarity; adapter-backed — Edge Case) ----------
+            var recommendedCourseTokens = TextSimilarity.TokenizeAsItems(internship.RecommendedCourses);
             double coursesScore = 0;
             var courseDataAvailable = true;
 
-            if (recommendedCourses.Count > 0)
+            if (recommendedCourseTokens.Count > 0)
             {
                 try
                 {
                     var provider = await _resolver.GetProviderAsync(student.UniversityCode);
                     var completedCourses = await provider.GetEnrolledCoursesAsync(student.UniversityCode, student.UniversityId);
-                    var completedCodes = completedCourses.Select(c => c.CourseCode.Trim().ToUpperInvariant()).ToHashSet();
-                    var matched = recommendedCourses.Count(rc => completedCodes.Contains(rc.ToUpperInvariant()));
-                    coursesScore = (double)matched / recommendedCourses.Count;
+                    var completedTokens = completedCourses.Select(c => c.CourseCode.Trim().ToLowerInvariant()).ToList();
+
+                    var recommendedVec = TextSimilarity.ComputeVector(recommendedCourseTokens, corpus.ListIdf);
+                    var completedVec = TextSimilarity.ComputeVector(completedTokens, corpus.ListIdf);
+                    coursesScore = TextSimilarity.CosineSimilarity(recommendedVec, completedVec);
                 }
                 catch (Exception ex)
                 {
@@ -107,44 +163,45 @@ namespace UniConnect.Services
                 coursesScore = 1; // no specific courses recommended
             }
 
-            // ---------- Major ----------
+            // ---------- Major (TF-IDF + cosine similarity) ----------
             // Neutral (full credit) if the posting doesn't specify relevant
             // majors, OR the student's major isn't known — never penalized,
-            // never flagged. See the class-level comment for why.
-            var relevantMajors = ParseList(internship.RelevantMajors);
+            // never flagged. A missing major is a normal, common state
+            // (e.g. a first-year undeclared student), not a system failure.
+            var relevantMajorTokens = TextSimilarity.TokenizeAsItems(internship.RelevantMajors);
             double majorScore;
-            if (relevantMajors.Count == 0 || string.IsNullOrWhiteSpace(studentMajor))
+            if (relevantMajorTokens.Count == 0 || string.IsNullOrWhiteSpace(studentMajor))
             {
                 majorScore = 1;
             }
             else
             {
-                majorScore = relevantMajors.Any(m => string.Equals(m.Trim(), studentMajor.Trim(), StringComparison.OrdinalIgnoreCase))
-                    ? 1 : 0;
+                var studentMajorTokens = TextSimilarity.TokenizeAsItems(studentMajor);
+                var relevantVec = TextSimilarity.ComputeVector(relevantMajorTokens, corpus.ListIdf);
+                var studentVec = TextSimilarity.ComputeVector(studentMajorTokens, corpus.ListIdf);
+                majorScore = TextSimilarity.CosineSimilarity(relevantVec, studentVec);
             }
 
-            // ---------- Career interests vs. internship "field" ----------
-            // No dedicated "field/category" attribute exists on Internship in
-            // the schema — interpreted as keyword overlap between the
-            // student's free-text interests and the posting's title/description,
-            // which is what "field" realistically maps to without that column.
+            // ---------- Career interests vs. internship "field" (TF-IDF + cosine similarity) ----------
             double interestsScore = 0;
             if (!string.IsNullOrWhiteSpace(profile?.CareerInterests))
             {
-                var interestWords = ParseWords(profile.CareerInterests);
-                var postingText = $"{internship.Title} {internship.Description}".ToLowerInvariant();
-                if (interestWords.Count > 0)
-                {
-                    var matched = interestWords.Count(w => postingText.Contains(w));
-                    interestsScore = Math.Min(1.0, (double)matched / interestWords.Count);
-                }
+                var interestTokens = TextSimilarity.TokenizeAsWords(profile.CareerInterests);
+                var postingTokens = TextSimilarity.TokenizeAsWords($"{internship.Title} {internship.Description}");
+                var interestVec = TextSimilarity.ComputeVector(interestTokens, corpus.WordIdf);
+                var postingVec = TextSimilarity.ComputeVector(postingTokens, corpus.WordIdf);
+                interestsScore = TextSimilarity.CosineSimilarity(interestVec, postingVec);
             }
 
-            // ---------- Location preference ----------
+            // ---------- Location preference (TF-IDF + cosine similarity) ----------
             double locationScore = 0;
             if (!string.IsNullOrWhiteSpace(profile?.PreferredLocation))
             {
-                locationScore = internship.Location.Contains(profile.PreferredLocation, StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+                var preferredTokens = TextSimilarity.TokenizeAsWords(profile.PreferredLocation);
+                var locationTokens = TextSimilarity.TokenizeAsWords(internship.Location);
+                var preferredVec = TextSimilarity.ComputeVector(preferredTokens, corpus.WordIdf);
+                var locationVec = TextSimilarity.ComputeVector(locationTokens, corpus.WordIdf);
+                locationScore = TextSimilarity.CosineSimilarity(preferredVec, locationVec);
             }
 
             // ---------- Combine, redistributing the course weight if unavailable ----------
@@ -153,8 +210,6 @@ namespace UniConnect.Services
 
             if (!courseDataAvailable)
             {
-                // Scale the remaining four weights up proportionally so they
-                // still sum to 100, rather than just losing 25 points outright.
                 var remainingTotal = SkillsWeight + MajorWeight + InterestsWeight + LocationWeight;
                 skillsW = (int)Math.Round(SkillsWeight * 100.0 / remainingTotal);
                 majorW = (int)Math.Round(MajorWeight * 100.0 / remainingTotal);
@@ -169,17 +224,5 @@ namespace UniConnect.Services
 
             return new MatchingScoreResult(finalScore, courseDataAvailable);
         }
-
-        private static List<string> ParseList(string? commaSeparated) =>
-            string.IsNullOrWhiteSpace(commaSeparated)
-                ? new List<string>()
-                : commaSeparated.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-
-        private static List<string> ParseWords(string freeText) =>
-            freeText.ToLowerInvariant()
-                .Split(new[] { ' ', ',', '.', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(w => w.Length > 3) // skip short/common words for a slightly cleaner signal
-                .Distinct()
-                .ToList();
     }
 }

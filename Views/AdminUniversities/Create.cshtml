@@ -77,6 +77,19 @@
                 </small>
             </div>
 
+            <div class="mb-3">
+                <label asp-for="UniversityAdminEmail" class="form-label"></label>
+                <div class="uc-input-icon">
+                    <svg class="hgi hgi-sm"><use href="#i-mail"></use></svg>
+                    <input asp-for="UniversityAdminEmail" class="form-control" placeholder="admin@university.edu" />
+                </div>
+                <span asp-validation-for="UniversityAdminEmail" class="text-danger"></span>
+                <small class="text-muted d-block mt-1">
+                    Creates this university's own scoped admin login — can manage this university's services,
+                    users, and reports, but not any other university on the platform.
+                </small>
+            </div>
+
             <button type="submit" class="btn btn-primary w-100" data-loading-text="Adding…">
                 <svg class="hgi hgi-sm me-1"><use href="#i-plus"></use></svg>Add University
             </button>

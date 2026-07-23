@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -14,33 +15,55 @@ namespace UniConnect.Controllers
     /// AdminAuditLogController — kept separate since it's a genuinely
     /// different kind of screen (a raw event log, not a summarized report).
     ///
+    /// A UniversityAdmin can only ever see reports scoped to their own
+    /// university — the universityCode filter is forced server-side,
+    /// regardless of what's in the querystring, rather than trusted from
+    /// the request. A Super Admin ("Admin") can see any university, or all
+    /// of them combined.
+    ///
     /// Edge Cases: "Report generation timeout" and "Export file too large" —
     /// every report caps its detail rows at MaxRows rather than letting a
     /// query run unbounded; if the cap is hit, the result is marked
     /// Truncated and the view/export both say so plainly.
     /// </summary>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,UniversityAdmin")]
     public class AdminReportsController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
         private const int MaxRows = 2000;
 
-        public AdminReportsController(ApplicationDbContext db)
+        public AdminReportsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
+        }
+
+        private bool IsSuperAdmin => User.IsInRole("Admin");
+
+        // Returns the university code a non-super-admin is FORCED to use,
+        // ignoring whatever was passed in the querystring — a UniversityAdmin
+        // can't broaden their own view by editing the URL by hand.
+        private async Task<string?> ResolveScopedUniversityCodeAsync(string? requested)
+        {
+            if (IsSuperAdmin) return requested;
+            var currentUser = await _userManager.GetUserAsync(User);
+            return currentUser?.UniversityCode;
         }
 
         public IActionResult Index() => View();
 
         public async Task<IActionResult> Report(string type, DateTime? from, DateTime? to, string? universityCode)
         {
-            var result = await GenerateAsync(type, from, to, universityCode);
+            var scopedCode = await ResolveScopedUniversityCodeAsync(universityCode);
+            var result = await GenerateAsync(type, from, to, scopedCode);
             if (result is null) return NotFound();
 
             ViewBag.Type = type;
             ViewBag.From = from;
             ViewBag.To = to;
-            ViewBag.UniversityCode = universityCode;
+            ViewBag.UniversityCode = scopedCode;
+            ViewBag.IsSuperAdmin = IsSuperAdmin;
             ViewBag.Universities = await _db.Universities.OrderBy(u => u.Name).ToListAsync();
 
             return View(result);
@@ -48,7 +71,8 @@ namespace UniConnect.Controllers
 
         public async Task<IActionResult> Export(string type, DateTime? from, DateTime? to, string? universityCode)
         {
-            var result = await GenerateAsync(type, from, to, universityCode);
+            var scopedCode = await ResolveScopedUniversityCodeAsync(universityCode);
+            var result = await GenerateAsync(type, from, to, scopedCode);
             if (result is null) return NotFound();
 
             var sb = new StringBuilder();

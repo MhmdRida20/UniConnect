@@ -47,10 +47,13 @@ namespace UniConnect.Models
         [Display(Name = "Departure Time")]
         public DateTime DepartureTime { get; set; } = DateTime.Now.AddHours(1);
 
+        // References a specific vehicle the driver registered under their
+        // own account (see Vehicle.cs / VehiclesController) — no longer a
+        // free-text field typed fresh each time, so a ride is always tied
+        // to a real, reusable vehicle profile (plate, color, capacity).
         [Required]
-        [StringLength(50)]
-        [Display(Name = "Vehicle Type")]
-        public string VehicleType { get; set; } = string.Empty;
+        public int VehicleId { get; set; }
+        public virtual Vehicle? Vehicle { get; set; }
 
         [Range(1, 8)]
         [Display(Name = "Total Seats")]
