@@ -216,6 +216,43 @@ a:focus-visible, button:focus-visible {
     to   { transform: scaleX(1); opacity: 1; }
 }
 
+/* "Services" grouping dropdown — keeps the primary bar to five items so it
+   stops overflowing off-screen (bell/avatar were unreachable without a
+   horizontal scroll) on common 1280-1440px laptop widths. */
+.uc-navbar .dropdown-toggle::after {
+    margin-left: .45rem;
+    transition: transform var(--uc-transition);
+    vertical-align: .1em;
+}
+.uc-navbar .dropdown-toggle[aria-expanded="true"]::after { transform: rotate(180deg); }
+.uc-nav-dropdown {
+    min-width: 13rem;
+    padding: .4rem;
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow-lg);
+    margin-top: .6rem !important;
+    animation: authFieldIn .18s ease both;
+}
+.uc-nav-dropdown .dropdown-item {
+    display: flex; align-items: center; gap: .65rem;
+    padding: .55rem .7rem; border-radius: var(--uc-radius-sm);
+    font-size: .87rem; font-weight: 600; color: var(--uc-text-soft);
+    transition: background var(--uc-transition), color var(--uc-transition);
+}
+.uc-nav-dropdown .dropdown-item .hgi { color: var(--uc-muted); transition: color var(--uc-transition); }
+.uc-nav-dropdown .dropdown-item:hover, .uc-nav-dropdown .dropdown-item:focus {
+    background: var(--uc-primary-tint); color: var(--uc-primary-dark);
+}
+.uc-nav-dropdown .dropdown-item:hover .hgi, .uc-nav-dropdown .dropdown-item:focus .hgi { color: var(--uc-primary-dark); }
+.uc-nav-dropdown .dropdown-item.active {
+    background: var(--uc-primary-tint); color: var(--uc-primary-dark);
+}
+.uc-nav-dropdown .dropdown-item.active .hgi { color: var(--uc-primary-dark); }
+@media (max-width: 1199.98px) {
+    .uc-nav-dropdown { box-shadow: none; border: none; margin-top: .15rem !important; padding-left: 1.2rem; }
+}
+
 /* Vertical divider between the nav links and the account cluster (desktop only) */
 .uc-navbar-divider {
     width: 1px; align-self: stretch; min-height: 26px;
@@ -339,8 +376,13 @@ a:focus-visible, button:focus-visible {
 .uc-nav-signup .hgi { width: 16px; height: 16px; }
 
 @media (max-width: 1199.98px) {
-    .uc-account-nav { flex-direction: row; align-items: center; gap: .5rem; margin-top: .5rem; }
-    .uc-account-name { display: none; }
+    .uc-account-nav {
+        flex-direction: row; align-items: center; gap: .5rem;
+        margin-top: .75rem; padding-top: .75rem;
+        border-top: 1px solid var(--uc-border-soft);
+    }
+    .uc-account-name { display: inline-block; max-width: none; flex: 1; }
+    .uc-account-toggle { flex: 1; min-width: 0; }
     .uc-account-menu { position: absolute; right: 0; }
 }
 
@@ -357,6 +399,14 @@ a:focus-visible, button:focus-visible {
 }
 .btn:active { transform: translateY(1px) scale(.99); }
 
+/* NOTE on the duplicated declarations below: this project bundles Bootstrap
+   v5.1, where .btn-primary sets `background-color`/`border-color` DIRECTLY.
+   The `--bs-btn-*` custom properties only became the styling hook in
+   Bootstrap 5.3. Setting the variables alone was therefore a silent no-op
+   here and every primary button rendered Bootstrap blue (#0d6efd) instead of
+   the brand green. The real properties are what actually take effect today;
+   the variables are kept so this still themes correctly if Bootstrap is
+   ever upgraded to 5.3+. */
 .btn-primary {
     --bs-btn-bg: var(--uc-primary);
     --bs-btn-border-color: var(--uc-primary);
@@ -366,9 +416,31 @@ a:focus-visible, button:focus-visible {
     --bs-btn-active-border-color: var(--uc-primary-darker);
     --bs-btn-disabled-bg: var(--uc-primary);
     --bs-btn-disabled-border-color: var(--uc-primary);
+    color: #fff;
+    background-color: var(--uc-primary);
+    border-color: var(--uc-primary);
     box-shadow: 0 2px 8px rgba(22, 163, 74, .25);
 }
-.btn-primary:hover { box-shadow: var(--uc-shadow-green); }
+.btn-primary:hover,
+.btn-primary:focus {
+    color: #fff;
+    background-color: var(--uc-primary-dark);
+    border-color: var(--uc-primary-dark);
+    box-shadow: var(--uc-shadow-green);
+}
+.btn-primary:active,
+.btn-primary:disabled,
+.btn-primary.disabled {
+    color: #fff;
+    background-color: var(--uc-primary-darker);
+    border-color: var(--uc-primary-darker);
+}
+.btn-check:checked + .btn-primary,
+.btn-check:active + .btn-primary,
+.btn-primary:not(:disabled):not(.disabled):active {
+    background-color: var(--uc-primary-darker);
+    border-color: var(--uc-primary-darker);
+}
 
 .btn-outline-primary {
     --bs-btn-color: var(--uc-primary-dark);
@@ -377,6 +449,15 @@ a:focus-visible, button:focus-visible {
     --bs-btn-hover-border-color: var(--uc-primary);
     --bs-btn-active-bg: var(--uc-primary-dark);
     --bs-btn-active-border-color: var(--uc-primary-dark);
+    color: var(--uc-primary-dark);
+    border-color: #bbf7d0;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:active,
+.btn-outline-primary:not(:disabled):not(.disabled):active {
+    color: #fff;
+    background-color: var(--uc-primary);
+    border-color: var(--uc-primary);
 }
 
 .btn-success {
@@ -384,6 +465,16 @@ a:focus-visible, button:focus-visible {
     --bs-btn-border-color: var(--uc-primary);
     --bs-btn-hover-bg: var(--uc-primary-dark);
     --bs-btn-hover-border-color: var(--uc-primary-dark);
+    color: #fff;
+    background-color: var(--uc-primary);
+    border-color: var(--uc-primary);
+}
+.btn-success:hover,
+.btn-success:active,
+.btn-success:not(:disabled):not(.disabled):active {
+    color: #fff;
+    background-color: var(--uc-primary-dark);
+    border-color: var(--uc-primary-dark);
 }
 
 .btn-link { color: var(--uc-primary-dark); }
@@ -701,3 +792,7 @@ a:focus-visible, button:focus-visible {
 .hgi-2x { width: 2.5rem; height: 2.5rem; }
 /* nudge crisper strokes on tiny sizes */
 .hgi[data-thin] { stroke-width: 1.4; }
+/* spin utility for loading-state icons (e.g. #i-loading while a button is busy) */
+.hgi-spin { animation: hgiSpin .9s linear infinite; }
+@keyframes hgiSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .hgi-spin { animation: none; } }

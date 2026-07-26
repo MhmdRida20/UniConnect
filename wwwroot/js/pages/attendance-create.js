@@ -32,12 +32,16 @@
                 const p = marker.getLatLng();
                 latInput.value = p.lat;
                 lngInput.value = p.lng;
+                latInput.dispatchEvent(new Event('input', { bubbles: true }));
+                lngInput.dispatchEvent(new Event('input', { bubbles: true }));
             });
         } else {
             marker.setLatLng(latlng);
         }
         latInput.value = lat;
         lngInput.value = lng;
+        latInput.dispatchEvent(new Event('input', { bubbles: true }));
+        lngInput.dispatchEvent(new Event('input', { bubbles: true }));
         map.panTo(latlng);
     }
 
@@ -55,21 +59,22 @@
     map.on('click', (e) => placePin(e.latlng.lat, e.latlng.lng));
 
     if (useMyLocationBtn) {
+        const idleHtml = useMyLocationBtn.innerHTML;
         useMyLocationBtn.addEventListener('click', () => {
             if (!navigator.geolocation) return;
             useMyLocationBtn.disabled = true;
-            useMyLocationBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Locating…';
+            useMyLocationBtn.innerHTML = '<svg class="hgi hgi-sm hgi-spin"><use href="#i-loading"></use></svg>Locating…';
 
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     placePin(pos.coords.latitude, pos.coords.longitude);
                     map.setView([pos.coords.latitude, pos.coords.longitude], 17);
                     useMyLocationBtn.disabled = false;
-                    useMyLocationBtn.innerHTML = '<i class="bi bi-crosshair"></i> Use my current location';
+                    useMyLocationBtn.innerHTML = idleHtml;
                 },
                 () => {
                     useMyLocationBtn.disabled = false;
-                    useMyLocationBtn.innerHTML = '<i class="bi bi-crosshair"></i> Use my current location';
+                    useMyLocationBtn.innerHTML = idleHtml;
                     alert("Couldn't get your location — please click the map instead.");
                 },
                 { enableHighAccuracy: true, timeout: 10000 }

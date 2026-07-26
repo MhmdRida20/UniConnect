@@ -129,6 +129,6 @@
         cursor: default;
     }
 
-    .ride-my-location-btn i {
+    .ride-my-location-btn i, .ride-my-location-btn svg {
         color: var(--uc-primary);
     }

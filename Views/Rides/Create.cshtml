@@ -11,11 +11,11 @@
 
 <div class="form-page">
     <nav aria-label="breadcrumb">
-        <a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to rides</a>
+        <a asp-action="Index" class="form-back"><svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to rides</a>
     </nav>
 
     <div class="form-page-head">
-        <span class="form-page-ico"><i class="bi bi-car-front-fill"></i></span>
+        <span class="form-page-ico"><svg class="hgi"><use href="#i-car"></use></svg></span>
         <div>
             <h1>Offer a Ride</h1>
             <p>Share your trip with classmates and split the commute.</p>
@@ -26,12 +26,21 @@
         <div class="col-lg-7">
             <div class="uc-form-card">
                 <form asp-action="Create" method="post" data-loading novalidate>
+                    <div class="uc-form-progress" data-form-progress>
+                        <div class="ufp-head">
+                            <span class="ufp-label"><svg class="hgi"><use href="#i-chart"></use></svg>Form progress</span>
+                            <span class="ufp-pct" data-progress-pct>0%</span>
+                        </div>
+                        <div class="ufp-track"><div class="ufp-fill" data-progress-fill></div></div>
+                        <ul class="ufp-checklist" data-progress-checklist></ul>
+                    </div>
+
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
                         <label asp-for="DepartureLocation" class="form-label"></label>
                         <div class="input-icon">
-                            <i class="bi bi-geo-alt"></i>
+                            <svg class="hgi hgi-sm"><use href="#i-location"></use></svg>
                             <input asp-for="DepartureLocation" class="form-control" placeholder="e.g. Hamra, Beirut" autofocus />
                         </div>
                         <span asp-validation-for="DepartureLocation" class="text-danger"></span>
@@ -41,7 +50,7 @@
                     <div class="mb-3">
                         <label asp-for="Destination" class="form-label"></label>
                         <div class="input-icon">
-                            <i class="bi bi-flag"></i>
+                            <svg class="hgi hgi-sm"><use href="#i-flag"></use></svg>
                             <input asp-for="Destination" class="form-control" placeholder="e.g. University Main Gate" />
                         </div>
                         <span asp-validation-for="Destination" class="text-danger"></span>
@@ -57,18 +66,18 @@
                         <div class="ride-pin-toggle" role="group" aria-label="Choose which pin to place">
                             <button type="button" class="ride-pin-btn is-active" id="pinModeDeparture" data-mode="departure">
                                 <span class="ride-pin-dot ride-pin-dot-green"></span> Set Departure
-                                <i class="bi bi-check2-circle ride-pin-check" id="pinCheckDeparture"></i>
+                                <svg class="hgi hgi-sm ride-pin-check" id="pinCheckDeparture"><use href="#i-check-circle"></use></svg>
                             </button>
                             <button type="button" class="ride-pin-btn" id="pinModeDestination" data-mode="destination">
                                 <span class="ride-pin-dot ride-pin-dot-red"></span> Set Destination
-                                <i class="bi bi-check2-circle ride-pin-check" id="pinCheckDestination"></i>
+                                <svg class="hgi hgi-sm ride-pin-check" id="pinCheckDestination"><use href="#i-check-circle"></use></svg>
                             </button>
                         </div>
                         <button type="button" class="ride-my-location-btn" id="useMyLocationBtn">
-                            <i class="bi bi-crosshair"></i> Use my current location as departure
+                            <svg class="hgi hgi-sm"><use href="#i-target"></use></svg>Use my current location as departure
                         </button>
                         <div id="rideCreateMap" class="ride-create-map"></div>
-                        <p class="ride-pin-hint"><i class="bi bi-info-circle"></i> Click the map to drop the active pin. You can drag a pin to fine-tune it. The departure pin is the <strong>meeting point</strong> passengers plan around — it doesn't need to be your exact location right this second, just where you'll actually be when the ride leaves.</p>
+                        <p class="ride-pin-hint"><svg class="hgi hgi-sm"><use href="#i-info"></use></svg>Click the map to drop the active pin. You can drag a pin to fine-tune it. The departure pin is the <strong>meeting point</strong> passengers plan around — it doesn't need to be your exact location right this second, just where you'll actually be when the ride leaves.</p>
 
                         <input type="hidden" asp-for="DepartureLat" id="DepartureLat" />
                         <input type="hidden" asp-for="DepartureLng" id="DepartureLng" />
@@ -115,7 +124,7 @@
 
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" class="btn btn-primary" data-loading-text="Posting…">
-                            <i class="bi bi-check-lg me-1"></i>Create Ride
+                            <svg class="hgi hgi-sm me-1"><use href="#i-check-circle"></use></svg>Create Ride
                         </button>
                         <a asp-action="Index" class="btn btn-link">Cancel</a>
                     </div>
@@ -125,7 +134,7 @@
 
         <div class="col-lg-5">
             <aside class="form-aside">
-                <h2><i class="bi bi-shield-check"></i> Before you post</h2>
+                <h2><svg class="hgi"><use href="#i-shield"></use></svg>Before you post</h2>
                 <ul>
                     <li><strong>Double-check the time.</strong> Passengers plan around your departure, so be precise.</li>
                     <li><strong>Set honest seat counts.</strong> Only offer seats you can actually fill comfortably.</li>
@@ -140,6 +149,7 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
     <script src="~/js/pages/ride-create.js" asp-append-version="true"></script>
 }

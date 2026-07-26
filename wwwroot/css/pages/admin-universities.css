@@ -112,13 +112,15 @@
 
 .au-create-layout {
     display: grid;
-    grid-template-columns: minmax(0, 560px) minmax(260px, 320px);
-    gap: 1.5rem;
+    grid-template-columns: minmax(0, 620px) minmax(300px, 380px);
+    gap: 1.75rem;
     align-items: start;
+    max-width: 1050px;
+    margin: 0 auto;
 }
 
 .au-form-card {
-    max-width: 560px;
+    max-width: 620px;
 }
 
 .au-whathappens {

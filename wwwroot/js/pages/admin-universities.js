@@ -55,6 +55,7 @@
             const data = await resp.json();
 
             apiKeyInput.value = data.apiKey;
+            apiKeyInput.dispatchEvent(new Event('input', { bubbles: true }));
             apiKeyInput.classList.add('au-field-flash');
             apiKeyInput.addEventListener('animationend', () => apiKeyInput.classList.remove('au-field-flash'), { once: true });
             apiKeyHint.innerHTML =

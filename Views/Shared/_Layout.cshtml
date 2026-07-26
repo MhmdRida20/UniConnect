@@ -13,6 +13,22 @@
     string NavActive(string controller, string? action = null) =>
         (currentController == controller && (action == null || currentAction == action)) ? "active" : "";
 
+    // The five most-reached-for items stay inline; everything else groups under
+    // a "Services" dropdown so the bar doesn't overflow off-screen on common
+    // 1280-1440px laptop widths (it did — bell/avatar were clipped past the
+    // viewport edge with no way to reach them but a horizontal scroll).
+    var groupedControllers = new (string Controller, string? Action)[]
+    {
+        ("StudyGroups", "MyCourses"),
+        ("Vehicles", null),
+        ("Tickets", null),
+        ("Clubs", null),
+        ("InstructorAttendance", null),
+        ("Attendance", null),
+    };
+    var isServicesActive = groupedControllers.Any(g =>
+        currentController == g.Controller && (g.Action == null || currentAction == g.Action));
+
     // Only show nav items for services the current user's university has
     // actually enabled (Front Design doc: nav is filtered by "enabled
     // services for the university"). Anonymous visitors still see everything,
@@ -85,54 +101,12 @@
                                     <svg class="hgi hgi-sm"><use href="#i-users"></use></svg>Study Groups
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("StudyGroups", "MyCourses")" asp-controller="StudyGroups" asp-action="MyCourses">
-                                    <svg class="hgi hgi-sm"><use href="#i-book"></use></svg>My Courses
-                                </a>
-                            </li>
                         }
                         @if (ShowNav(ServiceCodes.RideSharing))
                         {
                             <li class="nav-item">
                                 <a class="nav-link @NavActive("Rides")" asp-controller="Rides" asp-action="Index">
                                     <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>Rides
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("Vehicles")" asp-controller="Vehicles" asp-action="Index">
-                                    <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>My Vehicles
-                                </a>
-                            </li>
-                        }
-                        @if (ShowNav(ServiceCodes.Tickets))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("Tickets")" asp-controller="Tickets" asp-action="Index">
-                                    <svg class="hgi hgi-sm"><use href="#i-ticket"></use></svg>My Tickets
-                                </a>
-                            </li>
-                        }
-                        @if (ShowNav(ServiceCodes.Clubs))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("Clubs")" asp-controller="Clubs" asp-action="Index">
-                                    <svg class="hgi hgi-sm"><use href="#i-user-multiple"></use></svg>Clubs
-                                </a>
-                            </li>
-                        }
-                        @if (ShowNav(ServiceCodes.Attendance) && User.IsInRole("Instructor"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("InstructorAttendance")" asp-controller="InstructorAttendance" asp-action="Index">
-                                    <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Sessions
-                                </a>
-                            </li>
-                        }
-                        @if (ShowNav(ServiceCodes.Attendance) && !User.IsInRole("Instructor"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("Attendance")" asp-controller="Attendance" asp-action="MyAttendance">
-                                    <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Attendance
                                 </a>
                             </li>
                         }
@@ -142,6 +116,69 @@
                                 <a class="nav-link @NavActive("Internships")" asp-controller="Internships" asp-action="Index">
                                     <svg class="hgi hgi-sm"><use href="#i-briefcase"></use></svg>Internships
                                 </a>
+                            </li>
+                        }
+                        @{
+                            var hasGroupedItems = ShowNav(ServiceCodes.StudyGroups) || ShowNav(ServiceCodes.RideSharing)
+                                || ShowNav(ServiceCodes.Tickets) || ShowNav(ServiceCodes.Clubs) || ShowNav(ServiceCodes.Attendance);
+                        }
+                        @if (hasGroupedItems)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle @(isServicesActive ? "active" : "")" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <svg class="hgi hgi-sm"><use href="#i-dashboard"></use></svg>Services
+                                </a>
+                                <ul class="dropdown-menu uc-nav-dropdown">
+                                    @if (ShowNav(ServiceCodes.StudyGroups))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item @NavActive("StudyGroups", "MyCourses")" asp-controller="StudyGroups" asp-action="MyCourses">
+                                                <svg class="hgi hgi-sm"><use href="#i-book"></use></svg>My Courses
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (ShowNav(ServiceCodes.RideSharing))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item @NavActive("Vehicles")" asp-controller="Vehicles" asp-action="Index">
+                                                <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>My Vehicles
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (ShowNav(ServiceCodes.Tickets))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item @NavActive("Tickets")" asp-controller="Tickets" asp-action="Index">
+                                                <svg class="hgi hgi-sm"><use href="#i-ticket"></use></svg>My Tickets
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (ShowNav(ServiceCodes.Clubs))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item @NavActive("Clubs")" asp-controller="Clubs" asp-action="Index">
+                                                <svg class="hgi hgi-sm"><use href="#i-user-multiple"></use></svg>Clubs
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (ShowNav(ServiceCodes.Attendance) && User.IsInRole("Instructor"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item @NavActive("InstructorAttendance")" asp-controller="InstructorAttendance" asp-action="Index">
+                                                <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Sessions
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (ShowNav(ServiceCodes.Attendance) && !User.IsInRole("Instructor"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item @NavActive("Attendance")" asp-controller="Attendance" asp-action="MyAttendance">
+                                                <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Attendance
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
                             </li>
                         }
                     </ul>

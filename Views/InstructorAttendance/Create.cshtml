@@ -10,79 +10,105 @@
 }
 
 <div class="form-page">
-    <a asp-action="Index" class="form-back"><i class="bi bi-arrow-left"></i> Back to my sessions</a>
+    <a asp-action="Index" class="form-back"><svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to my sessions</a>
 
     <div class="form-page-head">
-        <span class="form-page-ico"><i class="bi bi-qr-code"></i></span>
+        <span class="form-page-ico"><svg class="hgi"><use href="#i-qr"></use></svg></span>
         <div>
             <h1>Create Attendance Session</h1>
             <p class="text-muted">Generates a QR code students scan to check in.</p>
         </div>
     </div>
 
-    <div class="uc-form-card">
-        <form asp-action="Create" method="post" data-loading>
-            @Html.AntiForgeryToken()
-            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="uc-form-card">
+                <form asp-action="Create" method="post" data-loading>
+                    @Html.AntiForgeryToken()
+                    <div class="uc-form-progress" data-form-progress>
+                        <div class="ufp-head">
+                            <span class="ufp-label"><svg class="hgi"><use href="#i-chart"></use></svg>Form progress</span>
+                            <span class="ufp-pct" data-progress-pct>0%</span>
+                        </div>
+                        <div class="ufp-track"><div class="ufp-fill" data-progress-fill></div></div>
+                        <ul class="ufp-checklist" data-progress-checklist></ul>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="CourseCode" class="form-label"></label>
-                <select asp-for="CourseCode" asp-items="Model.AvailableCourses" class="form-select">
-                    <option value="">— Select a course —</option>
-                </select>
-                @if (!Model.AvailableCourses.Any())
-                {
-                    <small class="text-muted">You don't have any assigned courses yet — contact your admin.</small>
-                }
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="CourseCode" class="form-label"></label>
+                        <select asp-for="CourseCode" asp-items="Model.AvailableCourses" class="form-select">
+                            <option value="">— Select a course —</option>
+                        </select>
+                        @if (!Model.AvailableCourses.Any())
+                        {
+                            <small class="text-muted">You don't have any assigned courses yet — contact your admin.</small>
+                        }
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="StartTime" class="form-label"></label>
+                            <input asp-for="StartTime" class="form-control" />
+                            <span asp-validation-for="StartTime" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EndTime" class="form-label"></label>
+                            <input asp-for="EndTime" class="form-control" />
+                            <span asp-validation-for="EndTime" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <label asp-for="GracePeriodMinutes" class="form-label"></label>
+                        <input asp-for="GracePeriodMinutes" type="number" class="form-control" style="max-width:160px" />
+                        <small class="text-muted">Submissions after this many minutes past start are marked Late instead of Present.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Classroom Location</label>
+                        <button type="button" class="ride-my-location-btn" id="useMyLocationBtn">
+                            <svg class="hgi hgi-sm"><use href="#i-target"></use></svg>Use my current location
+                        </button>
+                        <div id="classroomMap" class="attendance-map"></div>
+                        <p class="ride-pin-hint"><svg class="hgi hgi-sm"><use href="#i-info"></use></svg>Click the map to set the classroom's exact location, or use the button above if you're there now.</p>
+                        <input type="hidden" asp-for="ClassroomLat" id="ClassroomLat" />
+                        <input type="hidden" asp-for="ClassroomLng" id="ClassroomLng" />
+                        <span asp-validation-for="ClassroomLat" class="text-danger d-block"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="GpsRadiusMeters" class="form-label"></label>
+                        <input asp-for="GpsRadiusMeters" type="number" class="form-control" style="max-width:160px" />
+                        <small class="text-muted">How far (in meters) a student can be from the classroom and still be marked present.</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" data-loading-text="Creating…">
+                        <svg class="hgi hgi-sm me-1"><use href="#i-qr"></use></svg>Create Session &amp; Generate QR
+                    </button>
+                </form>
             </div>
+        </div>
 
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label asp-for="StartTime" class="form-label"></label>
-                    <input asp-for="StartTime" class="form-control" />
-                    <span asp-validation-for="StartTime" class="text-danger"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="EndTime" class="form-label"></label>
-                    <input asp-for="EndTime" class="form-control" />
-                    <span asp-validation-for="EndTime" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="mb-3 mt-3">
-                <label asp-for="GracePeriodMinutes" class="form-label"></label>
-                <input asp-for="GracePeriodMinutes" type="number" class="form-control" style="max-width:160px" />
-                <small class="text-muted">Submissions after this many minutes past start are marked Late instead of Present.</small>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Classroom Location</label>
-                <button type="button" class="ride-my-location-btn" id="useMyLocationBtn">
-                    <i class="bi bi-crosshair"></i> Use my current location
-                </button>
-                <div id="classroomMap" class="attendance-map"></div>
-                <p class="ride-pin-hint"><i class="bi bi-info-circle"></i> Click the map to set the classroom's exact location, or use the button above if you're there now.</p>
-                <input type="hidden" asp-for="ClassroomLat" id="ClassroomLat" />
-                <input type="hidden" asp-for="ClassroomLng" id="ClassroomLng" />
-                <span asp-validation-for="ClassroomLat" class="text-danger d-block"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="GpsRadiusMeters" class="form-label"></label>
-                <input asp-for="GpsRadiusMeters" type="number" class="form-control" style="max-width:160px" />
-                <small class="text-muted">How far (in meters) a student can be from the classroom and still be marked present.</small>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100" data-loading-text="Creating…">
-                <i class="bi bi-qr-code me-1"></i>Create Session & Generate QR
-            </button>
-        </form>
+        <div class="col-lg-5">
+            <aside class="form-aside">
+                <h2><svg class="hgi"><use href="#i-idea"></use></svg>Before you start</h2>
+                <ul>
+                    <li><strong>Set a realistic window.</strong> Students can only check in between the start and end time.</li>
+                    <li><strong>Use the grace period.</strong> A few extra minutes covers stragglers without opening the door too wide.</li>
+                    <li><strong>Pin the real classroom.</strong> The GPS radius is measured from this exact point.</li>
+                    <li><strong>Keep the radius tight.</strong> Wide radii make it easier to check in from outside the room.</li>
+                </ul>
+            </aside>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
     <script src="~/js/pages/attendance-create.js" asp-append-version="true"></script>
 }

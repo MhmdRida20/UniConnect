@@ -1,40 +1,137 @@
 @model IEnumerable<UniConnect.Models.Notification>
 @{
     ViewData["Title"] = "Notifications";
+
+    // Portal roles (admin / staff / company) reach this page from the portal
+    // sidebar — rendering it in the student top-nav layout would drop them out
+    // of their own chrome mid-session, so pick the shell that matches the role.
+    var isPortalUser = User.IsInRole("Admin") || User.IsInRole("DepartmentStaff") || User.IsInRole("Company");
+    Layout = isPortalUser ? "~/Views/Shared/_PortalLayout.cshtml" : "_Layout";
+
     var notifications = Model.ToList();
+    var newIds = ViewBag.NewIds as HashSet<int> ?? new HashSet<int>();
+    var newCount = notifications.Count(n => newIds.Contains(n.Id));
+
+    // Notification has no type column, so the service it belongs to is derived
+    // from its Link — good enough to give each row a meaningful icon/accent
+    // without a schema change.
+    // Returns [icon-symbol-id, tone-suffix].
+    string[] Kind(string? link)
+    {
+        var l = (link ?? string.Empty).ToLowerInvariant();
+        if (l.Contains("/rides")) return new[] { "i-car", "teal" };
+        if (l.Contains("/studygroups")) return new[] { "i-users", "green" };
+        if (l.Contains("/tickets")) return new[] { "i-ticket", "red" };
+        if (l.Contains("/clubs")) return new[] { "i-flag", "purple" };
+        if (l.Contains("/internships") || l.Contains("/company")) return new[] { "i-briefcase", "amber" };
+        if (l.Contains("attendance")) return new[] { "i-qr", "blue" };
+        return new[] { "i-bell", "grey" };
+    }
+
+    string Ago(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 1) return "just now";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m ago";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours}h ago";
+        if (span.TotalDays < 7) return $"{(int)span.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("MMM dd");
+    }
+
+    string Bucket(DateTime utc)
+    {
+        var local = utc.ToLocalTime().Date;
+        var today = DateTime.Now.Date;
+        if (local == today) return "Today";
+        if (local == today.AddDays(-1)) return "Yesterday";
+        if (local > today.AddDays(-7)) return "This week";
+        return "Earlier";
+    }
 }
 
-<div class="uc-hero" style="padding:1.5rem 0;">
-    <div class="uc-hero-inner">
-        <p class="uc-eyebrow"><i class="bi bi-bell"></i>Notifications</p>
-        <h1 class="uc-hero-title mb-0" style="font-size:1.6rem;">My Notifications</h1>
-    </div>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/notifications.css" asp-append-version="true" />
+}
 
-<div class="container" style="padding-top:1rem;">
+<div class="nt-page @(isPortalUser ? "nt-page-portal" : "")">
+
+    @* ─────────────── Header ─────────────── *@
+    @if (!isPortalUser)
+    {
+        <section class="nt-hero">
+            <span class="nt-hero-aura" aria-hidden="true"></span>
+            <div class="nt-hero-inner">
+                <span class="nt-hero-ico"><svg class="hgi"><use href="#i-bell"></use></svg></span>
+                <div>
+                    <h1>Notifications</h1>
+                    <p>
+                        @if (newCount > 0)
+                        {
+                            <text><strong>@newCount new</strong> since your last visit · </text>
+                        }
+                        @notifications.Count total
+                    </p>
+                </div>
+            </div>
+        </section>
+    }
+    else if (notifications.Any())
+    {
+        <p class="text-muted mb-3">
+            @if (newCount > 0)
+            {
+                <span class="nt-newcount"><svg class="hgi hgi-sm"><use href="#i-sparkles"></use></svg>@newCount new</span>
+            }
+            @notifications.Count notification@(notifications.Count == 1 ? "" : "s")
+        </p>
+    }
+
     @if (!notifications.Any())
     {
-        <div class="uc-empty">
-            <span class="uc-empty-icon"><i class="bi bi-bell-slash"></i></span>
-            <h5>No notifications yet</h5>
-            <p>System updates that affect you — like being removed from a study group — will show up here.</p>
+        <div class="nt-empty">
+            <span class="nt-empty-ico"><svg class="hgi"><use href="#i-bell-off"></use></svg></span>
+            <h5>You're all caught up</h5>
+            <p>Updates that affect you — a ride request accepted, a ticket answered, a study group change — will land here.</p>
         </div>
     }
     else
     {
-        <div class="d-flex flex-column gap-2" style="max-width:640px;">
+        <div class="nt-list">
+            @{ string? lastBucket = null; var idx = 0; }
             @foreach (var n in notifications)
             {
-                <div class="uc-form-card" style="padding:1rem 1.2rem;">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <strong>@n.Title</strong>
-                        <span class="text-muted small">@n.CreatedAt.ToString("MMM dd, HH:mm")</span>
+                var bucket = Bucket(n.CreatedAt);
+                if (bucket != lastBucket)
+                {
+                    lastBucket = bucket;
+                    <p class="nt-bucket">@bucket</p>
+                }
+                var kind = Kind(n.Link);
+                var isNew = newIds.Contains(n.Id);
+                idx++;
+                var hasLink = !string.IsNullOrWhiteSpace(n.Link);
+
+                <div class="nt-item @(isNew ? "is-new" : "")" style="--i:@idx">
+                    <span class="nt-item-ico nt-tone-@kind[1]">
+                        <svg class="hgi"><use href="#@kind[0]"></use></svg>
+                    </span>
+                    <div class="nt-item-body">
+                        <div class="nt-item-head">
+                            <strong>@n.Title</strong>
+                            @if (isNew)
+                            {
+                                <span class="nt-new-dot" title="New since your last visit"></span>
+                            }
+                            <time class="nt-item-time" title="@n.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")">@Ago(n.CreatedAt)</time>
+                        </div>
+                        <p class="nt-item-msg">@n.Message</p>
+                        @if (hasLink)
+                        {
+                            <a href="@n.Link" class="nt-item-link">
+                                View details <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg>
+                            </a>
+                        }
                     </div>
-                    <p class="mb-1 mt-1" style="font-size:.9rem;">@n.Message</p>
-                    @if (!string.IsNullOrWhiteSpace(n.Link))
-                    {
-                        <a href="@n.Link" class="small">View →</a>
-                    }
                 </div>
             }
         </div>

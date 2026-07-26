@@ -9,148 +9,265 @@
     var hasCv = ViewBag.HasCv is true;
     var skillCount = (int)(ViewBag.SkillCount ?? 0);
     var mailtoSubject = Uri.EscapeDataString($"Application for {Model.Title}");
+
+    var scoreTone = score >= 70 ? "high" : score >= 40 ? "mid" : "low";
+    var scoreLabel = score >= 70 ? "Strong match" : score >= 40 ? "Partial match" : "Low match";
+
+    var daysLeft = (Model.ApplicationDeadline.Date - DateTime.Today).Days;
+    var deadlineUrgent = !deadlinePassed && daysLeft <= 7;
+
+    string[] Split(string? csv) => string.IsNullOrWhiteSpace(csv)
+        ? Array.Empty<string>()
+        : csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/internships.css" asp-append-version="true" />
 }
 
-<div class="container" style="padding-top:1.5rem; max-width:760px;">
-    <a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to internships</a>
+<div class="idt-page">
+    <a asp-action="Index" class="idt-back">
+        <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to internships
+    </a>
 
-    <div class="uc-form-card">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-            <div>
-                <h1 class="mb-1" style="font-size:1.4rem;">@Model.Title</h1>
-                <p class="text-muted mb-0">
-                    <i class="bi bi-building"></i> @Model.ExternalEmployerName
-                    <span class="uc-pill uc-pill-grey ms-1">Posted by @Model.Company?.CompanyName</span>
-                </p>
+    @* ─────────────── Hero ─────────────── *@
+    <section class="idt-hero">
+        <span class="idt-hero-aura" aria-hidden="true"></span>
+        <div class="idt-hero-inner">
+            <div class="idt-hero-text">
+                <span class="idt-employer">
+                    <svg class="hgi hgi-sm"><use href="#i-building"></use></svg>@Model.ExternalEmployerName
+                </span>
+                <h1>@Model.Title</h1>
+                <span class="idt-posted">Posted by @Model.Company?.CompanyName</span>
             </div>
-            <span class="match-badge match-@(score >= 70 ? "high" : score >= 40 ? "mid" : "low") fs-6">
-                @score% match
-            </span>
+
+            <div class="idt-score idt-score-@scoreTone" style="--pct:@score">
+                <div class="idt-score-ring">
+                    <span class="idt-score-num">@score<small>%</small></span>
+                </div>
+                <span class="idt-score-label">@scoreLabel</span>
+            </div>
         </div>
 
         @if (!courseDataAvailable)
         {
-            <small class="text-muted d-block mt-1"><i class="bi bi-exclamation-circle"></i> Partial score — course data unavailable right now.</small>
+            <p class="idt-score-note">
+                <svg class="hgi hgi-sm"><use href="#i-info"></use></svg>
+                Partial score — course data is unavailable right now.
+            </p>
         }
+    </section>
 
-        <hr />
-        <p>@Model.Description</p>
-
-        <div class="row g-3 mb-3">
-            <div class="col-sm-6"><strong>Location:</strong> @Model.Location</div>
-            <div class="col-sm-6"><strong>Duration:</strong> @(Model.DurationWeeks.HasValue ? Model.DurationWeeks + " weeks" : "Not specified")</div>
-            <div class="col-sm-6"><strong>Deadline:</strong> @Model.ApplicationDeadline.ToString("MMM dd, yyyy")</div>
-            <div class="col-sm-6"><strong>Positions:</strong> @Model.NumberOfPositions</div>
+    @* ─────────────── Key facts ─────────────── *@
+    <div class="idt-meta">
+        <div class="idt-meta-card">
+            <span class="idt-meta-ico"><svg class="hgi"><use href="#i-location"></use></svg></span>
+            <div><small>Location</small><strong>@Model.Location</strong></div>
         </div>
-
-        @if (!string.IsNullOrWhiteSpace(Model.RequiredSkills))
-        {
-            <p><strong>Required skills:</strong> @Model.RequiredSkills</p>
-        }
-        @if (!string.IsNullOrWhiteSpace(Model.RecommendedCourses))
-        {
-            <p><strong>Recommended courses:</strong> @Model.RecommendedCourses</p>
-        }
-        @if (!string.IsNullOrWhiteSpace(Model.RelevantMajors))
-        {
-            <p><strong>Relevant majors:</strong> @Model.RelevantMajors</p>
-        }
-
-        <hr />
-
-        @if (Model.PostingMode == UniConnect.Models.InternshipPostingMode.ListingOnly)
-        {
-            <div class="alert alert-secondary uc-flash mb-3">
-                <i class="bi bi-box-arrow-up-right"></i> This employer handles applications directly — UniConnect
-                doesn't track your application status for this listing.
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                @if (!string.IsNullOrWhiteSpace(Model.ExternalApplyUrl))
+        <div class="idt-meta-card">
+            <span class="idt-meta-ico"><svg class="hgi"><use href="#i-clock"></use></svg></span>
+            <div><small>Duration</small><strong>@(Model.DurationWeeks.HasValue ? Model.DurationWeeks + " weeks" : "Not specified")</strong></div>
+        </div>
+        <div class="idt-meta-card @(deadlineUrgent ? "is-urgent" : "")">
+            <span class="idt-meta-ico"><svg class="hgi"><use href="#i-calendar"></use></svg></span>
+            <div>
+                <small>Deadline</small>
+                <strong>@Model.ApplicationDeadline.ToString("MMM dd, yyyy")</strong>
+                @if (deadlinePassed)
                 {
-                    <a href="@Model.ExternalApplyUrl" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                        <i class="bi bi-box-arrow-up-right me-1"></i>Apply on Employer's Website
-                    </a>
+                    <em class="idt-meta-flag">Closed</em>
                 }
-                @if (!string.IsNullOrWhiteSpace(Model.ExternalApplyEmail))
+                else if (daysLeft == 0)
                 {
-                    <div>
-                        <a href="mailto:@Model.ExternalApplyEmail?subject=@mailtoSubject" class="btn btn-outline-primary">
-                            <i class="bi bi-envelope me-1"></i>Apply by Email
-                        </a>
-                        <div class="mt-1">
-                            <small class="text-muted">
-                                No email app open automatically? Send to
-                                <span class="fw-semibold" id="applyEmailText">@Model.ExternalApplyEmail</span>
-                                <button type="button" class="btn btn-link btn-sm p-0 ms-1" id="copyEmailBtn" title="Copy email address">
-                                    <i class="bi bi-clipboard"></i> Copy
-                                </button>
-                            </small>
+                    <em class="idt-meta-flag">Last day</em>
+                }
+                else if (deadlineUrgent)
+                {
+                    <em class="idt-meta-flag">@daysLeft day@(daysLeft == 1 ? "" : "s") left</em>
+                }
+            </div>
+        </div>
+        <div class="idt-meta-card">
+            <span class="idt-meta-ico"><svg class="hgi"><use href="#i-users"></use></svg></span>
+            <div><small>Positions</small><strong>@Model.NumberOfPositions</strong></div>
+        </div>
+    </div>
+
+    @* ─────────────── Description + requirements ─────────────── *@
+    <section class="idt-card">
+        <h2 class="idt-section-title"><svg class="hgi hgi-sm"><use href="#i-file"></use></svg>About this role</h2>
+        <p class="idt-desc">@Model.Description</p>
+
+        @{
+            var skills = Split(Model.RequiredSkills);
+            var courses = Split(Model.RecommendedCourses);
+            var majors = Split(Model.RelevantMajors);
+        }
+
+        @if (skills.Length > 0 || courses.Length > 0 || majors.Length > 0)
+        {
+            <div class="idt-reqs">
+                @if (skills.Length > 0)
+                {
+                    <div class="idt-req-group">
+                        <h3><svg class="hgi hgi-sm"><use href="#i-tag"></use></svg>Required skills</h3>
+                        <div class="idt-chips">
+                            @foreach (var s in skills)
+                            {
+                                <span class="idt-chip">@s</span>
+                            }
+                        </div>
+                    </div>
+                }
+                @if (courses.Length > 0)
+                {
+                    <div class="idt-req-group">
+                        <h3><svg class="hgi hgi-sm"><use href="#i-book"></use></svg>Recommended courses</h3>
+                        <div class="idt-chips">
+                            @foreach (var c in courses)
+                            {
+                                <span class="idt-chip idt-chip-blue">@c</span>
+                            }
+                        </div>
+                    </div>
+                }
+                @if (majors.Length > 0)
+                {
+                    <div class="idt-req-group">
+                        <h3><svg class="hgi hgi-sm"><use href="#i-graduation"></use></svg>Relevant majors</h3>
+                        <div class="idt-chips">
+                            @foreach (var m in majors)
+                            {
+                                <span class="idt-chip idt-chip-purple">@m</span>
+                            }
                         </div>
                     </div>
                 }
             </div>
         }
+    </section>
+
+    @* ─────────────── Apply ─────────────── *@
+    <section class="idt-card idt-apply">
+        @if (Model.PostingMode == UniConnect.Models.InternshipPostingMode.ListingOnly)
+        {
+            <h2 class="idt-section-title"><svg class="hgi hgi-sm"><use href="#i-external"></use></svg>How to apply</h2>
+            <div class="idt-note idt-note-info">
+                <svg class="hgi hgi-sm"><use href="#i-info"></use></svg>
+                <span>This employer handles applications directly — UniConnect doesn't track your application status for this listing.</span>
+            </div>
+            <div class="idt-apply-actions">
+                @if (!string.IsNullOrWhiteSpace(Model.ExternalApplyUrl))
+                {
+                    <a href="@Model.ExternalApplyUrl" target="_blank" rel="noopener noreferrer" class="btn btn-primary idt-btn">
+                        <svg class="hgi hgi-sm"><use href="#i-external"></use></svg>Apply on employer's website
+                    </a>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ExternalApplyEmail))
+                {
+                    <a href="mailto:@Model.ExternalApplyEmail?subject=@mailtoSubject" class="btn btn-outline-primary idt-btn">
+                        <svg class="hgi hgi-sm"><use href="#i-mail"></use></svg>Apply by email
+                    </a>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.ExternalApplyEmail))
+            {
+                <div class="idt-copyrow">
+                    <span>No mail app opened? Send to</span>
+                    <code id="applyEmailText">@Model.ExternalApplyEmail</code>
+                    <button type="button" class="idt-copy-btn" id="copyEmailBtn" title="Copy email address">
+                        <svg class="hgi hgi-sm"><use href="#i-copy"></use></svg><span>Copy</span>
+                    </button>
+                </div>
+            }
+        }
         else if (existingApplication is not null)
         {
-            <div class="alert alert-secondary uc-flash">
-                <i class="bi bi-check-circle"></i> You applied on @existingApplication.AppliedAt.ToString("MMM dd, yyyy") —
-                status: <strong>@existingApplication.Status</strong>
+            <h2 class="idt-section-title"><svg class="hgi hgi-sm"><use href="#i-check-circle"></use></svg>Your application</h2>
+            <div class="idt-note idt-note-ok">
+                <svg class="hgi hgi-sm"><use href="#i-check-circle"></use></svg>
+                <span>
+                    You applied on <strong>@existingApplication.AppliedAt.ToLocalTime().ToString("MMM dd, yyyy")</strong> —
+                    status: <span class="uc-pill status-@existingApplication.Status.ToString().ToLowerInvariant()">@existingApplication.Status</span>
+                </span>
             </div>
+            <a asp-action="MyApplications" class="idt-link">
+                Track all my applications <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg>
+            </a>
         }
         else if (deadlinePassed)
         {
-            <div class="alert alert-secondary uc-flash"><i class="bi bi-calendar-x"></i> The application deadline has passed.</div>
+            <div class="idt-note idt-note-muted">
+                <svg class="hgi hgi-sm"><use href="#i-calendar"></use></svg>
+                <span>The application deadline has passed.</span>
+            </div>
         }
         else if (positionsFilled)
         {
-            <div class="alert alert-secondary uc-flash"><i class="bi bi-people-fill"></i> All positions for this internship have been filled.</div>
+            <div class="idt-note idt-note-muted">
+                <svg class="hgi hgi-sm"><use href="#i-users"></use></svg>
+                <span>All positions for this internship have been filled.</span>
+            </div>
         }
         else
         {
+            <h2 class="idt-section-title"><svg class="hgi hgi-sm"><use href="#i-send"></use></svg>Apply for this role</h2>
+
+            @* Readiness checklist — makes the CV/skills gap actionable instead of a wall of warning text. *@
+            <div class="idt-ready">
+                <div class="idt-ready-item @(hasCv ? "is-ok" : "is-missing")">
+                    <svg class="hgi hgi-sm"><use href="@(hasCv ? "#i-check-circle" : "#i-alert")"></use></svg>
+                    <span>@(hasCv ? "CV uploaded" : "No CV uploaded")</span>
+                </div>
+                <div class="idt-ready-item @(skillCount > 0 ? "is-ok" : "is-missing")">
+                    <svg class="hgi hgi-sm"><use href="@(skillCount > 0 ? "#i-check-circle" : "#i-alert")"></use></svg>
+                    <span>@(skillCount > 0 ? $"{skillCount} skill{(skillCount == 1 ? "" : "s")} listed" : "No skills listed")</span>
+                </div>
+                @if (!hasCv || skillCount == 0)
+                {
+                    <a asp-controller="CareerProfile" asp-action="Index" class="idt-ready-fix">
+                        Update profile <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg>
+                    </a>
+                }
+            </div>
+
             @if (!hasCv || skillCount == 0)
             {
-                <div class="alert alert-warning uc-flash mb-3">
-                    <i class="bi bi-info-circle"></i>
-                    @if (!hasCv && skillCount == 0)
-                    {
-                        <text>Your profile has no CV and no skills listed yet — the employer won't see either if you apply now.</text>
-                    }
-                    else if (!hasCv)
-                    {
-                        <text>You haven't uploaded a CV yet — it won't be included if the employer receives your application.</text>
-                    }
-                    else
-                    {
-                        <text>You haven't added any skills yet — this may lower your matching score.</text>
-                    }
-                    <a asp-controller="CareerProfile" asp-action="Index" class="alert-link">Update your Career Profile</a> first, or apply anyway below.
+                <div class="idt-note idt-note-warn">
+                    <svg class="hgi hgi-sm"><use href="#i-info"></use></svg>
+                    <span>
+                        @if (!hasCv && skillCount == 0)
+                        {
+                            <text>The employer won't see a CV or any skills if you apply now.</text>
+                        }
+                        else if (!hasCv)
+                        {
+                            <text>Your CV won't be included if the employer receives your application.</text>
+                        }
+                        else
+                        {
+                            <text>Adding skills may raise your matching score.</text>
+                        }
+                        You can still apply below.
+                    </span>
                 </div>
             }
+
             <form asp-action="Apply" method="post" data-loading>
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="internshipId" value="@Model.Id" />
-                <label class="form-label">Cover message (optional)</label>
-                <textarea name="coverMessage" class="form-control mb-2" rows="3" placeholder="Why are you a good fit?"></textarea>
-                <button class="btn btn-primary"><i class="bi bi-send me-1"></i>Apply</button>
+                <label class="form-label" for="coverMessage">Cover message <span class="text-muted">(optional)</span></label>
+                <textarea id="coverMessage" name="coverMessage" class="form-control mb-3" rows="4"
+                          maxlength="1000" placeholder="Why are you a good fit for this role?"></textarea>
+                <button class="btn btn-primary idt-btn idt-btn-submit" data-loading-text="Sending…">
+                    <svg class="hgi hgi-sm"><use href="#i-send"></use></svg>Submit application
+                </button>
             </form>
         }
-    </div>
+    </section>
 </div>
 
-<script>
-    (function () {
-        const btn = document.getElementById('copyEmailBtn');
-        const text = document.getElementById('applyEmailText');
-        if (!btn || !text) return;
-        btn.addEventListener('click', () => {
-            navigator.clipboard.writeText(text.textContent.trim()).then(() => {
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
-                setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'; }, 2000);
-            });
-        });
-    })();
-</script>
+@section Scripts {
+    <script src="~/js/pages/internship-details.js" asp-append-version="true"></script>
+}

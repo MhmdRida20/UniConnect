@@ -139,6 +139,9 @@
         if (address && textInput) {
             programmaticTextUpdate = true;
             textInput.value = address;
+            // Let the progress bar (and anything else listening) know the
+            // field now has a value, without re-triggering our own geocode.
+            textInput.dispatchEvent(new Event('input', { bubbles: true }));
             // Release the guard on the next tick, after the 'input' event (if any) fires.
             setTimeout(() => { programmaticTextUpdate = false; }, 0);
         }

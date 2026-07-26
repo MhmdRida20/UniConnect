@@ -5,6 +5,7 @@
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
 }
 
@@ -16,6 +17,15 @@
     <div class="uc-form-card au-form-card">
         <form asp-action="Create" method="post" data-loading>
             @Html.AntiForgeryToken()
+            <div class="uc-form-progress" data-form-progress>
+                <div class="ufp-head">
+                    <span class="ufp-label"><svg class="hgi"><use href="#i-chart"></use></svg>Form progress</span>
+                    <span class="ufp-pct" data-progress-pct>0%</span>
+                </div>
+                <div class="ufp-track"><div class="ufp-fill" data-progress-fill></div></div>
+                <ul class="ufp-checklist" data-progress-checklist></ul>
+            </div>
+
             <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
             <div class="mb-3">
@@ -126,5 +136,6 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/admin-universities.js" asp-append-version="true"></script>
 }

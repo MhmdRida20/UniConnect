@@ -30,6 +30,12 @@ namespace UniConnect.Controllers
 
             // Viewing the list marks everything read.
             var unread = notifications.Where(n => !n.IsRead).ToList();
+
+            // Capture which ones were unread BEFORE we flip the flag — otherwise
+            // the view can never distinguish "new since your last visit" from
+            // old ones, since by render time every row is already IsRead = true.
+            ViewBag.NewIds = unread.Select(n => n.Id).ToHashSet();
+
             if (unread.Any())
             {
                 foreach (var n in unread) n.IsRead = true;

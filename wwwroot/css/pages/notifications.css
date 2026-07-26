@@ -1,0 +1,164 @@
+/* ==========================================================================
+   Notifications — activity feed
+   Renders inside either shell: the student top-nav layout (with the gradient
+   hero) or the admin/staff portal layout (hero suppressed, since the portal
+   topbar already shows the page title).
+   ========================================================================== */
+
+.nt-page { max-width: 720px; margin: 0 auto; padding: 1.5rem 0 2.5rem; }
+.nt-page-portal { max-width: 720px; margin: 0; padding: 0; }
+
+/* ── Gradient hero (student layout only) ── */
+.nt-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--uc-radius-lg);
+    padding: 1.6rem 1.75rem;
+    margin-bottom: 1.5rem;
+    color: #fff;
+    background: linear-gradient(135deg, var(--uc-primary-deep) 0%, var(--uc-primary-darker) 45%, var(--uc-primary) 100%);
+    box-shadow: var(--uc-shadow-md);
+}
+.nt-hero-aura {
+    position: absolute; top: -90px; right: -60px;
+    width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(134, 239, 172, .45), transparent 70%);
+    filter: blur(50px); pointer-events: none;
+    animation: ntAura 12s ease-in-out infinite;
+}
+@keyframes ntAura {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(16px, -18px) scale(1.12); }
+}
+.nt-hero-inner { position: relative; z-index: 1; display: flex; align-items: center; gap: 1rem; }
+.nt-hero-ico {
+    width: 52px; height: 52px; border-radius: 15px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .26);
+    backdrop-filter: blur(4px);
+}
+.nt-hero-ico .hgi { width: 26px; height: 26px; }
+.nt-hero h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; margin: 0; color: #fff; }
+.nt-hero p { margin: .15rem 0 0; font-size: .88rem; color: rgba(255, 255, 255, .78); }
+.nt-hero p strong { color: #bbf7d0; }
+
+/* Portal-variant "N new" chip */
+.nt-newcount {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: var(--uc-primary-tint); color: var(--uc-primary-darker);
+    border-radius: var(--uc-radius-pill);
+    padding: .15rem .6rem; margin-right: .5rem;
+    font-size: .8rem; font-weight: 700;
+}
+
+/* ── Date bucket headings ── */
+.nt-bucket {
+    font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--uc-muted);
+    margin: 1.4rem 0 .6rem .25rem;
+}
+.nt-bucket:first-child { margin-top: 0; }
+
+/* ── Feed ── */
+.nt-list { display: flex; flex-direction: column; }
+
+.nt-item {
+    position: relative;
+    display: flex; gap: .9rem;
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    padding: .95rem 1.1rem;
+    margin-bottom: .6rem;
+    box-shadow: var(--uc-shadow-xs);
+    transition: transform var(--uc-transition), box-shadow var(--uc-transition), border-color var(--uc-transition);
+    animation: ntIn .4s ease both;
+    animation-delay: calc(var(--i, 0) * 40ms);
+}
+.nt-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--uc-shadow-md);
+    border-color: var(--uc-primary-soft);
+}
+@keyframes ntIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Unread-since-last-visit accent */
+.nt-item.is-new {
+    border-color: var(--uc-primary-soft);
+    background: linear-gradient(90deg, var(--uc-primary-tint) 0%, var(--uc-surface) 55%);
+}
+.nt-item.is-new::before {
+    content: '';
+    position: absolute; left: 0; top: .8rem; bottom: .8rem;
+    width: 3px; border-radius: 0 3px 3px 0;
+    background: linear-gradient(180deg, var(--uc-primary-light), var(--uc-accent));
+}
+
+.nt-item-ico {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform var(--uc-transition);
+}
+.nt-item-ico .hgi { width: 21px; height: 21px; }
+.nt-item:hover .nt-item-ico { transform: scale(1.07) rotate(-4deg); }
+
+/* Per-service tones */
+.nt-tone-green  { background: #dcfce7; color: #15803d; }
+.nt-tone-teal   { background: #ccfbf1; color: #0f766e; }
+.nt-tone-blue   { background: #dbeafe; color: #1d4ed8; }
+.nt-tone-amber  { background: #fef9c3; color: #92400e; }
+.nt-tone-red    { background: #fee2e2; color: #b91c1c; }
+.nt-tone-purple { background: #f3e8ff; color: #7e22ce; }
+.nt-tone-grey   { background: var(--uc-bg); color: var(--uc-muted); }
+
+.nt-item-body { min-width: 0; flex: 1; }
+.nt-item-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.nt-item-head strong { font-size: .93rem; color: var(--uc-text); }
+.nt-new-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: var(--uc-primary);
+    box-shadow: 0 0 0 3px var(--uc-primary-soft);
+    animation: ntPulse 2s ease-in-out infinite;
+}
+@keyframes ntPulse {
+    0%, 100% { box-shadow: 0 0 0 3px var(--uc-primary-soft); }
+    50%      { box-shadow: 0 0 0 5px rgba(22, 163, 74, .12); }
+}
+.nt-item-time { margin-left: auto; font-size: .76rem; color: var(--uc-muted); white-space: nowrap; cursor: help; }
+.nt-item-msg { margin: .3rem 0 0; font-size: .87rem; color: var(--uc-text-soft); line-height: 1.5; }
+
+.nt-item-link {
+    display: inline-flex; align-items: center; gap: .3rem;
+    margin-top: .55rem;
+    font-size: .82rem; font-weight: 700; color: var(--uc-primary-dark);
+    text-decoration: none;
+    transition: gap var(--uc-transition), color var(--uc-transition);
+}
+.nt-item-link:hover { gap: .55rem; color: var(--uc-primary-deep); }
+
+/* ── Empty state ── */
+.nt-empty {
+    text-align: center; padding: 3.5rem 1.5rem;
+    background: var(--uc-surface);
+    border: 1px dashed var(--uc-border);
+    border-radius: var(--uc-radius-lg);
+}
+.nt-empty-ico {
+    width: 64px; height: 64px; margin: 0 auto 1rem;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-primary-tint); color: var(--uc-primary);
+}
+.nt-empty-ico .hgi { width: 30px; height: 30px; }
+.nt-empty h5 { font-weight: 800; margin-bottom: .35rem; }
+.nt-empty p { font-size: .9rem; color: var(--uc-muted); max-width: 420px; margin: 0 auto; }
+
+@media (max-width: 575.98px) {
+    .nt-hero { padding: 1.25rem 1.15rem; }
+    .nt-hero h1 { font-size: 1.25rem; }
+    .nt-item-time { margin-left: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .nt-hero-aura, .nt-item, .nt-new-dot { animation: none; }
+}

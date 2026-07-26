@@ -27,11 +27,53 @@
 
 /* Input with a leading icon */
 .input-icon { position: relative; }
-.input-icon i {
+.input-icon i, .input-icon svg {
     position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
     color: var(--uc-muted); pointer-events: none;
 }
 .input-icon .form-control { padding-left: 2.4rem; }
+
+/* ── Dynamic progress bar (reflects [Required] fields as they're filled) ── */
+.uc-form-progress {
+    background: linear-gradient(160deg, var(--uc-primary-tint), #fff);
+    border: 1px solid #bbf7d0;
+    border-radius: var(--uc-radius-lg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--uc-shadow-xs);
+    transition: box-shadow var(--uc-transition);
+}
+.ufp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+.ufp-label {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .76rem; font-weight: 700; color: var(--uc-primary-darker);
+    text-transform: uppercase; letter-spacing: .05em;
+}
+.ufp-label svg { width: 15px; height: 15px; }
+.ufp-pct { font-size: .95rem; font-weight: 800; color: var(--uc-primary-dark); font-variant-numeric: tabular-nums; }
+.ufp-track { height: 8px; border-radius: 999px; background: #ffffffb0; overflow: hidden; }
+.ufp-fill {
+    height: 100%; border-radius: 999px; width: 0%;
+    background: linear-gradient(90deg, var(--uc-primary-light), var(--uc-primary));
+    transition: width .35s cubic-bezier(.4, 0, .2, 1);
+}
+.uc-form-progress.is-complete { box-shadow: 0 0 0 3px rgba(22, 163, 74, .12); }
+.uc-form-progress.is-complete .ufp-fill { background: linear-gradient(90deg, var(--uc-primary), var(--uc-primary-dark)); }
+.uc-form-progress.is-complete .ufp-pct { color: var(--uc-primary-darker); }
+.uc-form-progress.is-complete .ufp-pct::after { content: ' ✓'; }
+
+.ufp-checklist { list-style: none; padding: 0; margin: .9rem 0 0; display: flex; flex-wrap: wrap; gap: .4rem 1rem; }
+.ufp-checklist li {
+    display: flex; align-items: center; gap: .35rem;
+    font-size: .79rem; font-weight: 600; color: var(--uc-muted);
+    transition: color var(--uc-transition);
+}
+.ufp-checklist li svg {
+    width: 15px; height: 15px; color: var(--uc-border); flex-shrink: 0;
+    transition: color var(--uc-transition), transform var(--uc-transition);
+}
+.ufp-checklist li.is-done { color: var(--uc-primary-dark); }
+.ufp-checklist li.is-done svg { color: var(--uc-primary); transform: scale(1.12); }
 
 /* ── Tips aside ── */
 .form-aside {
@@ -47,17 +89,16 @@
     display: flex; align-items: center; gap: .5rem;
     color: var(--uc-primary-darker);
 }
-.form-aside h2 i { color: var(--uc-warning); }
+.form-aside h2 i, .form-aside h2 svg { color: var(--uc-warning); width: 20px; height: 20px; }
 .form-aside ul { list-style: none; padding: 0; margin: 0; }
 .form-aside li {
     position: relative; padding-left: 1.6rem; margin-bottom: .85rem;
     font-size: .88rem; color: var(--uc-text-soft); line-height: 1.5;
 }
 .form-aside li::before {
-    content: '\F26A'; /* bi check-lg */
-    font-family: 'bootstrap-icons';
+    content: '✓';
     position: absolute; left: 0; top: -1px;
-    color: var(--uc-primary); font-weight: bold;
+    color: var(--uc-primary); font-weight: 800;
 }
 .form-aside li strong { color: var(--uc-text); }
 
