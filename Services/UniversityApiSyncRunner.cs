@@ -70,6 +70,28 @@ namespace UniConnect.Services
                 studentsResponse.EnsureSuccessStatusCode();
                 var externalStudents = await studentsResponse.Content.ReadFromJsonAsync<List<ExternalStudentRecord>>(cancellationToken: ct) ?? new();
 
+                // Instructors/staff are optional in principle (an older or
+                // more limited external API might not expose them yet) —
+                // missing endpoints shouldn't fail the whole sync, just
+                // leave those two caches unchanged for this cycle.
+                var externalInstructors = new List<ExternalInstructorRecord>();
+                try
+                {
+                    var instructorsResponse = await client.GetAsync("instructors", ct);
+                    if (instructorsResponse.IsSuccessStatusCode)
+                        externalInstructors = await instructorsResponse.Content.ReadFromJsonAsync<List<ExternalInstructorRecord>>(cancellationToken: ct) ?? new();
+                }
+                catch (Exception ex) { _logger.LogWarning(ex, "Instructor sync skipped for {Code} — endpoint unavailable.", university.Code); }
+
+                var externalStaff = new List<ExternalStaffRecord>();
+                try
+                {
+                    var staffResponse = await client.GetAsync("staff", ct);
+                    if (staffResponse.IsSuccessStatusCode)
+                        externalStaff = await staffResponse.Content.ReadFromJsonAsync<List<ExternalStaffRecord>>(cancellationToken: ct) ?? new();
+                }
+                catch (Exception ex) { _logger.LogWarning(ex, "Staff sync skipped for {Code} — endpoint unavailable.", university.Code); }
+
                 var coursesResponse = await client.GetAsync("courses", ct);
                 coursesResponse.EnsureSuccessStatusCode();
                 var externalCourses = await coursesResponse.Content.ReadFromJsonAsync<List<ExternalCourseRecord>>(cancellationToken: ct) ?? new();
@@ -77,6 +99,35 @@ namespace UniConnect.Services
                 var existingCourses = await _db.Courses.Where(c => c.UniversityCode == university.Code).ToListAsync(ct);
                 var existingStudents = await _db.Students.Where(s => s.UniversityCode == university.Code).ToListAsync(ct);
                 var existingEnrollments = await _db.Enrollments.Where(e => e.UniversityCode == university.Code).ToListAsync(ct);
+                var existingInstructors = await _db.Instructors.Where(i => i.UniversityCode == university.Code).ToListAsync(ct);
+                var existingStaff = await _db.StaffRecords.Where(s => s.UniversityCode == university.Code).ToListAsync(ct);
+
+                foreach (var extInstructor in externalInstructors)
+                {
+                    var localInstructor = existingInstructors.FirstOrDefault(i => i.StaffId == extInstructor.StaffId);
+                    if (localInstructor is null)
+                    {
+                        localInstructor = new Instructor { StaffId = extInstructor.StaffId, UniversityCode = university.Code };
+                        _db.Instructors.Add(localInstructor);
+                        existingInstructors.Add(localInstructor);
+                    }
+                    localInstructor.FullName = extInstructor.FullName;
+                    localInstructor.UniversityEmail = extInstructor.Email;
+                }
+
+                foreach (var extStaff in externalStaff)
+                {
+                    var localStaff = existingStaff.FirstOrDefault(s => s.StaffId == extStaff.StaffId);
+                    if (localStaff is null)
+                    {
+                        localStaff = new StaffRecord { StaffId = extStaff.StaffId, UniversityCode = university.Code };
+                        _db.StaffRecords.Add(localStaff);
+                        existingStaff.Add(localStaff);
+                    }
+                    localStaff.FullName = extStaff.FullName;
+                    localStaff.UniversityEmail = extStaff.Email;
+                    localStaff.Department = extStaff.Department;
+                }
 
                 // Tracks every (student, course) pair the external side
                 // actually reports right now — anything locally cached that

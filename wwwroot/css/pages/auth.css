@@ -499,8 +499,27 @@
     .auth-quote:not(:first-child) { display: none; }
 }
 
-/* FR-03: SSO option below the standard login form — only rendered when a
-   real university identity provider is actually configured. */
+/* FR-01/03/06: role-choice buttons on the "who's signing up?" landing page */
+.auth-choice-btn {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    text-align: left;
+    padding: .9rem 1.1rem;
+    border-radius: 12px;
+    width: 100%;
+}
+.auth-choice-btn span {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    line-height: 1.25;
+}
+.auth-choice-btn small {
+    opacity: .75;
+    font-weight: 400;
+}
+
 .auth-divider {
     display: flex;
     align-items: center;

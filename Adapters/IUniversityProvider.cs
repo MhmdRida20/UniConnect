@@ -32,6 +32,12 @@ namespace UniConnect.Adapters
         /// <summary>Basic academic profile for this student, if they exist.</summary>
         Task<UniversityStudentDto?> GetStudentInfoAsync(string universityCode, string studentNumber);
 
+        /// <summary>Basic profile for this instructor, if they exist — used to verify instructor self-registration, the same way GetStudentInfoAsync verifies students.</summary>
+        Task<UniversityInstructorDto?> GetInstructorInfoAsync(string universityCode, string staffId);
+
+        /// <summary>Basic profile for this department staff member, if they exist — used to verify staff self-registration, including which department they're actually assigned to.</summary>
+        Task<UniversityStaffDto?> GetStaffInfoAsync(string universityCode, string staffId);
+
         /// <summary>Courses this instructor is assigned to teach (FR-18 precondition for creating an attendance session).</summary>
         Task<List<UniversityCourseDto>> GetTaughtCoursesAsync(string universityCode, string instructorId);
 
@@ -54,4 +60,17 @@ namespace UniConnect.Adapters
         string UniversityEmail,
         string? Major,
         int YearOfStudy);
+
+    /// <summary>Adapter-agnostic instructor profile shape.</summary>
+    public record UniversityInstructorDto(
+        string StaffId,
+        string FullName,
+        string UniversityEmail);
+
+    /// <summary>Adapter-agnostic department staff profile shape.</summary>
+    public record UniversityStaffDto(
+        string StaffId,
+        string FullName,
+        string UniversityEmail,
+        string Department);
 }

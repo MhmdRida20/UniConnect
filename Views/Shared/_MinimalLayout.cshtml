@@ -1,0 +1,58 @@
+@{
+    // A deliberately bare shell — reuses the exact same fonts/CSS/icon
+    // sprite as the portal layout so it still looks like part of the same
+    // app, but with no sidebar and no nav at all. Used specifically for the
+    // Admin/UniversityAdmin notifications page: a notification often points
+    // somewhere entirely outside the admin's usual area, so surfacing it
+    // inside the full portal chrome (with a sidebar full of unrelated admin
+    // tools) added noise rather than context.
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#16a34a" />
+    <title>@ViewData["Title"] - UniConnect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/minimal-layout.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="minimal-body">
+    <partial name="_Icons" />
+
+    <header class="minimal-topbar">
+        <a class="uc-brand-mark minimal-brand" asp-controller="Home" asp-action="Index">
+            <svg class="hgi"><use href="#i-graduation"></use></svg>
+            <span>Uni<b>Connect</b></span>
+        </a>
+        <a class="minimal-back" asp-controller="Home" asp-action="Index">
+            <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>
+            Back to Dashboard
+        </a>
+    </header>
+
+    <main class="minimal-main" role="main">
+        <div class="container">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success uc-flash">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger uc-flash">@TempData["Error"]</div>
+            }
+            @RenderBody()
+        </div>
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

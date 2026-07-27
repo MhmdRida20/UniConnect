@@ -32,6 +32,12 @@ namespace UniConnect.Controllers
 
         private bool IsSuperAdmin => User.IsInRole("Admin");
 
+        // Controls both the ORDER role groups appear in within a university,
+        // and which role a user with multiple roles (rare, but possible) is
+        // grouped under — whichever of these appears earliest wins.
+        private static readonly string[] RoleDisplayOrder =
+            { "UniversityAdmin", "Instructor", "DepartmentStaff", "Company", "Student", "Admin" };
+
         public async Task<IActionResult> Index(string? search)
         {
             var query = _db.Users.AsQueryable();
@@ -52,18 +58,43 @@ namespace UniConnect.Controllers
                     u.UniversityId.Contains(term));
             }
 
-            var users = await query.OrderBy(u => u.FullName).Take(200).ToListAsync();
+            var users = await query.OrderBy(u => u.FullName).Take(500).ToListAsync();
 
             var roleNames = new Dictionary<string, List<string>>();
             foreach (var u in users)
                 roleNames[u.Id] = (await _userManager.GetRolesAsync(u)).ToList();
+
+            var universityNames = await _db.Universities.ToDictionaryAsync(u => u.Code, u => u.Name);
+
+            // Group by university first, then by role within each — a flat,
+            // unlabeled list made it hard to tell at a glance which
+            // institution a user belonged to or what they actually were.
+            var universityGroups = users
+                .GroupBy(u => u.UniversityCode)
+                .OrderBy(g => universityNames.TryGetValue(g.Key, out var name) ? name : g.Key)
+                .Select(uniGroup => new AdminUserUniversityGroup
+                {
+                    UniversityCode = uniGroup.Key,
+                    UniversityName = universityNames.TryGetValue(uniGroup.Key, out var n) ? n : uniGroup.Key,
+                    RoleGroups = uniGroup
+                        .GroupBy(u =>
+                        {
+                            var roles = roleNames[u.Id];
+                            return RoleDisplayOrder.FirstOrDefault(r => roles.Contains(r))
+                                ?? (roles.FirstOrDefault() ?? "Student");
+                        })
+                        .OrderBy(rg => Array.IndexOf(RoleDisplayOrder, rg.Key) is var idx && idx >= 0 ? idx : int.MaxValue)
+                        .Select(rg => new AdminUserRoleGroup { RoleName = rg.Key, Users = rg.ToList() })
+                        .ToList()
+                })
+                .ToList();
 
             ViewBag.RoleNames = roleNames;
             ViewBag.Search = search;
             ViewBag.CurrentUserId = _userManager.GetUserId(User);
             ViewBag.IsSuperAdmin = IsSuperAdmin;
 
-            return View(users);
+            return View(universityGroups);
         }
 
         [HttpPost]
@@ -178,5 +209,18 @@ namespace UniConnect.Controllers
             TempData["Success"] = $"{user.FullName}'s role changed to {newRole}.";
             return RedirectToAction(nameof(Index));
         }
+    }
+
+    public class AdminUserUniversityGroup
+    {
+        public string UniversityCode { get; set; } = string.Empty;
+        public string UniversityName { get; set; } = string.Empty;
+        public List<AdminUserRoleGroup> RoleGroups { get; set; } = new();
+    }
+
+    public class AdminUserRoleGroup
+    {
+        public string RoleName { get; set; } = string.Empty;
+        public List<ApplicationUser> Users { get; set; } = new();
     }
 }

@@ -151,6 +151,54 @@ namespace UniConnect.Adapters
             }
         }
 
+        public async Task<UniversityInstructorDto?> GetInstructorInfoAsync(string universityCode, string staffId)
+        {
+            try
+            {
+                var client = await BuildClientAsync(universityCode);
+                var response = await client.GetAsync($"instructors/{staffId}");
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+                if (!response.IsSuccessStatusCode)
+                    throw new HttpRequestException($"External API returned {response.StatusCode}");
+
+                var i = await response.Content.ReadFromJsonAsync<ExternalInstructorRecord>();
+                return i is null ? null : new UniversityInstructorDto(i.StaffId, i.FullName, i.Email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Live instructor lookup failed for {University}/{Staff} — falling back to local cache.", universityCode, staffId);
+
+                var instructor = await _db.Instructors.FirstOrDefaultAsync(
+                    i => i.UniversityCode == universityCode && i.StaffId == staffId);
+                return instructor is null ? null
+                    : new UniversityInstructorDto(instructor.StaffId, instructor.FullName, instructor.UniversityEmail);
+            }
+        }
+
+        public async Task<UniversityStaffDto?> GetStaffInfoAsync(string universityCode, string staffId)
+        {
+            try
+            {
+                var client = await BuildClientAsync(universityCode);
+                var response = await client.GetAsync($"staff/{staffId}");
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+                if (!response.IsSuccessStatusCode)
+                    throw new HttpRequestException($"External API returned {response.StatusCode}");
+
+                var s = await response.Content.ReadFromJsonAsync<ExternalStaffRecord>();
+                return s is null ? null : new UniversityStaffDto(s.StaffId, s.FullName, s.Email, s.Department);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Live staff lookup failed for {University}/{Staff} — falling back to local cache.", universityCode, staffId);
+
+                var staff = await _db.StaffRecords.FirstOrDefaultAsync(
+                    s => s.UniversityCode == universityCode && s.StaffId == staffId);
+                return staff is null ? null
+                    : new UniversityStaffDto(staff.StaffId, staff.FullName, staff.UniversityEmail, staff.Department);
+            }
+        }
+
         public async Task<List<UniversityCourseDto>> GetTaughtCoursesAsync(string universityCode, string instructorId)
         {
             try

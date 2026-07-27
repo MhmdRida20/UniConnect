@@ -11,8 +11,10 @@
         <span class="auth-head-ico"><svg class="hgi"><use href="#i-user-add"></use></svg></span>
         <h1 class="auth-title">Create your account</h1>
         <p class="auth-subtitle">
-            <span class="auth-hint"><svg class="hgi hgi-sm"><use href="#i-shield"></use></svg>
-                Registered students only — use your University ID &amp; registrar email.</span>
+            <span class="auth-hint">
+                <svg class="hgi hgi-sm"><use href="#i-shield"></use></svg>
+                Registered students only — use your University ID &amp; registrar email.
+            </span>
         </p>
     </div>
 
@@ -83,7 +85,15 @@
     <div class="auth-switch">
         Already have an account?
         <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" data-auth-nav>
-            Log in <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+            Log in
+            <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+        </a>
+    </div>
+    <div class="auth-switch">
+        Not the right role?
+        <a asp-page="./RegisterChoice" asp-route-returnUrl="@Model.ReturnUrl" data-auth-nav>
+            Choose again
+            <svg class="hgi"><use href="#i-arrow-right"></use></svg>
         </a>
     </div>
 </form>

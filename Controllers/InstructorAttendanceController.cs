@@ -80,7 +80,7 @@ namespace UniConnect.Controllers
             if (user is null) return Challenge();
 
             var provider = await _providerResolver.GetProviderAsync(user.UniversityCode);
-            var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.Id);
+            var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.UniversityId);
 
             // FR-11: pre-fill with this university's configured defaults —
             // the instructor can still adjust either value for this
@@ -105,7 +105,7 @@ namespace UniConnect.Controllers
             if (user is null) return Challenge();
 
             var provider = await _providerResolver.GetProviderAsync(user.UniversityCode);
-            var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.Id);
+            var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.UniversityId);
             var course = courses.FirstOrDefault(c => c.CourseCode == vm.CourseCode);
 
             if (course is null)
@@ -169,7 +169,7 @@ namespace UniConnect.Controllers
             }
 
             var provider = await _providerResolver.GetProviderAsync(user.UniversityCode);
-            var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.Id);
+            var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.UniversityId);
 
             var vm = new AttendanceSessionCreateVM
             {
@@ -205,7 +205,7 @@ namespace UniConnect.Controllers
             }
 
             var provider = await _providerResolver.GetProviderAsync(user.UniversityCode);
-            var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.Id);
+            var courses = await provider.GetTaughtCoursesAsync(user.UniversityCode, user.UniversityId);
             var course = courses.FirstOrDefault(c => c.CourseCode == vm.CourseCode);
 
             if (course is null)

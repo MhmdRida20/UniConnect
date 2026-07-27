@@ -1,88 +1,132 @@
-@model IEnumerable<UniConnect.Models.ApplicationUser>
+@model List<UniConnect.Controllers.AdminUserUniversityGroup>
 @{
     ViewData["Title"] = "Manage Users";
     Layout = "~/Views/Shared/_PortalLayout.cshtml";
     var roleNames = ViewBag.RoleNames as Dictionary<string, List<string>> ?? new();
     var currentUserId = ViewBag.CurrentUserId as string;
     var isSuperAdmin = ViewBag.IsSuperAdmin is true;
-    var users = Model.ToList();
 
-    // Mirrors AdminUsersController's own allow-lists — kept in sync so the
-    // dropdown never offers a role the server would reject anyway.
     var assignableRoles = isSuperAdmin
         ? new[] { "Student", "Instructor", "DepartmentStaff", "UniversityAdmin" }
         : new[] { "Student", "Instructor", "DepartmentStaff" };
+
+    var totalUsers = Model.Sum(g => g.RoleGroups.Sum(rg => rg.Users.Count));
+
+    string RoleGroupLabel(string role) => role switch
+    {
+        "Student" => "Students",
+        "Instructor" => "Instructors",
+        "DepartmentStaff" => "Department Staff",
+        "UniversityAdmin" => "University Admins",
+        "Company" => "Company Accounts",
+        "Admin" => "Super Admins",
+        _ => role
+    };
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
 }
 
-<form method="get" class="d-flex gap-2 mb-3" style="max-width:420px">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="mb-0">Manage Users</h2>
+    <span class="text-muted small">@totalUsers user@(totalUsers == 1 ? "" : "s") @(isSuperAdmin ? "across all universities" : "at your university")</span>
+</div>
+
+<form method="get" class="d-flex gap-2 mb-4" style="max-width:420px">
     <input type="text" name="search" class="form-control" placeholder="Search by name, email, or ID…" value="@ViewBag.Search" />
     <button class="btn btn-outline-secondary">Search</button>
 </form>
 
-<div class="st-table">
-    <div class="st-table-head" style="grid-template-columns: 1.2fr 1.1fr .8fr .7fr 260px !important;">
-        <span>Name</span>
-        <span>Email</span>
-        <span>Role</span>
-        <span>Status</span>
-        <span></span>
+@if (!Model.Any())
+{
+    <div class="uc-empty">
+        <span class="uc-empty-icon"><i class="bi bi-people"></i></span>
+        <h5>No users found</h5>
     </div>
-    @foreach (var u in users)
-    {
-        var roles = roleNames.TryGetValue(u.Id, out var r) ? r : new List<string>();
-        var isChangeable = u.Id != currentUserId
-            && !roles.Contains("Admin") && !roles.Contains("Company")
-            && (isSuperAdmin || !roles.Contains("UniversityAdmin"));
+}
 
-        <div class="st-table-row" style="cursor:default; grid-template-columns: 1.2fr 1.1fr .8fr .7fr 260px !important;">
-            <span class="st-title-cell">@u.FullName</span>
-            <span class="text-muted small">@u.Email</span>
-            <span>@(roles.Any() ? string.Join(", ", roles) : "Student")</span>
-            @if (u.IsSuspended)
-            {
-                <span class="uc-pill uc-pill-amber">Suspended</span>
-            }
-            else
-            {
-                <span class="uc-pill uc-pill-green">Active</span>
-            }
+@foreach (var uniGroup in Model)
+{
+    <div class="mb-4">
+        <h4 class="mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-bank"></i> @uniGroup.UniversityName
+            <span class="uc-pill uc-pill-grey">@uniGroup.RoleGroups.Sum(rg => rg.Users.Count) user@(uniGroup.RoleGroups.Sum(rg => rg.Users.Count) == 1 ? "" : "s")</span>
+        </h4>
 
-            @if (u.Id == currentUserId)
-            {
-                <span class="text-muted small">(you)</span>
-            }
-            else
-            {
-                <div class="d-flex flex-wrap gap-1 justify-content-end">
-                    @if (isChangeable)
-                    {
-                        <form asp-action="ChangeRole" method="post" class="d-flex gap-1" data-loading
-                              data-confirm="Change @u.FullName's role?">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="userId" value="@u.Id" />
-                            <select name="newRole" class="form-select form-select-sm" style="width:auto;">
-                                @foreach (var role in assignableRoles)
-                                {
-                                    <option value="@role">@role</option>
-                                }
-                            </select>
-                            <button class="btn btn-outline-secondary btn-sm">Set</button>
-                        </form>
-                    }
-                    <form asp-action="ToggleSuspend" method="post"
-                          data-confirm="@(u.IsSuspended ? "Reactivate" : "Suspend") @u.FullName's account?">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="userId" value="@u.Id" />
-                        <button class="btn btn-sm @(u.IsSuspended ? "btn-outline-success" : "btn-outline-danger")">
-                            @(u.IsSuspended ? "Reactivate" : "Suspend")
-                        </button>
-                    </form>
+        @foreach (var roleGroup in uniGroup.RoleGroups)
+        {
+            <h6 class="text-muted text-uppercase small mb-2 mt-3" style="letter-spacing:.04em;">
+                @RoleGroupLabel(roleGroup.RoleName) <span class="fw-normal">(@roleGroup.Users.Count)</span>
+            </h6>
+
+            <div class="st-table mb-2">
+                <div class="st-table-head" style="grid-template-columns: 1.2fr 1.1fr .7fr 260px !important;">
+                    <span>Name</span>
+                    <span>Email</span>
+                    <span>Status</span>
+                    <span></span>
                 </div>
-            }
-        </div>
-    }
-</div>
+                @foreach (var u in roleGroup.Users)
+                {
+                    var roles = roleNames.TryGetValue(u.Id, out var r) ? r : new List<string>();
+                    var isChangeable = u.Id != currentUserId
+                        && !roles.Contains("Admin") && !roles.Contains("Company")
+                        && (isSuperAdmin || !roles.Contains("UniversityAdmin"));
+
+                    <div class="st-table-row" style="cursor:default; grid-template-columns: 1.2fr 1.1fr .7fr 260px !important;">
+                        <span class="st-title-cell">
+                            @u.FullName
+                            @if (roleGroup.RoleName == "DepartmentStaff" && !string.IsNullOrWhiteSpace(u.Department))
+                            {
+                                <span class="uc-pill uc-pill-grey ms-1">@u.Department</span>
+                            }
+                        </span>
+                        <span class="text-muted small">@u.Email</span>
+                        @if (u.IsSuspended)
+                        {
+                            <span class="uc-pill uc-pill-amber">Suspended</span>
+                        }
+                        else
+                        {
+                            <span class="uc-pill uc-pill-green">Active</span>
+                        }
+
+                        @if (u.Id == currentUserId)
+                        {
+                            <span class="text-muted small">(you)</span>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                @if (isChangeable)
+                                {
+                                    <form asp-action="ChangeRole" method="post" class="d-flex gap-1" data-loading
+                                          data-confirm="Change @u.FullName's role?">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@u.Id" />
+                                        <select name="newRole" class="form-select form-select-sm" style="width:auto;">
+                                            @foreach (var role in assignableRoles)
+                                            {
+                                                <option value="@role">@role</option>
+                                            }
+                                        </select>
+                                        <button class="btn btn-outline-secondary btn-sm">Set</button>
+                                    </form>
+                                }
+                                <form asp-action="ToggleSuspend" method="post"
+                                      data-confirm="@(u.IsSuspended ? "Reactivate" : "Suspend") @u.FullName's account?">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@u.Id" />
+                                    <button class="btn btn-sm @(u.IsSuspended ? "btn-outline-success" : "btn-outline-danger")">
+                                        @(u.IsSuspended ? "Reactivate" : "Suspend")
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}

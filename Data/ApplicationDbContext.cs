@@ -26,6 +26,8 @@ namespace UniConnect.Data
 
         // University adapter data (synced from each university's API)
         public DbSet<Student> Students => Set<Student>();
+        public DbSet<Instructor> Instructors => Set<Instructor>();
+        public DbSet<StaffRecord> StaffRecords => Set<StaffRecord>();
         public DbSet<Course> Courses => Set<Course>();
         public DbSet<Enrollment> Enrollments => Set<Enrollment>();
 
@@ -62,6 +64,7 @@ namespace UniConnect.Data
         public DbSet<ExternalSimCourse> ExternalSimCourses => Set<ExternalSimCourse>();
         public DbSet<ExternalSimStudent> ExternalSimStudents => Set<ExternalSimStudent>();
         public DbSet<ExternalSimEnrollment> ExternalSimEnrollments => Set<ExternalSimEnrollment>();
+        public DbSet<ExternalSimStaff> ExternalSimStaff => Set<ExternalSimStaff>();
 
         // Internship and Career Matching module
         public DbSet<Company> Companies => Set<Company>();
@@ -95,6 +98,18 @@ namespace UniConnect.Data
             builder.Entity<Student>()
                 .HasOne(s => s.University)
                 .WithMany(un => un.Students)
+                .HasForeignKey(s => s.UniversityCode)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Instructor>()
+                .HasOne(i => i.University)
+                .WithMany()
+                .HasForeignKey(i => i.UniversityCode)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<StaffRecord>()
+                .HasOne(s => s.University)
+                .WithMany()
                 .HasForeignKey(s => s.UniversityCode)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -420,6 +435,9 @@ namespace UniConnect.Data
 
             builder.Entity<ExternalSimEnrollment>()
                 .HasKey(e => new { e.ApiKey, e.StudentNumber, e.CourseCode });
+
+            builder.Entity<ExternalSimStaff>()
+                .HasKey(s => new { s.ApiKey, s.StaffId });
 
             // ----- Internship and Career Matching -----
             builder.Entity<Company>()

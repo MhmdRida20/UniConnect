@@ -248,6 +248,23 @@ namespace UniConnect.Controllers
                 credentialMessages.Add("University admin login creation FAILED — you can add one manually later.");
             }
 
+            // Instructor and staff RECORDS were already generated alongside
+            // this university's courses (ProvisionRandomDatasetAsync) — no
+            // login accounts are created for them here anymore. They now
+            // self-register exactly like students already do, using the
+            // Staff ID + email shown on the Services page. This keeps the
+            // "who has an account" story consistent across every role:
+            // nobody is a real person here without having gone through
+            // registration themselves.
+            var instructorCount = (await _externalStore.GetDistinctInstructorsAsync(vm.ApiKey.Trim())).Count;
+            var staffCount = (await _externalStore.GetAllStaffAsync(vm.ApiKey.Trim())).Count;
+            if (instructorCount > 0 || staffCount > 0)
+            {
+                credentialMessages.Add(
+                    $"{instructorCount} instructor(s) and {staffCount} staff record(s) generated — " +
+                    "they can self-register using the Staff IDs shown on this page below.");
+            }
+
             TempData["Success"] = $"{university.Name} added and synced (status: {university.LastSyncStatus}). " +
                 string.Join(" | ", credentialMessages) +
                 " (save these now, they won't be shown again). Now choose which services to enable.";
@@ -359,6 +376,16 @@ namespace UniConnect.Controllers
             ViewBag.SyncedStudents = await _db.Students
                 .Where(s => s.UniversityCode == code)
                 .OrderBy(s => s.UniversityId)
+                .ToListAsync();
+
+            ViewBag.SyncedInstructors = await _db.Instructors
+                .Where(i => i.UniversityCode == code)
+                .OrderBy(i => i.StaffId)
+                .ToListAsync();
+
+            ViewBag.SyncedStaff = await _db.StaffRecords
+                .Where(s => s.UniversityCode == code)
+                .OrderBy(s => s.Department).ThenBy(s => s.StaffId)
                 .ToListAsync();
 
             return View(allServices);

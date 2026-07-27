@@ -68,6 +68,64 @@ namespace UniConnect.Controllers.ExternalApi
             return student is null ? NotFound() : Ok(student);
         }
 
+        [HttpGet("instructors/{staffId}")]
+        public async Task<IActionResult> GetInstructor(string staffId)
+        {
+            var (dataset, denied) = await ResolveAsync();
+            if (denied is not null) return denied;
+
+            // Instructor identity is derived from course records — there's
+            // no separate "instructor directory" in this simulated API,
+            // matching how a real course-catalog API would likely expose it.
+            var course = dataset!.Courses.FirstOrDefault(c => c.InstructorStaffId == staffId);
+            if (course is null || string.IsNullOrWhiteSpace(course.InstructorEmail)) return NotFound();
+
+            return Ok(new ExternalInstructorRecord
+            {
+                StaffId = staffId,
+                FullName = course.InstructorName ?? "Instructor",
+                Email = course.InstructorEmail
+            });
+        }
+
+        [HttpGet("instructors")]
+        public async Task<IActionResult> GetAllInstructors()
+        {
+            var (dataset, denied) = await ResolveAsync();
+            if (denied is not null) return denied;
+
+            var instructors = dataset!.Courses
+                .Where(c => c.InstructorStaffId != null && c.InstructorEmail != null)
+                .GroupBy(c => c.InstructorStaffId)
+                .Select(g => new ExternalInstructorRecord
+                {
+                    StaffId = g.Key!,
+                    FullName = g.First().InstructorName ?? "Instructor",
+                    Email = g.First().InstructorEmail!
+                })
+                .ToList();
+            return Ok(instructors);
+        }
+
+        [HttpGet("staff/{staffId}")]
+        public async Task<IActionResult> GetStaff(string staffId)
+        {
+            var (dataset, denied) = await ResolveAsync();
+            if (denied is not null) return denied;
+
+            var staff = dataset!.Staff.FirstOrDefault(s => s.StaffId == staffId);
+            return staff is null ? NotFound() : Ok(staff);
+        }
+
+        [HttpGet("staff")]
+        public async Task<IActionResult> GetAllStaff()
+        {
+            var (dataset, denied) = await ResolveAsync();
+            if (denied is not null) return denied;
+
+            return Ok(dataset!.Staff);
+        }
+
         [HttpGet("students/{studentNumber}/enrollments")]
         public async Task<IActionResult> GetStudentEnrollments(string studentNumber)
         {

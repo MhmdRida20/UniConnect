@@ -2,11 +2,28 @@
 @{
     ViewData["Title"] = "Notifications";
 
-    // Portal roles (admin / staff / company) reach this page from the portal
-    // sidebar — rendering it in the student top-nav layout would drop them out
-    // of their own chrome mid-session, so pick the shell that matches the role.
-    var isPortalUser = User.IsInRole("Admin") || User.IsInRole("DepartmentStaff") || User.IsInRole("Company");
-    Layout = isPortalUser ? "~/Views/Shared/_PortalLayout.cshtml" : "_Layout";
+    // Three distinct shells, deliberately:
+    //   Admin/UniversityAdmin — a bare, standalone page (no sidebar at all).
+    //     A notification usually points somewhere OUTSIDE the admin's own
+    //     area entirely, so the full sidebar of admin tools was just noise
+    //     here, not useful context. UniversityAdmin was previously missing
+    //     from this check entirely and fell through to the STUDENT layout
+    //     by mistake — fixed here too.
+    //   DepartmentStaff/Company — the full portal layout, since their own
+    //     sidebar IS directly relevant to what a notification tells them
+    //     (e.g. a ticket response, a new applicant).
+    //   Everyone else (students) — the normal student top-nav layout.
+    var isAdminUser = User.IsInRole("Admin") || User.IsInRole("UniversityAdmin");
+    var isPortalStaffUser = User.IsInRole("DepartmentStaff") || User.IsInRole("Company");
+    Layout = isAdminUser ? "~/Views/Shared/_MinimalLayout.cshtml"
+        : isPortalStaffUser ? "~/Views/Shared/_PortalLayout.cshtml"
+        : "_Layout";
+
+    // Both non-student shells (the bare admin page and the portal sidebar)
+    // use the simpler, compact header below instead of the big decorative
+    // hero — the hero fits the student page's more spacious feel, but reads
+    // as excessive on either of the more focused/utilitarian admin views.
+    var isNonStudentUser = isAdminUser || isPortalStaffUser;
 
     var notifications = Model.ToList();
     var newIds = ViewBag.NewIds as HashSet<int> ?? new HashSet<int>();
@@ -53,10 +70,10 @@
     <link rel="stylesheet" href="~/css/pages/notifications.css" asp-append-version="true" />
 }
 
-<div class="nt-page @(isPortalUser ? "nt-page-portal" : "")">
+<div class="nt-page @(isNonStudentUser ? "nt-page-portal" : "")">
 
     @* ─────────────── Header ─────────────── *@
-    @if (!isPortalUser)
+    @if (!isNonStudentUser)
     {
         <section class="nt-hero">
             <span class="nt-hero-aura" aria-hidden="true"></span>

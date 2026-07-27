@@ -349,7 +349,15 @@ namespace UniConnect.Data
                 var course = await db.Courses.FirstOrDefaultAsync(
                     c => c.UniversityCode == DefaultUniversityCode && c.CourseCode == courseCode);
                 if (course is not null && course.InstructorId is null)
+                {
                     course.InstructorId = instructor.Id;
+                    // Keep the student-facing display name in sync with the
+                    // REAL assignment — this used to stay stuck on whatever
+                    // placeholder name the course was first seeded with,
+                    // which had nothing to do with the actual instructor
+                    // this course later got assigned to.
+                    course.InstructorName = instructor.FullName;
+                }
             }
 
             await AssignInstructorAsync("CSC301", habib);
@@ -382,6 +390,34 @@ namespace UniConnect.Data
                 };
                 await db.Students.AddRangeAsync(students);
                 await db.SaveChangesAsync();
+
+                // Seed an actual, ready-to-use LOGIN account for each of
+                // these students too — not just their academic record above.
+                // Without this, testing any student-facing feature would
+                // require manually self-registering and confirming each one
+                // through the live Register flow, which becomes a real
+                // problem once real SMTP is configured (a confirmation
+                // email to a fictional @uni.edu address goes nowhere, with
+                // no console fallback to catch it either, since the send
+                // itself doesn't throw). Seeded directly and pre-confirmed
+                // here instead, exactly like every other role already is.
+                foreach (var s in students)
+                {
+                    if (await userManager.FindByEmailAsync(s.UniversityEmail) is not null) continue;
+
+                    var studentUser = new ApplicationUser
+                    {
+                        UserName = s.UniversityEmail,
+                        Email = s.UniversityEmail,
+                        EmailConfirmed = true,
+                        FullName = s.FullName,
+                        UniversityCode = DefaultUniversityCode,
+                        UniversityId = s.UniversityId,
+                    };
+                    var studentCreateResult = await userManager.CreateAsync(studentUser, "Student@12345");
+                    if (studentCreateResult.Succeeded)
+                        await userManager.AddToRoleAsync(studentUser, StudentRole);
+                }
             }
 
             // ---- 3. ENROLLMENTS ------------------------------------------------

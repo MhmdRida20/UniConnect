@@ -76,6 +76,58 @@ else
     </div>
 }
 
+@{
+    var syncedInstructors = ViewBag.SyncedInstructors as List<UniConnect.Models.Instructor>;
+    var syncedStaff = ViewBag.SyncedStaff as List<UniConnect.Models.StaffRecord>;
+}
+
+@if (syncedInstructors is { Count: > 0 })
+{
+    <div class="au-synced-students mb-4">
+        <h3><svg class="hgi hgi-sm"><use href="#i-graduation"></use></svg>Instructors synced from the external API</h3>
+        <p class="text-muted small mb-2">
+            These are instructors — use any of these Staff IDs to test instructor registration.
+        </p>
+        <div class="au-synced-student-list">
+            @foreach (var i in syncedInstructors)
+            {
+                var initial = string.IsNullOrEmpty(i.FullName) ? "?" : i.FullName.Substring(0, 1).ToUpperInvariant();
+                <div class="au-synced-student">
+                    <span class="au-synced-avatar">@initial</span>
+                    <strong>@i.StaffId</strong>
+                    <span>@i.FullName</span>
+                    <span class="text-muted">@i.UniversityEmail</span>
+                    <span class="uc-pill uc-pill-green ms-auto">Instructor</span>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (syncedStaff is { Count: > 0 })
+{
+    <div class="au-synced-students mb-4">
+        <h3><svg class="hgi hgi-sm"><use href="#i-building"></use></svg>Department staff synced from the external API</h3>
+        <p class="text-muted small mb-2">
+            These are department staff — use any of these Staff IDs to test staff registration. Each is
+            already assigned to a specific department, shown below.
+        </p>
+        <div class="au-synced-student-list">
+            @foreach (var s in syncedStaff)
+            {
+                var initial = string.IsNullOrEmpty(s.FullName) ? "?" : s.FullName.Substring(0, 1).ToUpperInvariant();
+                <div class="au-synced-student">
+                    <span class="au-synced-avatar">@initial</span>
+                    <strong>@s.StaffId</strong>
+                    <span>@s.FullName</span>
+                    <span class="text-muted">@s.UniversityEmail</span>
+                    <span class="uc-pill uc-pill-amber ms-auto">@s.Department</span>
+                </div>
+            }
+        </div>
+    </div>
+}
+
 <p class="text-muted mb-3">Choose which services <strong>@university?.Name</strong> has access to. Students and staff there will only see the ones turned on here.</p>
 
 <form asp-action="Services" asp-route-code="@university?.Code" method="post" data-loading>

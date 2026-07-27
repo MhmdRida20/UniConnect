@@ -25,6 +25,7 @@ namespace UniConnect.ExternalApi
         public string CourseName { get; set; } = string.Empty;
         public string? InstructorName { get; set; }
         public string? InstructorStaffId { get; set; }
+        public string? InstructorEmail { get; set; }
         public int Credits { get; set; }
     }
 
@@ -32,6 +33,21 @@ namespace UniConnect.ExternalApi
     {
         public string StudentNumber { get; set; } = string.Empty;
         public string CourseCode { get; set; } = string.Empty;
+    }
+
+    public class ExternalInstructorRecord
+    {
+        public string StaffId { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class ExternalStaffRecord
+    {
+        public string StaffId { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -56,6 +72,7 @@ namespace UniConnect.ExternalApi
         public List<ExternalStudentRecord> Students { get; } = new();
         public List<ExternalCourseRecord> Courses { get; } = new();
         public List<ExternalEnrollmentRecord> Enrollments { get; } = new();
+        public List<ExternalStaffRecord> Staff { get; } = new();
     }
 
     /// <summary>
@@ -101,6 +118,31 @@ namespace UniConnect.ExternalApi
             ("Maya","Kanaan"), ("Elie","Tabet"), ("Sarah","Njeim"), ("Karim","Daou"),
         };
 
+        // Distinct from NamePool (students) — used to build a SMALL number
+        // of real instructor identities per newly-generated university
+        // (courses get grouped under a handful of instructors, not one each,
+        // matching how the seeded default university has 2 instructors
+        // covering 4 courses between them).
+        private static readonly (string First, string Last)[] InstructorNamePool =
+        {
+            ("Elias","Nassar"), ("Farah","Idriss"), ("Wael","Haddad"), ("Rana","Kfoury"),
+            ("Omar","Sleiman"), ("Lea","Boutros"), ("Samer","Abdallah"), ("Nour","Haidar"),
+        };
+
+        // Distinct again from both NamePool and InstructorNamePool — one
+        // staff identity gets generated per department below.
+        private static readonly (string First, string Last)[] StaffNamePool =
+        {
+            ("Hady","Chalhoub"), ("Rita","Assaf"), ("Bilal","Osman"), ("Christelle","Saade"),
+            ("Marwan","Feghali"), ("Joyce","Karam"), ("Anthony","Merhi"),
+        };
+
+        // Same 7 departments used throughout the app (TicketCategory, the
+        // seeded default university's staff accounts) — kept identical so
+        // a newly-generated university's staff match the same structure.
+        private static readonly string[] DepartmentPool =
+            { "IT", "Registration", "Finance", "Student Affairs", "Facilities", "Academic Affairs", "Other" };
+
         private static readonly string[] Majors =
             { "Economics", "Chemistry", "Computer Science", "Marketing", "Biology", "History", "Mathematics", "Psychology" };
 
@@ -122,6 +164,7 @@ namespace UniConnect.ExternalApi
 
             var students = await _db.ExternalSimStudents.Where(s => s.ApiKey == apiKey).ToListAsync();
             var enrollments = await _db.ExternalSimEnrollments.Where(e => e.ApiKey == apiKey).ToListAsync();
+            var staff = await _db.ExternalSimStaff.Where(s => s.ApiKey == apiKey).ToListAsync();
             var university = await _db.Universities.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
 
             var ds = new ExternalUniversityDataset { ApiKey = apiKey, Label = university?.Name ?? apiKey };
@@ -131,6 +174,7 @@ namespace UniConnect.ExternalApi
                 CourseName = c.CourseName,
                 InstructorName = c.InstructorName,
                 InstructorStaffId = c.InstructorStaffId,
+                InstructorEmail = c.InstructorEmail,
                 Credits = c.Credits
             }));
             ds.Students.AddRange(students.Select(s => new ExternalStudentRecord
@@ -140,6 +184,13 @@ namespace UniConnect.ExternalApi
                 Email = s.Email,
                 Major = s.Major,
                 YearOfStudy = s.YearOfStudy
+            }));
+            ds.Staff.AddRange(staff.Select(s => new ExternalStaffRecord
+            {
+                StaffId = s.StaffId,
+                FullName = s.FullName,
+                Email = s.Email,
+                Department = s.Department
             }));
             ds.Enrollments.AddRange(enrollments.Select(e => new ExternalEnrollmentRecord
             {
@@ -170,6 +221,7 @@ namespace UniConnect.ExternalApi
                 CourseName = c.CourseName,
                 InstructorName = c.InstructorName,
                 InstructorStaffId = c.InstructorStaffId,
+                InstructorEmail = c.InstructorEmail,
                 Credits = c.Credits
             }));
             _db.ExternalSimStudents.AddRange(students.Select(s => new ExternalSimStudent
@@ -209,14 +261,43 @@ namespace UniConnect.ExternalApi
 
             var courseCount = Math.Max(MinCourses, rng.Next(MinCourses, MinCourses + 3));
             var chosenCourses = CoursePool.OrderBy(_ => rng.Next()).Take(courseCount).ToList();
-            var simCourses = chosenCourses.Select(c => new ExternalSimCourse
+
+            // Group the chosen courses under a SMALL number of real
+            // instructor identities (roughly one per two courses, minimum
+            // 2) — matching the seeded default university's pattern of a
+            // handful of instructors covering several courses each, rather
+            // than a different decorative name per course with no real
+            // account behind it. The actual login accounts get created
+            // afterward by AdminUniversitiesController once the university
+            // row itself exists (this method runs before that, from the
+            // "Generate" button on the create form) — see
+            // GetDistinctInstructorsAsync below.
+            var instructorCount = Math.Max(2, (int)Math.Ceiling(courseCount / 2.0));
+            var chosenInstructors = InstructorNamePool.OrderBy(_ => rng.Next()).Take(instructorCount).ToList();
+            var instructorStaffIds = chosenInstructors
+                .Select(_ => $"EXT-INSTR-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}")
+                .ToList();
+            var instructorEmails = chosenInstructors
+                .Select((n, idx) => $"{n.First.ToLowerInvariant()}.{n.Last.ToLowerInvariant()}.{instructorStaffIds[idx][^4..].ToLowerInvariant()}@external-uni.edu")
+                .ToList();
+
+            var simCourses = new List<ExternalSimCourse>();
+            for (int i = 0; i < chosenCourses.Count; i++)
             {
-                ApiKey = apiKey,
-                CourseCode = c.Code,
-                CourseName = c.Name,
-                InstructorName = c.Instructor,
-                Credits = c.Credits
-            }).ToList();
+                var c = chosenCourses[i];
+                var instructorIndex = i % chosenInstructors.Count; // round-robin, evens out the load
+                var (first, last) = chosenInstructors[instructorIndex];
+                simCourses.Add(new ExternalSimCourse
+                {
+                    ApiKey = apiKey,
+                    CourseCode = c.Code,
+                    CourseName = c.Name,
+                    InstructorName = $"Dr. {first} {last}",
+                    InstructorStaffId = instructorStaffIds[instructorIndex],
+                    InstructorEmail = instructorEmails[instructorIndex],
+                    Credits = c.Credits
+                });
+            }
 
             var studentCount = Math.Max(MinStudents, rng.Next(MinStudents, MinStudents + 3));
             var chosenNames = NamePool.OrderBy(_ => rng.Next()).Take(studentCount).ToList();
@@ -249,12 +330,62 @@ namespace UniConnect.ExternalApi
                     simEnrollments.Add(new ExternalSimEnrollment { ApiKey = apiKey, StudentNumber = studentNumber, CourseCode = course.CourseCode });
             }
 
+            // One staff identity per department — matches the seeded
+            // default university's own pattern (one account per department).
+            var shuffledStaffNames = StaffNamePool.OrderBy(_ => rng.Next()).ToList();
+            var simStaff = new List<ExternalSimStaff>();
+            for (int i = 0; i < DepartmentPool.Length; i++)
+            {
+                var (first, last) = shuffledStaffNames[i % shuffledStaffNames.Count];
+                var staffId = $"EXT-STAFF-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
+                simStaff.Add(new ExternalSimStaff
+                {
+                    ApiKey = apiKey,
+                    StaffId = staffId,
+                    FullName = $"{first} {last}",
+                    Email = $"{first.ToLowerInvariant()}.{last.ToLowerInvariant()}.{staffId[^4..].ToLowerInvariant()}@external-uni.edu",
+                    Department = DepartmentPool[i]
+                });
+            }
+
             _db.ExternalSimCourses.AddRange(simCourses);
             _db.ExternalSimStudents.AddRange(simStudents);
             _db.ExternalSimEnrollments.AddRange(simEnrollments);
+            _db.ExternalSimStaff.AddRange(simStaff);
             await _db.SaveChangesAsync();
 
             return (simStudents.Count, simCourses.Count);
+        }
+
+        /// <summary>
+        /// Returns the distinct (StaffId, FullName) instructor identities
+        /// already assigned to this dataset's courses by
+        /// ProvisionRandomDatasetAsync — used by
+        /// AdminUniversitiesController.Create to create their real login
+        /// accounts once the university row itself exists (this data store
+        /// only ever writes the SIMULATED "external" records, never
+        /// ApplicationUser accounts directly).
+        /// </summary>
+        public async Task<List<(string StaffId, string FullName)>> GetDistinctInstructorsAsync(string apiKey)
+        {
+            return await _db.ExternalSimCourses
+                .Where(c => c.ApiKey == apiKey && c.InstructorStaffId != null)
+                .Select(c => new { c.InstructorStaffId, c.InstructorName })
+                .Distinct()
+                .Select(x => new ValueTuple<string, string>(x.InstructorStaffId!, x.InstructorName ?? "Instructor"))
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Returns every department staff identity generated for this
+        /// dataset — used by AdminUniversitiesController to create their
+        /// real login accounts once the university row itself exists,
+        /// mirroring GetDistinctInstructorsAsync exactly.
+        /// </summary>
+        public async Task<List<(string StaffId, string FullName, string Department)>> GetAllStaffAsync(string apiKey)
+        {
+            var staff = await _db.ExternalSimStaff.Where(s => s.ApiKey == apiKey).ToListAsync();
+            return staff.Select(s => (s.StaffId, s.FullName, s.Department)).ToList();
         }
 
         // ---------- Test/demo mutation methods (per-dataset) --------------------

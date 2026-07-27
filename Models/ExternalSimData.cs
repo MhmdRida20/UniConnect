@@ -36,6 +36,9 @@ namespace UniConnect.Models
         [StringLength(20)]
         public string? InstructorStaffId { get; set; }
 
+        [StringLength(150)]
+        public string? InstructorEmail { get; set; }
+
         public int Credits { get; set; }
     }
 
@@ -76,5 +79,33 @@ namespace UniConnect.Models
         [Required]
         [StringLength(10)]
         public string CourseCode { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Simulated department staff directory — unlike instructors, staff
+    /// aren't tied to courses at all, so they need their own top-level
+    /// simulated record rather than being derived from something else.
+    /// </summary>
+    public class ExternalSimStaff
+    {
+        [Required]
+        [StringLength(100)]
+        public string ApiKey { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(20)]
+        public string StaffId { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(150)]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(150)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Department { get; set; } = string.Empty;
     }
 }

@@ -847,6 +847,10 @@ namespace UniConnect.Data.Migrations
                     b.Property<int>("Credits")
                         .HasColumnType("int");
 
+                    b.Property<string>("InstructorEmail")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<string>("InstructorName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -879,6 +883,36 @@ namespace UniConnect.Data.Migrations
                     b.ToTable("ExternalSimEnrollments");
                 });
 
+            modelBuilder.Entity("UniConnect.Models.ExternalSimStaff", b =>
+                {
+                    b.Property<string>("ApiKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("StaffId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("ApiKey", "StaffId");
+
+                    b.ToTable("ExternalSimStaff");
+                });
+
             modelBuilder.Entity("UniConnect.Models.ExternalSimStudent", b =>
                 {
                     b.Property<string>("ApiKey")
@@ -909,6 +943,34 @@ namespace UniConnect.Data.Migrations
                     b.HasKey("ApiKey", "StudentNumber");
 
                     b.ToTable("ExternalSimStudents");
+                });
+
+            modelBuilder.Entity("UniConnect.Models.Instructor", b =>
+                {
+                    b.Property<string>("StaffId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UniversityCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("UniversityEmail")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("StaffId");
+
+                    b.HasIndex("UniversityCode");
+
+                    b.ToTable("Instructors");
                 });
 
             modelBuilder.Entity("UniConnect.Models.Internship", b =>
@@ -1236,6 +1298,39 @@ namespace UniConnect.Data.Migrations
                     b.HasKey("Code");
 
                     b.ToTable("Services");
+                });
+
+            modelBuilder.Entity("UniConnect.Models.StaffRecord", b =>
+                {
+                    b.Property<string>("StaffId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("UniversityCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("UniversityEmail")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("StaffId");
+
+                    b.HasIndex("UniversityCode");
+
+                    b.ToTable("StaffRecords");
                 });
 
             modelBuilder.Entity("UniConnect.Models.Student", b =>
@@ -2000,6 +2095,17 @@ namespace UniConnect.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("UniConnect.Models.Instructor", b =>
+                {
+                    b.HasOne("UniConnect.Models.University", "University")
+                        .WithMany()
+                        .HasForeignKey("UniversityCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("University");
+                });
+
             modelBuilder.Entity("UniConnect.Models.Internship", b =>
                 {
                     b.HasOne("UniConnect.Models.Company", "Company")
@@ -2085,6 +2191,17 @@ namespace UniConnect.Data.Migrations
                     b.Navigation("Passenger");
 
                     b.Navigation("Ride");
+                });
+
+            modelBuilder.Entity("UniConnect.Models.StaffRecord", b =>
+                {
+                    b.HasOne("UniConnect.Models.University", "University")
+                        .WithMany()
+                        .HasForeignKey("UniversityCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("University");
                 });
 
             modelBuilder.Entity("UniConnect.Models.Student", b =>

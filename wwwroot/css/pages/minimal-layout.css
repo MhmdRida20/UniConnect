@@ -1,0 +1,53 @@
+/* A deliberately bare shell for Admin/UniversityAdmin notifications — see
+   _MinimalLayout.cshtml's own comment for why this exists separately from
+   the full portal layout. Reuses the same color tokens (site.css) so it
+   still reads as part of the same app, just without any nav chrome. */
+
+.minimal-body {
+    background: #f5f7f9;
+    min-height: 100vh;
+}
+
+.minimal-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--uc-surface);
+    border-bottom: 1px solid var(--uc-border);
+}
+
+.minimal-brand {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--uc-ink, #0f172a);
+    text-decoration: none;
+}
+.minimal-brand svg { width: 22px; height: 22px; color: var(--uc-primary); }
+.minimal-brand b { color: var(--uc-primary); }
+
+.minimal-back {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+    transition: color .15s ease;
+}
+.minimal-back:hover { color: var(--uc-primary); }
+.minimal-back svg { width: 16px; height: 16px; }
+
+.minimal-main {
+    padding: 1.5rem 0 3rem;
+}
+
+@media (max-width: 576px) {
+    .minimal-topbar { padding: .85rem 1rem; }
+    .minimal-back span { display: none; }
+}

@@ -19,12 +19,13 @@
     // viewport edge with no way to reach them but a horizontal scroll).
     var groupedControllers = new (string Controller, string? Action)[]
     {
-        ("StudyGroups", "MyCourses"),
-        ("Vehicles", null),
+        ("StudyGroups", "Index"),
+        ("Rides", null),
         ("Tickets", null),
         ("Clubs", null),
         ("InstructorAttendance", null),
         ("Attendance", null),
+        ("Internships", null),
     };
     var isServicesActive = groupedControllers.Any(g =>
         currentController == g.Controller && (g.Action == null || currentAction == g.Action));
@@ -94,92 +95,120 @@
                                 <svg class="hgi hgi-sm"><use href="#i-home"></use></svg>Home
                             </a>
                         </li>
-                        @if (ShowNav(ServiceCodes.StudyGroups))
+                        @if (User.IsInRole("Instructor"))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("StudyGroups", "Index")" asp-controller="StudyGroups" asp-action="Index">
-                                    <svg class="hgi hgi-sm"><use href="#i-users"></use></svg>Study Groups
-                                </a>
-                            </li>
+                            // Instructors get a short, flat list — the rest of
+                            // the student nav (Study Groups, Rides, Clubs,
+                            // Internships) doesn't apply to an instructor
+                            // account, so there's no "Services" dropdown here
+                            // at all, just the two things actually relevant.
+                            @if (ShowNav(ServiceCodes.Attendance))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link @NavActive("InstructorAttendance")" asp-controller="InstructorAttendance" asp-action="Index">
+                                        <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Sessions
+                                    </a>
+                                </li>
+                            }
+                            @if (ShowNav(ServiceCodes.Tickets))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link @NavActive("Tickets")" asp-controller="Tickets" asp-action="Index">
+                                        <svg class="hgi hgi-sm"><use href="#i-ticket"></use></svg>My Tickets
+                                    </a>
+                                </li>
+                            }
                         }
-                        @if (ShowNav(ServiceCodes.RideSharing))
+                        else
                         {
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("Rides")" asp-controller="Rides" asp-action="Index">
-                                    <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>Rides
-                                </a>
-                            </li>
-                        }
-                        @if (ShowNav(ServiceCodes.Internships) && !User.IsInRole("Company") && !User.IsInRole("Instructor"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link @NavActive("Internships")" asp-controller="Internships" asp-action="Index">
-                                    <svg class="hgi hgi-sm"><use href="#i-briefcase"></use></svg>Internships
-                                </a>
-                            </li>
-                        }
-                        @{
+                            @if (ShowNav(ServiceCodes.StudyGroups))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link @NavActive("StudyGroups", "MyCourses")" asp-controller="StudyGroups" asp-action="MyCourses">
+                                        <svg class="hgi hgi-sm"><use href="#i-book"></use></svg>My Courses
+                                    </a>
+                                </li>
+                            }
+                            @if (ShowNav(ServiceCodes.RideSharing))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link @NavActive("Vehicles")" asp-controller="Vehicles" asp-action="Index">
+                                        <svg class="hgi hgi-sm"><use href="#i-id"></use></svg>My Vehicles
+                                    </a>
+                                </li>
+                            }
                             var hasGroupedItems = ShowNav(ServiceCodes.StudyGroups) || ShowNav(ServiceCodes.RideSharing)
-                                || ShowNav(ServiceCodes.Tickets) || ShowNav(ServiceCodes.Clubs) || ShowNav(ServiceCodes.Attendance);
-                        }
-                        @if (hasGroupedItems)
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle @(isServicesActive ? "active" : "")" href="#" role="button"
-                                   data-bs-toggle="dropdown" aria-expanded="false">
-                                    <svg class="hgi hgi-sm"><use href="#i-dashboard"></use></svg>Services
-                                </a>
-                                <ul class="dropdown-menu uc-nav-dropdown">
-                                    @if (ShowNav(ServiceCodes.StudyGroups))
-                                    {
-                                        <li>
-                                            <a class="dropdown-item @NavActive("StudyGroups", "MyCourses")" asp-controller="StudyGroups" asp-action="MyCourses">
-                                                <svg class="hgi hgi-sm"><use href="#i-book"></use></svg>My Courses
-                                            </a>
-                                        </li>
-                                    }
-                                    @if (ShowNav(ServiceCodes.RideSharing))
-                                    {
-                                        <li>
-                                            <a class="dropdown-item @NavActive("Vehicles")" asp-controller="Vehicles" asp-action="Index">
-                                                <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>My Vehicles
-                                            </a>
-                                        </li>
-                                    }
-                                    @if (ShowNav(ServiceCodes.Tickets))
-                                    {
-                                        <li>
-                                            <a class="dropdown-item @NavActive("Tickets")" asp-controller="Tickets" asp-action="Index">
-                                                <svg class="hgi hgi-sm"><use href="#i-ticket"></use></svg>My Tickets
-                                            </a>
-                                        </li>
-                                    }
-                                    @if (ShowNav(ServiceCodes.Clubs))
-                                    {
-                                        <li>
-                                            <a class="dropdown-item @NavActive("Clubs")" asp-controller="Clubs" asp-action="Index">
-                                                <svg class="hgi hgi-sm"><use href="#i-user-multiple"></use></svg>Clubs
-                                            </a>
-                                        </li>
-                                    }
-                                    @if (ShowNav(ServiceCodes.Attendance) && User.IsInRole("Instructor"))
-                                    {
-                                        <li>
-                                            <a class="dropdown-item @NavActive("InstructorAttendance")" asp-controller="InstructorAttendance" asp-action="Index">
-                                                <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Sessions
-                                            </a>
-                                        </li>
-                                    }
-                                    @if (ShowNav(ServiceCodes.Attendance) && !User.IsInRole("Instructor"))
-                                    {
-                                        <li>
-                                            <a class="dropdown-item @NavActive("Attendance")" asp-controller="Attendance" asp-action="MyAttendance">
-                                                <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Attendance
-                                            </a>
-                                        </li>
-                                    }
-                                </ul>
-                            </li>
+                                || ShowNav(ServiceCodes.Tickets) || ShowNav(ServiceCodes.Clubs) || ShowNav(ServiceCodes.Attendance)
+                                || ShowNav(ServiceCodes.Internships);
+                            @if (hasGroupedItems)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle @(isServicesActive ? "active" : "")" href="#" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false">
+                                        <svg class="hgi hgi-sm"><use href="#i-dashboard"></use></svg>Services
+                                    </a>
+                                    <ul class="dropdown-menu uc-nav-dropdown">
+                                        @if (ShowNav(ServiceCodes.StudyGroups))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item @NavActive("StudyGroups", "Index")" asp-controller="StudyGroups" asp-action="Index">
+                                                    <svg class="hgi hgi-sm"><use href="#i-users"></use></svg>Study Groups
+                                                </a>
+                                            </li>
+                                        }
+                                        @if (ShowNav(ServiceCodes.RideSharing))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item @NavActive("Rides", "Index")" asp-controller="Rides" asp-action="Index">
+                                                    <svg class="hgi hgi-sm"><use href="#i-car"></use></svg>Rides
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item @NavActive("Rides", "MyRides")" asp-controller="Rides" asp-action="MyRides">
+                                                    <svg class="hgi hgi-sm"><use href="#i-map"></use></svg>My Rides
+                                                </a>
+                                            </li>
+                                        }
+                                        @if (ShowNav(ServiceCodes.Tickets))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item @NavActive("Tickets")" asp-controller="Tickets" asp-action="Index">
+                                                    <svg class="hgi hgi-sm"><use href="#i-ticket"></use></svg>My Tickets
+                                                </a>
+                                            </li>
+                                        }
+                                        @if (ShowNav(ServiceCodes.Clubs))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item @NavActive("Clubs")" asp-controller="Clubs" asp-action="Index">
+                                                    <svg class="hgi hgi-sm"><use href="#i-user-multiple"></use></svg>Clubs
+                                                </a>
+                                            </li>
+                                        }
+                                        @if (ShowNav(ServiceCodes.Attendance))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item @NavActive("Attendance")" asp-controller="Attendance" asp-action="MyAttendance">
+                                                    <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Attendance
+                                                </a>
+                                            </li>
+                                        }
+                                        @if (ShowNav(ServiceCodes.Internships) && !User.IsInRole("Company"))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item @NavActive("Internships", "Index")" asp-controller="Internships" asp-action="Index">
+                                                    <svg class="hgi hgi-sm"><use href="#i-briefcase"></use></svg>Internships
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item @NavActive("Internships", "MyApplications")" asp-controller="Internships" asp-action="MyApplications">
+                                                    <svg class="hgi hgi-sm"><use href="#i-check-badge"></use></svg>My Applications
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
                         }
                     </ul>
                     <span class="uc-navbar-divider d-none d-xl-block" aria-hidden="true"></span>

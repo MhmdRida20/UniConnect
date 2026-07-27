@@ -1,0 +1,51 @@
+@page
+@model UniConnect.Areas.Identity.Pages.Account.RegisterChoiceModel
+@{
+    ViewData["Title"] = "Sign Up";
+    ViewData["AuthMode"] = "register";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="auth-form">
+    <div class="auth-head">
+        <span class="auth-head-ico"><svg class="hgi"><use href="#i-user-add"></use></svg></span>
+        <h1 class="auth-title">Who's signing up?</h1>
+        <p class="auth-subtitle">Pick the option that matches your role at your university.</p>
+    </div>
+
+    <div class="d-flex flex-column gap-2 mt-3">
+        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-primary auth-choice-btn">
+            <svg class="hgi"><use href="#i-graduate"></use></svg>
+            <span>
+                <strong>Student</strong>
+                <small>Register with your University ID</small>
+            </span>
+            <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg>
+        </a>
+
+        <a asp-page="./RegisterInstructor" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-secondary auth-choice-btn">
+            <svg class="hgi"><use href="#i-graduation"></use></svg>
+            <span>
+                <strong>Instructor</strong>
+                <small>Register with your Staff ID</small>
+            </span>
+            <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg>
+        </a>
+
+        <a asp-page="./RegisterStaff" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-secondary auth-choice-btn">
+            <svg class="hgi"><use href="#i-building"></use></svg>
+            <span>
+                <strong>Department Staff</strong>
+                <small>Register with your Staff ID</small>
+            </span>
+            <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg>
+        </a>
+    </div>
+
+    <div class="auth-switch mt-3">
+        Already have an account?
+        <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" data-auth-nav>
+            Log in <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+        </a>
+    </div>
+</div>
