@@ -1,0 +1,38 @@
+@model UniConnect.ViewModels.FormProgressVM
+@*
+    Shared sidebar progress card. Drop it in a .form-rail next to any form:
+
+        <partial name="_FormProgress" model='new FormProgressVM {
+            Title = "New Study Group", Subtitle = "Course group", Icon = "#i-users" }' />
+
+    The checklist and percentage are populated at runtime by form-progress.js
+    from the form's own validation attributes — no field list is configured
+    here, so the card can't drift out of sync with the ViewModel.
+*@
+<div class="uc-form-progress" data-form-progress="@Model.FormSelector"
+     data-progress-mode="@(Model.TrackAllFields ? "all" : "required")"
+     data-progress-complete-text="@Model.CompleteMessage">
+    <div class="ufp-card-head">
+        <span class="ufp-card-ico"><svg class="hgi"><use href="@Model.Icon"></use></svg></span>
+        <div class="ufp-card-title">
+            <strong>@Model.Title</strong>
+            @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
+            {
+                <small>@Model.Subtitle</small>
+            }
+        </div>
+    </div>
+
+    <div class="ufp-body">
+        <div class="ufp-head">
+            <span class="ufp-label">@Model.Label</span>
+            <span class="ufp-pct" data-progress-pct>0%</span>
+        </div>
+        <div class="ufp-track" role="progressbar" aria-label="Form completion"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-progress-track>
+            <div class="ufp-fill" data-progress-fill></div>
+        </div>
+        <p class="ufp-remaining" data-progress-remaining></p>
+        <ul class="ufp-checklist" data-progress-checklist></ul>
+    </div>
+</div>

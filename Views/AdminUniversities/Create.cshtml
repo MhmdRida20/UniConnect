@@ -17,15 +17,6 @@
     <div class="uc-form-card au-form-card">
         <form asp-action="Create" method="post" data-loading>
             @Html.AntiForgeryToken()
-            <div class="uc-form-progress" data-form-progress>
-                <div class="ufp-head">
-                    <span class="ufp-label"><svg class="hgi"><use href="#i-chart"></use></svg>Form progress</span>
-                    <span class="ufp-pct" data-progress-pct>0%</span>
-                </div>
-                <div class="ufp-track"><div class="ufp-fill" data-progress-fill></div></div>
-                <ul class="ufp-checklist" data-progress-checklist></ul>
-            </div>
-
             <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
             <div class="mb-3">
@@ -106,8 +97,12 @@
         </form>
     </div>
 
-    <aside class="au-whathappens">
-        <h3><svg class="hgi hgi-sm"><use href="#i-info"></use></svg>What happens next</h3>
+    <aside class="au-rail">
+        <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+            Title = "New University", Subtitle = "Platform onboarding", Icon = "#i-building" }' />
+
+        <div class="au-whathappens">
+            <h3><svg class="hgi hgi-sm"><use href="#i-info"></use></svg>What happens next</h3>
         <ol>
             <li>
                 <span class="au-wh-ico"><svg class="hgi"><use href="#i-cloud-sync"></use></svg></span>
@@ -130,7 +125,8 @@
                     <small>You'll land on the service catalog for this university — nothing is visible to its students or staff until you enable it there.</small>
                 </div>
             </li>
-        </ol>
+            </ol>
+        </div>
     </aside>
 </div>
 

@@ -1,0 +1,329 @@
+/* ==========================================================================
+   uc-select — progressive enhancement for <select>.
+
+   Native <option> elements are drawn by the OS, so they can't take hover
+   animation, brand colours, or weight changes. This replaces the popup with a
+   styled listbox while keeping the real <select> in the DOM, so:
+
+     • the form still posts the same field,
+     • asp-for / unobtrusive validation still bind to it,
+     • anything listening for 'change' (the form progress rail) still fires.
+
+   Opt out on a specific control with data-no-ucs. Multi-selects are skipped.
+   ========================================================================== */
+(function () {
+    'use strict';
+
+    var SEARCH_THRESHOLD = 8;   // show a filter box once the list gets long
+    var open = null;            // the single currently-open instance
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('select').forEach(enhance);
+    });
+
+    function enhance(select) {
+        if (select.multiple) return;
+        if (select.hasAttribute('data-no-ucs')) return;
+        if (select.closest('.ucs')) return;              // already enhanced
+        if (!select.options.length) return;
+
+        var wrap = document.createElement('div');
+        wrap.className = 'ucs';
+        // Carry the sizing classes across so the control keeps its layout box
+        // (form-select / auth-select drive width and padding on these pages).
+        if (select.classList.contains('auth-select')) wrap.classList.add('ucs-auth');
+        select.parentNode.insertBefore(wrap, select);
+        wrap.appendChild(select);
+        select.classList.add('ucs-native');
+
+        var trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'ucs-trigger';
+        trigger.setAttribute('aria-haspopup', 'listbox');
+        trigger.setAttribute('aria-expanded', 'false');
+        if (select.disabled) trigger.disabled = true;
+        trigger.innerHTML = '<span class="ucs-value"></span>'
+            + '<svg class="hgi ucs-caret" aria-hidden="true"><use href="#i-arrow-right"></use></svg>';
+        wrap.appendChild(trigger);
+
+        var panel = document.createElement('div');
+        panel.className = 'ucs-panel';
+        panel.hidden = true;
+
+        var searchWrap = null, search = null;
+        if (select.options.length >= SEARCH_THRESHOLD) {
+            searchWrap = document.createElement('div');
+            searchWrap.className = 'ucs-search-wrap';
+            searchWrap.innerHTML = '<svg class="hgi ucs-search-ico" aria-hidden="true"><use href="#i-search"></use></svg>';
+            search = document.createElement('input');
+            search.type = 'text';
+            search.className = 'ucs-search';
+            search.placeholder = 'Search…';
+            search.setAttribute('aria-label', 'Filter options');
+            searchWrap.appendChild(search);
+            panel.appendChild(searchWrap);
+        }
+
+        var list = document.createElement('ul');
+        list.className = 'ucs-list';
+        list.setAttribute('role', 'listbox');
+        panel.appendChild(list);
+
+        var empty = document.createElement('p');
+        empty.className = 'ucs-empty';
+        empty.textContent = 'No matches';
+        empty.hidden = true;
+        panel.appendChild(empty);
+
+        wrap.appendChild(panel);
+
+        var items = [];
+        buildItems();
+
+        var activeIndex = -1;
+        var typeahead = '';
+        var typeaheadTimer = null;
+
+        function buildItems() {
+            list.innerHTML = '';
+            items = [];
+            Array.prototype.forEach.call(select.children, function (child) {
+                if (child.tagName === 'OPTGROUP') {
+                    var groupLabel = document.createElement('li');
+                    groupLabel.className = 'ucs-group';
+                    groupLabel.textContent = child.label;
+                    groupLabel.setAttribute('role', 'presentation');
+                    list.appendChild(groupLabel);
+                    Array.prototype.forEach.call(child.children, addOption);
+                } else if (child.tagName === 'OPTION') {
+                    addOption(child);
+                }
+            });
+        }
+
+        function addOption(opt) {
+            // <option hidden> is the "-- Select --" prompt some forms use to
+            // force a real choice; it has no text, so rendering it would leave
+            // a blank unusable row at the top of the list.
+            if (opt.hidden) return;
+
+            var li = document.createElement('li');
+            li.className = 'ucs-opt';
+            li.setAttribute('role', 'option');
+            li.dataset.value = opt.value;
+            // A blank value is the "-- Select --" prompt, not a real choice.
+            if (opt.value === '') li.classList.add('is-placeholder');
+            if (opt.disabled) li.classList.add('is-disabled');
+            li.innerHTML = '<span class="ucs-opt-text"></span>'
+                + '<svg class="hgi ucs-opt-check" aria-hidden="true"><use href="#i-check-circle"></use></svg>';
+            li.querySelector('.ucs-opt-text').textContent = opt.textContent.trim();
+            li.addEventListener('click', function () {
+                if (opt.disabled) return;
+                choose(opt);
+            });
+            li.addEventListener('mousemove', function () {
+                setActive(items.indexOf(li), false);
+            });
+            list.appendChild(li);
+            items.push(li);
+        }
+
+        function visibleItems() {
+            return items.filter(function (li) { return !li.hidden && !li.classList.contains('is-disabled'); });
+        }
+
+        function syncFromNative() {
+            var opt = select.options[select.selectedIndex];
+            var valueEl = trigger.querySelector('.ucs-value');
+            var isPlaceholder = !opt || opt.value === '';
+            valueEl.textContent = opt ? opt.textContent.trim() : '';
+            trigger.classList.toggle('is-placeholder', isPlaceholder);
+            items.forEach(function (li) {
+                var selected = !isPlaceholder && li.dataset.value === select.value;
+                li.classList.toggle('is-selected', selected);
+                li.setAttribute('aria-selected', selected ? 'true' : 'false');
+            });
+            // Mirror validation state so the styled trigger turns red too.
+            trigger.classList.toggle('is-invalid', select.classList.contains('input-validation-error'));
+        }
+
+        function choose(opt) {
+            select.value = opt.value;
+            select.dispatchEvent(new Event('input', { bubbles: true }));
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            syncFromNative();
+            trigger.classList.remove('ucs-pop');
+            void trigger.offsetWidth;          // restart the value-swap animation
+            trigger.classList.add('ucs-pop');
+            close(true);
+        }
+
+        function setActive(index, scroll) {
+            if (activeIndex >= 0 && items[activeIndex]) items[activeIndex].classList.remove('is-active');
+            activeIndex = index;
+            var li = items[activeIndex];
+            if (!li) { list.removeAttribute('aria-activedescendant'); return; }
+            li.classList.add('is-active');
+            if (!li.id) li.id = 'ucs-opt-' + Math.random().toString(36).slice(2, 8);
+            list.setAttribute('aria-activedescendant', li.id);
+            if (scroll !== false) li.scrollIntoView({ block: 'nearest' });
+        }
+
+        function moveActive(delta) {
+            var vis = visibleItems();
+            if (!vis.length) return;
+            var current = vis.indexOf(items[activeIndex]);
+            var next = current + delta;
+            if (next < 0) next = vis.length - 1;
+            if (next >= vis.length) next = 0;
+            setActive(items.indexOf(vis[next]));
+        }
+
+        // An ancestor with a transform/filter (the auth field wrapper has one)
+        // creates a stacking context, which traps the panel's z-index inside
+        // it — later siblings then paint straight over the open list. Lift
+        // those ancestors while the panel is open, then put them back.
+        var lifted = [];
+        function liftAncestors() {
+            var el = wrap.parentElement;
+            while (el && el !== document.body) {
+                var cs = getComputedStyle(el);
+                if (cs.transform !== 'none' || cs.filter !== 'none' ||
+                    cs.perspective !== 'none' || cs.isolation === 'isolate') {
+                    el.classList.add('ucs-lift');
+                    lifted.push(el);
+                }
+                el = el.parentElement;
+            }
+        }
+        function dropAncestors() {
+            lifted.forEach(function (el) { el.classList.remove('ucs-lift'); });
+            lifted = [];
+        }
+
+        function openPanel() {
+            if (open && open !== api) open.close();
+            open = api;
+            panel.hidden = false;
+            wrap.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+            liftAncestors();
+            placePanel();
+            if (search) { search.value = ''; filter(''); search.focus(); }
+            var selectedIdx = items.findIndex(function (li) { return li.classList.contains('is-selected'); });
+            setActive(selectedIdx >= 0 ? selectedIdx : items.indexOf(visibleItems()[0]));
+        }
+
+        function close(focusTrigger) {
+            panel.hidden = true;
+            wrap.classList.remove('is-open', 'ucs-drop-up');
+            trigger.setAttribute('aria-expanded', 'false');
+            dropAncestors();
+            if (open === api) open = null;
+            if (focusTrigger) trigger.focus();
+        }
+
+        // Flip above the trigger when there isn't room below — otherwise the
+        // list is cut off by the viewport on short screens.
+        function placePanel() {
+            wrap.classList.remove('ucs-drop-up');
+            var rect = trigger.getBoundingClientRect();
+            var spaceBelow = window.innerHeight - rect.bottom;
+            var needed = Math.min(panel.scrollHeight || 260, 280) + 12;
+            if (spaceBelow < needed && rect.top > spaceBelow) wrap.classList.add('ucs-drop-up');
+        }
+
+        function filter(term) {
+            var q = term.trim().toLowerCase();
+            var shown = 0;
+            items.forEach(function (li) {
+                var match = !q || li.textContent.toLowerCase().indexOf(q) !== -1;
+                li.hidden = !match;
+                if (match) shown++;
+            });
+            // Group headings whose options are all filtered out shouldn't linger.
+            list.querySelectorAll('.ucs-group').forEach(function (g) {
+                var next = g.nextElementSibling, any = false;
+                while (next && !next.classList.contains('ucs-group')) {
+                    if (!next.hidden) { any = true; break; }
+                    next = next.nextElementSibling;
+                }
+                g.hidden = !any;
+            });
+            empty.hidden = shown > 0;
+            var first = visibleItems()[0];
+            setActive(first ? items.indexOf(first) : -1);
+        }
+
+        /* ---------- events ---------- */
+        trigger.addEventListener('click', function () {
+            if (trigger.disabled) return;
+            wrap.classList.contains('is-open') ? close(true) : openPanel();
+        });
+
+        trigger.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openPanel();
+            }
+        });
+
+        (search || trigger).addEventListener('keydown', handleListKeys);
+        panel.addEventListener('keydown', handleListKeys);
+
+        function handleListKeys(e) {
+            if (panel.hidden) return;
+            switch (e.key) {
+                case 'ArrowDown': e.preventDefault(); moveActive(1); break;
+                case 'ArrowUp': e.preventDefault(); moveActive(-1); break;
+                case 'Home': e.preventDefault(); setActive(items.indexOf(visibleItems()[0])); break;
+                case 'End': e.preventDefault(); var v = visibleItems(); setActive(items.indexOf(v[v.length - 1])); break;
+                case 'Enter':
+                    e.preventDefault();
+                    var li = items[activeIndex];
+                    if (li && !li.hidden) {
+                        var opt = findOption(li.dataset.value);
+                        if (opt) choose(opt);
+                    }
+                    break;
+                case 'Escape': e.preventDefault(); close(true); break;
+                case 'Tab': close(false); break;
+                default:
+                    // Type-ahead only when there's no search box to type into.
+                    if (!search && e.key.length === 1) {
+                        typeahead += e.key.toLowerCase();
+                        clearTimeout(typeaheadTimer);
+                        typeaheadTimer = setTimeout(function () { typeahead = ''; }, 600);
+                        var hit = items.find(function (x) {
+                            return !x.hidden && x.textContent.trim().toLowerCase().startsWith(typeahead);
+                        });
+                        if (hit) setActive(items.indexOf(hit));
+                    }
+            }
+        }
+
+        if (search) search.addEventListener('input', function () { filter(search.value); });
+
+        function findOption(value) {
+            return Array.prototype.find.call(select.options, function (o) { return o.value === value; });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!wrap.contains(e.target) && !panel.hidden) close(false);
+        });
+
+        // Server-side re-render or JS changing the value must refresh the label.
+        select.addEventListener('change', syncFromNative);
+        // Validation runs after ours, so re-mirror the error class when it lands.
+        select.addEventListener('blur', syncFromNative);
+        select.addEventListener('focus', function () { trigger.focus(); });
+
+        var api = { close: close };
+        syncFromNative();
+        // jQuery validation toggles input-validation-error without an event.
+        new MutationObserver(syncFromNative)
+            .observe(select, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    window.addEventListener('resize', function () { if (open) open.close(); });
+})();

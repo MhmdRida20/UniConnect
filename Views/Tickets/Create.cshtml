@@ -20,20 +20,11 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-7">
+    <div class="form-page-split">
+        <div class="form-main">
             <div class="uc-form-card">
                 <form asp-action="Create" method="post" enctype="multipart/form-data" data-loading>
                     @Html.AntiForgeryToken()
-                    <div class="uc-form-progress" data-form-progress>
-                        <div class="ufp-head">
-                            <span class="ufp-label"><svg class="hgi"><use href="#i-chart"></use></svg>Form progress</span>
-                            <span class="ufp-pct" data-progress-pct>0%</span>
-                        </div>
-                        <div class="ufp-track"><div class="ufp-fill" data-progress-fill></div></div>
-                        <ul class="ufp-checklist" data-progress-checklist></ul>
-                    </div>
-
                     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                     @if (showDuplicateWarning)
@@ -110,8 +101,11 @@
             </div>
         </div>
 
-        <div class="col-lg-5">
-            <aside class="form-aside">
+        <aside class="form-rail">
+            <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+                Title = "New Ticket", Subtitle = "Support request", Icon = "#i-ticket" }' />
+
+            <div class="form-aside">
                 <h2><svg class="hgi"><use href="#i-idea"></use></svg>Get a faster response</h2>
                 <ul>
                     <li><strong>Pick the right category.</strong> It routes your ticket straight to the department that can fix it.</li>
@@ -119,8 +113,8 @@
                     <li><strong>Add details.</strong> When it started, what you've tried, and any error messages help a lot.</li>
                     <li><strong>Attach evidence.</strong> A screenshot or document can save a back-and-forth.</li>
                 </ul>
-            </aside>
-        </div>
+            </div>
+        </aside>
     </div>
 </div>
 

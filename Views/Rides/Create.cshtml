@@ -22,19 +22,10 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-7">
+    <div class="form-page-split">
+        <div class="form-main">
             <div class="uc-form-card">
                 <form asp-action="Create" method="post" data-loading novalidate>
-                    <div class="uc-form-progress" data-form-progress>
-                        <div class="ufp-head">
-                            <span class="ufp-label"><svg class="hgi"><use href="#i-chart"></use></svg>Form progress</span>
-                            <span class="ufp-pct" data-progress-pct>0%</span>
-                        </div>
-                        <div class="ufp-track"><div class="ufp-fill" data-progress-fill></div></div>
-                        <ul class="ufp-checklist" data-progress-checklist></ul>
-                    </div>
-
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
@@ -132,8 +123,11 @@
             </div>
         </div>
 
-        <div class="col-lg-5">
-            <aside class="form-aside">
+        <aside class="form-rail">
+            <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+                Title = "New Ride Offer", Subtitle = "Campus commute", Icon = "#i-car" }' />
+
+            <div class="form-aside">
                 <h2><svg class="hgi"><use href="#i-shield"></use></svg>Before you post</h2>
                 <ul>
                     <li><strong>Double-check the time.</strong> Passengers plan around your departure, so be precise.</li>
@@ -141,8 +135,8 @@
                     <li><strong>Add helpful notes.</strong> Mention luggage space, stops, or anything riders should know.</li>
                     <li><strong>You stay in control.</strong> You approve each request before anyone joins your ride.</li>
                 </ul>
-            </aside>
-        </div>
+            </div>
+        </aside>
     </div>
 </div>
 

@@ -20,20 +20,11 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-7">
+    <div class="form-page-split">
+        <div class="form-main">
             <div class="uc-form-card">
                 <form asp-action="Create" method="post" data-loading>
                     @Html.AntiForgeryToken()
-                    <div class="uc-form-progress" data-form-progress>
-                        <div class="ufp-head">
-                            <span class="ufp-label"><svg class="hgi"><use href="#i-chart"></use></svg>Form progress</span>
-                            <span class="ufp-pct" data-progress-pct>0%</span>
-                        </div>
-                        <div class="ufp-track"><div class="ufp-fill" data-progress-fill></div></div>
-                        <ul class="ufp-checklist" data-progress-checklist></ul>
-                    </div>
-
                     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
@@ -91,8 +82,11 @@
             </div>
         </div>
 
-        <div class="col-lg-5">
-            <aside class="form-aside">
+        <aside class="form-rail">
+            <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+                Title = "New Session", Subtitle = "QR attendance", Icon = "#i-qr" }' />
+
+            <div class="form-aside">
                 <h2><svg class="hgi"><use href="#i-idea"></use></svg>Before you start</h2>
                 <ul>
                     <li><strong>Set a realistic window.</strong> Students can only check in between the start and end time.</li>
@@ -100,8 +94,8 @@
                     <li><strong>Pin the real classroom.</strong> The GPS radius is measured from this exact point.</li>
                     <li><strong>Keep the radius tight.</strong> Wide radii make it easier to check in from outside the room.</li>
                 </ul>
-            </aside>
-        </div>
+            </div>
+        </aside>
     </div>
 </div>
 

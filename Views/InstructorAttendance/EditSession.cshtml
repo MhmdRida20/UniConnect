@@ -11,73 +11,97 @@
 }
 
 <div class="form-page">
-    <a asp-action="Details" asp-route-id="@sessionId" class="form-back"><i class="bi bi-arrow-left"></i> Back to session</a>
+    <a asp-action="Details" asp-route-id="@sessionId" class="form-back">
+        <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to session
+    </a>
 
     <div class="form-page-head">
-        <span class="form-page-ico"><i class="bi bi-pencil-square"></i></span>
+        <span class="form-page-ico"><svg class="hgi"><use href="#i-settings"></use></svg></span>
         <div>
             <h1>Edit Attendance Session</h1>
             <p class="text-muted">Only possible before the session starts — created the wrong course by mistake? Fix it here.</p>
         </div>
     </div>
 
-    <div class="uc-form-card">
-        <form asp-action="EditSession" asp-route-id="@sessionId" method="post" data-loading>
-            @Html.AntiForgeryToken()
-            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <div class="form-page-split">
+        <div class="form-main">
+            <div class="uc-form-card">
+                <form asp-action="EditSession" asp-route-id="@sessionId" method="post" data-loading>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-            <div class="mb-3">
-                <label asp-for="CourseCode" class="form-label"></label>
-                <select asp-for="CourseCode" asp-items="Model.AvailableCourses" class="form-select">
-                    <option value="">— Select a course —</option>
-                </select>
+                    <div class="mb-3">
+                        <label asp-for="CourseCode" class="form-label"></label>
+                        <select asp-for="CourseCode" asp-items="Model.AvailableCourses" class="form-select">
+                            <option value="">— Select a course —</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="StartTime" class="form-label"></label>
+                            <input asp-for="StartTime" class="form-control" />
+                            <span asp-validation-for="StartTime" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EndTime" class="form-label"></label>
+                            <input asp-for="EndTime" class="form-control" />
+                            <span asp-validation-for="EndTime" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <label asp-for="GracePeriodMinutes" class="form-label"></label>
+                        <input asp-for="GracePeriodMinutes" type="number" class="form-control" style="max-width:160px" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Classroom Location</label>
+                        <button type="button" class="ride-my-location-btn" id="useMyLocationBtn">
+                            <svg class="hgi hgi-sm"><use href="#i-target"></use></svg>Use my current location
+                        </button>
+                        <div id="classroomMap" class="attendance-map"></div>
+                        <p class="ride-pin-hint">
+                            <svg class="hgi hgi-sm"><use href="#i-info"></use></svg>Click the map to change the classroom's location.
+                        </p>
+                        <input type="hidden" asp-for="ClassroomLat" id="ClassroomLat" />
+                        <input type="hidden" asp-for="ClassroomLng" id="ClassroomLng" />
+                        <span asp-validation-for="ClassroomLat" class="text-danger d-block"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="GpsRadiusMeters" class="form-label"></label>
+                        <input asp-for="GpsRadiusMeters" type="number" class="form-control" style="max-width:160px" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" data-loading-text="Saving…">
+                        <svg class="hgi hgi-sm me-1"><use href="#i-check-circle"></use></svg>Save Changes
+                    </button>
+                </form>
             </div>
+        </div>
 
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label asp-for="StartTime" class="form-label"></label>
-                    <input asp-for="StartTime" class="form-control" />
-                    <span asp-validation-for="StartTime" class="text-danger"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="EndTime" class="form-label"></label>
-                    <input asp-for="EndTime" class="form-control" />
-                    <span asp-validation-for="EndTime" class="text-danger"></span>
-                </div>
+        <aside class="form-rail">
+            <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+                Title = "Edit Session", Subtitle = "QR attendance", Icon = "#i-qr" }' />
+
+            <div class="form-aside">
+                <h2><svg class="hgi"><use href="#i-idea"></use></svg>Editing rules</h2>
+                <ul>
+                    <li><strong>Before the start time only.</strong> Once students begin checking in, the session is locked.</li>
+                    <li><strong>Changing the course resets nothing.</strong> Any check-ins already recorded stay attached.</li>
+                    <li><strong>Moving the pin matters.</strong> The GPS radius is measured from wherever you drop it.</li>
+                    <li><strong>The QR code stays valid.</strong> Students who already have it don't need a new one.</li>
+                </ul>
             </div>
-
-            <div class="mb-3 mt-3">
-                <label asp-for="GracePeriodMinutes" class="form-label"></label>
-                <input asp-for="GracePeriodMinutes" type="number" class="form-control" style="max-width:160px" />
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Classroom Location</label>
-                <button type="button" class="ride-my-location-btn" id="useMyLocationBtn">
-                    <i class="bi bi-crosshair"></i> Use my current location
-                </button>
-                <div id="classroomMap" class="attendance-map"></div>
-                <p class="ride-pin-hint"><i class="bi bi-info-circle"></i> Click the map to change the classroom's location.</p>
-                <input type="hidden" asp-for="ClassroomLat" id="ClassroomLat" />
-                <input type="hidden" asp-for="ClassroomLng" id="ClassroomLng" />
-                <span asp-validation-for="ClassroomLat" class="text-danger d-block"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="GpsRadiusMeters" class="form-label"></label>
-                <input asp-for="GpsRadiusMeters" type="number" class="form-control" style="max-width:160px" />
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100" data-loading-text="Saving…">
-                <i class="bi bi-check-lg me-1"></i>Save Changes
-            </button>
-        </form>
+        </aside>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/form-page.js" asp-append-version="true"></script>
     <script src="~/js/pages/attendance-create.js" asp-append-version="true"></script>
 }

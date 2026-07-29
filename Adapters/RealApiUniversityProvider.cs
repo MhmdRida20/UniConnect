@@ -201,6 +201,9 @@ namespace UniConnect.Adapters
 
         public async Task<List<UniversityCourseDto>> GetTaughtCoursesAsync(string universityCode, string instructorId)
         {
+            // NOTE: instructorId here is the university-issued staff id
+            // (e.g. INSTR-002), not our internal Identity GUID — that's the
+            // identifier the external API keys instructors by.
             try
             {
                 var client = await BuildClientAsync(universityCode);
@@ -215,8 +218,19 @@ namespace UniConnect.Adapters
             {
                 _logger.LogWarning(ex, "Live taught-courses lookup failed for {University}/{Instructor} — falling back to local cache.", universityCode, instructorId);
 
+                // Courses.InstructorId stores the Identity GUID, so the staff id
+                // has to be resolved back to it here — comparing the two
+                // directly always matches nothing, which would silently turn an
+                // API outage into "you teach no courses".
+                var identityId = await _db.Users
+                    .Where(u => u.UniversityCode == universityCode && u.UniversityId == instructorId)
+                    .Select(u => u.Id)
+                    .FirstOrDefaultAsync();
+
+                if (identityId is null) return new List<UniversityCourseDto>();
+
                 return await _db.Courses
-                    .Where(c => c.UniversityCode == universityCode && c.InstructorId == instructorId)
+                    .Where(c => c.UniversityCode == universityCode && c.InstructorId == identityId)
                     .Select(c => new UniversityCourseDto(c.CourseCode, c.CourseName, c.InstructorName, c.Credits))
                     .ToListAsync();
             }

@@ -796,3 +796,174 @@ a:focus-visible, button:focus-visible {
 .hgi-spin { animation: hgiSpin .9s linear infinite; }
 @keyframes hgiSpin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .hgi-spin { animation: none; } }
+
+/* --------------------------------------------------------------------------
+   16. uc-select — styled dropdown (see wwwroot/js/uc-select.js)
+
+   The native <select> stays in the DOM for posting and validation; it's the
+   trigger + panel below that the user actually sees and interacts with, which
+   is what makes per-option hover states possible at all.
+   -------------------------------------------------------------------------- */
+.ucs { position: relative; width: 100%; }
+
+/* Kept reachable for validation focus, but out of the visual flow. */
+.ucs-native {
+    position: absolute; opacity: 0; pointer-events: none;
+    width: 1px; height: 1px; padding: 0; margin: 0; border: 0;
+    clip: rect(0 0 0 0); overflow: hidden;
+}
+
+.ucs-trigger {
+    display: flex; align-items: center; gap: .5rem; width: 100%;
+    padding: .5rem .8rem; min-height: 42px;
+    font: inherit; font-size: .95rem; text-align: left; color: var(--uc-text);
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border); border-radius: var(--uc-radius-sm);
+    cursor: pointer;
+    transition: border-color var(--uc-transition), box-shadow var(--uc-transition),
+                background var(--uc-transition), transform var(--uc-transition);
+}
+.ucs-trigger:hover:not(:disabled) {
+    border-color: var(--uc-primary-light);
+    background: var(--uc-primary-tint);
+}
+.ucs-trigger:focus-visible,
+.ucs.is-open .ucs-trigger {
+    outline: none;
+    border-color: var(--uc-primary);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, .18);
+}
+.ucs-trigger:disabled { opacity: .6; cursor: not-allowed; background: var(--uc-border-soft); }
+.ucs-trigger.is-invalid { border-color: var(--uc-danger); }
+.ucs-trigger.is-invalid:focus-visible { box-shadow: 0 0 0 3px rgba(220, 38, 38, .18); }
+
+.ucs-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ucs-trigger.is-placeholder .ucs-value { color: var(--uc-muted); }
+
+.ucs-caret {
+    width: 15px; height: 15px; flex-shrink: 0; color: var(--uc-muted);
+    transform: rotate(90deg);
+    transition: transform .25s cubic-bezier(.4, 0, .2, 1), color var(--uc-transition);
+}
+.ucs.is-open .ucs-caret { transform: rotate(-90deg); color: var(--uc-primary); }
+.ucs-trigger:hover .ucs-caret { color: var(--uc-primary); }
+
+/* Value swap acknowledgement — a brief lift so the choice registers. */
+.ucs-pop .ucs-value { animation: ucsPop .28s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes ucsPop {
+    0%   { transform: translateY(.35rem); opacity: .4; }
+    100% { transform: none; opacity: 1; }
+}
+
+/* ── Panel ── */
+.ucs-panel {
+    position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + .35rem);
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow-lg);
+    padding: .35rem;
+    max-height: 280px; display: flex; flex-direction: column;
+    animation: ucsPanelIn .16s cubic-bezier(.4, 0, .2, 1) both;
+    transform-origin: top center;
+}
+.ucs.ucs-drop-up .ucs-panel {
+    top: auto; bottom: calc(100% + .35rem);
+    transform-origin: bottom center;
+}
+@keyframes ucsPanelIn {
+    from { opacity: 0; transform: translateY(-.35rem) scale(.985); }
+    to   { opacity: 1; transform: none; }
+}
+.ucs.ucs-drop-up .ucs-panel { animation-name: ucsPanelUpIn; }
+@keyframes ucsPanelUpIn {
+    from { opacity: 0; transform: translateY(.35rem) scale(.985); }
+    to   { opacity: 1; transform: none; }
+}
+
+.ucs-search-wrap { position: relative; padding: .2rem .2rem .35rem; flex-shrink: 0; }
+.ucs-search-ico {
+    position: absolute; left: .75rem; top: 50%; transform: translateY(-60%);
+    width: 15px; height: 15px; color: var(--uc-muted); pointer-events: none;
+}
+.ucs-search {
+    width: 100%; font: inherit; font-size: .88rem;
+    padding: .45rem .6rem .45rem 2.1rem;
+    border: 1px solid var(--uc-border); border-radius: var(--uc-radius-sm);
+    background: var(--uc-bg); color: var(--uc-text); outline: none;
+    transition: border-color var(--uc-transition), box-shadow var(--uc-transition);
+}
+.ucs-search:focus { border-color: var(--uc-primary); box-shadow: 0 0 0 3px rgba(22, 163, 74, .14); }
+
+.ucs-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+.ucs-group {
+    padding: .5rem .7rem .3rem; font-size: .7rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--uc-muted);
+}
+
+.ucs-opt {
+    position: relative;
+    display: flex; align-items: center; gap: .5rem;
+    padding: .5rem .7rem; margin-bottom: 1px;
+    border-radius: var(--uc-radius-sm);
+    font-size: .9rem; color: var(--uc-text-soft); cursor: pointer;
+    transition: background var(--uc-transition), color var(--uc-transition),
+                font-weight var(--uc-transition), padding-left var(--uc-transition);
+}
+.ucs-opt-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The accent bar grows from the left edge on hover/keyboard focus. */
+.ucs-opt::before {
+    content: ''; position: absolute; left: .25rem; top: 50%;
+    width: 3px; height: 0; border-radius: 2px;
+    background: var(--uc-primary);
+    transform: translateY(-50%);
+    transition: height .18s cubic-bezier(.4, 0, .2, 1);
+}
+.ucs-opt.is-active {
+    background: var(--uc-primary-tint);
+    color: var(--uc-primary-darker);
+    font-weight: 600;
+    padding-left: 1rem;
+}
+.ucs-opt.is-active::before { height: 60%; }
+
+.ucs-opt.is-selected { color: var(--uc-primary-dark); font-weight: 700; }
+.ucs-opt.is-selected::before { height: 60%; }
+
+.ucs-opt-check {
+    width: 16px; height: 16px; flex-shrink: 0;
+    color: var(--uc-primary);
+    opacity: 0; transform: scale(.6);
+    transition: opacity var(--uc-transition), transform var(--uc-transition);
+}
+.ucs-opt.is-selected .ucs-opt-check { opacity: 1; transform: scale(1); }
+
+.ucs-opt.is-placeholder { color: var(--uc-muted); font-style: italic; }
+.ucs-opt.is-disabled { opacity: .45; cursor: not-allowed; }
+.ucs-opt.is-disabled.is-active { background: none; padding-left: .7rem; }
+.ucs-opt.is-disabled.is-active::before { height: 0; }
+
+.ucs-empty { margin: 0; padding: .9rem .7rem; font-size: .85rem; color: var(--uc-muted); text-align: center; }
+
+/* ── Auth pages: the field wrapper already draws the border and floating
+      label, so the trigger has to sit flush inside it. ── */
+.ucs-auth .ucs-trigger {
+    border: none; background: transparent; box-shadow: none;
+    padding: 1.35rem 1.5rem .5rem 0; min-height: 0;
+    font-size: .98rem;
+}
+.ucs-auth .ucs-trigger:hover { background: transparent; }
+.ucs-auth .ucs-trigger:focus-visible { box-shadow: none; }
+.ucs-auth .ucs-caret { display: none; }        /* .auth-field--select draws its own */
+.ucs-auth .ucs-panel { left: -.75rem; right: -1.75rem; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ucs-panel, .ucs-pop .ucs-value { animation: none; }
+    .ucs-trigger, .ucs-caret, .ucs-opt, .ucs-opt::before, .ucs-opt-check { transition: none; }
+}
+
+/* Ancestors that create a stacking context (the auth field wrapper has a
+   transform) get lifted while a dropdown inside them is open — otherwise the
+   panel is trapped behind later siblings. Applied/removed by uc-select.js. */
+.ucs-lift { z-index: 55; }

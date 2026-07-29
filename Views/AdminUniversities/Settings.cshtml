@@ -7,6 +7,7 @@
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/pages/admin-universities.css" asp-append-version="true" />
 }
 
@@ -21,7 +22,9 @@
     values within these bounds when creating a study group, attendance session, club, or ride request.
 </p>
 
-<div class="uc-form-card" style="max-width:640px;">
+<div class="form-page-split">
+<div class="form-main">
+<div class="uc-form-card">
     <form asp-action="Settings" asp-route-code="@university?.Code" method="post" data-loading>
         @Html.AntiForgeryToken()
         <div asp-validation-summary="All" class="text-danger mb-3"></div>
@@ -74,8 +77,26 @@
             Limits how many ride requests one student can send within this many minutes, to prevent spam.
         </small>
 
-        <button type="submit" class="btn btn-primary w-100 mt-2"><i class="bi bi-check-lg me-1"></i>Save Settings</button>
+        <button type="submit" class="btn btn-primary w-100 mt-2">
+            <svg class="hgi hgi-sm me-1"><use href="#i-check-circle"></use></svg>Save Settings
+        </button>
     </form>
+</div>
+</div>
+
+@* No progress card here on purpose: every setting ships with a valid default,
+   so a completion bar would sit at 100% permanently and mean nothing. *@
+<aside class="form-rail">
+    <div class="form-aside">
+        <h2><svg class="hgi"><use href="#i-idea"></use></svg>How these limits work</h2>
+        <ul>
+            <li><strong>These are ceilings, not fixed values.</strong> Students and instructors still choose their own numbers underneath them.</li>
+            <li><strong>Changes apply to new items only.</strong> Existing groups, sessions, and rides keep the limits they were created with.</li>
+            <li><strong>Rate limits stop spam.</strong> The ride request window caps how often one student can send requests.</li>
+            <li><strong>Blank means unlimited</strong> wherever a field says so — useful for large clubs.</li>
+        </ul>
+    </div>
+</aside>
 </div>
 
 @section Scripts {

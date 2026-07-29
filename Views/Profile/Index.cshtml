@@ -6,9 +6,15 @@
     if (isPortalRole) { Layout = "~/Views/Shared/_PortalLayout.cshtml"; }
 }
 
-<div class="container" style="padding-top:1.5rem; max-width:640px;">
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
+}
+
+<div class="container form-page" style="padding-top:1.5rem;">
     <h2 class="mb-3">My Profile</h2>
 
+<div class="form-page-split">
+<div class="form-main">
     <div class="uc-form-card mb-3">
         <div class="d-flex align-items-center gap-3 mb-3">
             @if (!string.IsNullOrWhiteSpace(user?.ProfilePicturePath))
@@ -35,7 +41,7 @@
             <i class="bi bi-info-circle"></i> Name, ID, and email come from your university's own records and can't be edited here.
         </small>
 
-        <form asp-action="Edit" method="post" enctype="multipart/form-data" data-loading>
+        <form asp-action="Edit" method="post" enctype="multipart/form-data" data-loading id="profileEditForm">
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
@@ -84,6 +90,27 @@
     }
 </div>
 
+<aside class="form-rail">
+    @* Nothing on this form is mandatory, so track everything: the bar reads as
+       "how complete is my profile", not "can I submit". *@
+    <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+        Title = "Profile completeness", Subtitle = "Optional but recommended", Icon = "#i-user-circle",
+        FormSelector = "#profileEditForm", TrackAllFields = true, Label = "Completed",
+        CompleteMessage = "Your profile is complete." }' />
+
+    <div class="form-aside">
+        <h2><svg class="hgi"><use href="#i-idea"></use></svg>About your profile</h2>
+        <ul>
+            <li><strong>Name and ID are locked.</strong> They come from your university's records, not from you.</li>
+            <li><strong>A photo helps.</strong> It shows next to your rides, study groups, and club posts.</li>
+            <li><strong>Add a phone number.</strong> Ride passengers and group members can reach you faster.</li>
+        </ul>
+    </div>
+</aside>
+</div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/form-progress.js" asp-append-version="true"></script>
 }

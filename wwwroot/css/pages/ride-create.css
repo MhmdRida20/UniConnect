@@ -72,14 +72,20 @@
     z-index: 0;
 }
 
+/* Deliberately NOT flex: this hint contains inline <strong>, and a flex
+   container would promote it to a flex item, splitting the sentence into
+   side-by-side columns instead of letting it wrap as one paragraph. */
 .ride-pin-hint {
     margin: .55rem 0 0;
     font-size: .78rem;
     color: var(--uc-muted);
-    display: flex;
-    align-items: center;
-    gap: .4rem;
+    line-height: 1.5;
 }
+
+    .ride-pin-hint svg, .ride-pin-hint i {
+        vertical-align: -.15em;
+        margin-right: .3rem;
+    }
 
 /* ── Geocoding status messages (Phase 3) ── */
 .geo-status {

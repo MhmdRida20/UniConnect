@@ -8,11 +8,20 @@
     <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
 }
 
-<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to my internships</a>
+<div class="form-page">
+<a asp-action="Index" class="form-back"><svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to my internships</a>
 
-<div class="uc-form-card" style="max-width:640px;">
-    <h3 class="mb-3">Post an Internship</h3>
-    <p class="text-muted small">Every internship is posted on behalf of a real employer — fill in who it's actually for below.</p>
+<div class="form-page-head">
+    <span class="form-page-ico"><svg class="hgi"><use href="#i-briefcase"></use></svg></span>
+    <div>
+        <h1>Post an Internship</h1>
+        <p class="text-muted">Every internship is posted on behalf of a real employer — fill in who it's actually for below.</p>
+    </div>
+</div>
+
+<div class="form-page-split">
+<div class="form-main">
+<div class="uc-form-card">
     <form asp-action="PostInternship" method="post" enctype="multipart/form-data" data-loading>
         @Html.AntiForgeryToken()
         <div asp-validation-summary="All" class="text-danger mb-3"></div>
@@ -108,12 +117,31 @@
         </div>
 
         <button type="submit" class="btn btn-primary w-100 mt-3" data-loading-text="Posting…">
-            <i class="bi bi-plus-lg me-1"></i>Post Internship
+            <svg class="hgi hgi-sm me-1"><use href="#i-plus"></use></svg>Post Internship
         </button>
     </form>
+</div>
+</div>
+
+<aside class="form-rail">
+    <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+        Title = "New Internship", Subtitle = "Employer listing", Icon = "#i-briefcase" }' />
+
+    <div class="form-aside">
+        <h2><svg class="hgi"><use href="#i-idea"></use></svg>Getting good applicants</h2>
+        <ul>
+            <li><strong>Skills drive matching.</strong> Students see a match score built from these — list the real ones, not a wish list.</li>
+            <li><strong>Name the employer accurately.</strong> It's shown to students as the actual company behind the role.</li>
+            <li><strong>Pick the right posting mode.</strong> Full application tracks candidates here; listing-only sends them to the employer.</li>
+            <li><strong>Set an honest deadline.</strong> The listing stops accepting applications automatically on that date.</li>
+        </ul>
+    </div>
+</aside>
+</div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/internship-posting-mode.js" asp-append-version="true"></script>
 }

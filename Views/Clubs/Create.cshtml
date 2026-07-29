@@ -20,20 +20,11 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-7">
+    <div class="form-page-split">
+        <div class="form-main">
             <div class="uc-form-card">
                 <form asp-action="Create" method="post" enctype="multipart/form-data" data-loading>
                     @Html.AntiForgeryToken()
-                    <div class="uc-form-progress" data-form-progress>
-                        <div class="ufp-head">
-                            <span class="ufp-label"><svg class="hgi"><use href="#i-chart"></use></svg>Form progress</span>
-                            <span class="ufp-pct" data-progress-pct>0%</span>
-                        </div>
-                        <div class="ufp-track"><div class="ufp-fill" data-progress-fill></div></div>
-                        <ul class="ufp-checklist" data-progress-checklist></ul>
-                    </div>
-
                     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                     @if (showDuplicateWarning)
@@ -87,8 +78,11 @@
             </div>
         </div>
 
-        <div class="col-lg-5">
-            <aside class="form-aside">
+        <aside class="form-rail">
+            <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+                Title = "New Club", Subtitle = "Student organization", Icon = "#i-flag" }' />
+
+            <div class="form-aside">
                 <h2><svg class="hgi"><use href="#i-idea"></use></svg>Tips for a strong club</h2>
                 <ul>
                     <li><strong>Pick a clear name.</strong> Something students can search for and recognize at a glance.</li>
@@ -96,8 +90,8 @@
                     <li><strong>Choose the closest category.</strong> It's how students filter and discover clubs.</li>
                     <li><strong>You're the President.</strong> You can add officers and post announcements once it's live.</li>
                 </ul>
-            </aside>
-        </div>
+            </div>
+        </aside>
     </div>
 </div>
 

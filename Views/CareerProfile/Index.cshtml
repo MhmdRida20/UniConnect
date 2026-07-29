@@ -5,6 +5,7 @@
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/pages/internships.css" asp-append-version="true" />
 }
 
@@ -15,7 +16,9 @@
     </div>
 </div>
 
-<div class="container" style="padding-top:1.25rem; max-width:760px;">
+<div class="container form-page" style="padding-top:1.25rem;">
+<div class="form-page-split">
+<div class="form-main">
     <div class="uc-form-card mb-3">
         <h3 class="mb-3">Profile Details</h3>
         <p class="text-muted small mb-3">
@@ -23,7 +26,7 @@
             Skills and your CV (further down) each save immediately when you click their own button —
             you don't need to come back here afterward.
         </p>
-        <form asp-action="Edit" method="post" data-loading>
+        <form asp-action="Edit" method="post" data-loading id="careerProfileForm">
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
@@ -107,6 +110,28 @@
     </div>
 </div>
 
+<aside class="form-rail">
+    @* Tracks every field, not just required ones: nothing here is mandatory,
+       but a fuller profile scores measurably higher against internships. *@
+    <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+        Title = "Profile strength", Subtitle = "Drives your match scores", Icon = "#i-target",
+        FormSelector = "#careerProfileForm", TrackAllFields = true, Label = "Completed",
+        CompleteMessage = "Profile details complete — add skills and a CV below to score higher." }' />
+
+    <div class="form-aside">
+        <h2><svg class="hgi"><use href="#i-idea"></use></svg>Why this matters</h2>
+        <ul>
+            <li><strong>This feeds your match score.</strong> Every internship shows a percentage calculated from what's here.</li>
+            <li><strong>Skills carry the most weight.</strong> Add them individually — each one saves the moment you click Add.</li>
+            <li><strong>Employers see your CV.</strong> Applications without one are far weaker.</li>
+            <li><strong>Be specific about interests.</strong> "Backend development" matches better than "technology".</li>
+        </ul>
+    </div>
+</aside>
+</div>
+</div>
+
 @section Scripts {
+    <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/career-profile-cv.js" asp-append-version="true"></script>
 }

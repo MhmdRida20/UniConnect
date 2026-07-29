@@ -8,10 +8,20 @@
     <link rel="stylesheet" href="~/css/pages/form-page.css" asp-append-version="true" />
 }
 
-<a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to my internships</a>
+<div class="form-page">
+<a asp-action="Index" class="form-back"><svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>Back to my internships</a>
 
-<div class="uc-form-card" style="max-width:640px;">
-    <h3 class="mb-3">Edit Internship</h3>
+<div class="form-page-head">
+    <span class="form-page-ico"><svg class="hgi"><use href="#i-briefcase"></use></svg></span>
+    <div>
+        <h1>Edit Internship</h1>
+        <p class="text-muted">Changes go live immediately for students browsing this listing.</p>
+    </div>
+</div>
+
+<div class="form-page-split">
+<div class="form-main">
+<div class="uc-form-card">
     <form asp-action="EditInternship" method="post" enctype="multipart/form-data" data-loading>
         @Html.AntiForgeryToken()
         <input type="hidden" name="id" value="@ViewBag.InternshipId" />
@@ -107,12 +117,31 @@
         </div>
 
         <button type="submit" class="btn btn-primary w-100 mt-3" data-loading-text="Saving…">
-            <i class="bi bi-check-lg me-1"></i>Save Changes
+            <svg class="hgi hgi-sm me-1"><use href="#i-check-circle"></use></svg>Save Changes
         </button>
     </form>
+</div>
+</div>
+
+<aside class="form-rail">
+    <partial name="_FormProgress" model='new UniConnect.ViewModels.FormProgressVM {
+        Title = "Edit Internship", Subtitle = "Employer listing", Icon = "#i-briefcase" }' />
+
+    <div class="form-aside">
+        <h2><svg class="hgi"><use href="#i-idea"></use></svg>Before you save</h2>
+        <ul>
+            <li><strong>Edits are live instantly.</strong> Students browsing right now will see the updated listing.</li>
+            <li><strong>Existing applications stay.</strong> Editing the listing never removes candidates who already applied.</li>
+            <li><strong>Changing skills re-scores matches.</strong> Student match percentages recalculate from the new list.</li>
+            <li><strong>Extending the deadline reopens it.</strong> A closed listing accepts applications again if you push the date out.</li>
+        </ul>
+    </div>
+</aside>
+</div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/internship-posting-mode.js" asp-append-version="true"></script>
 }
