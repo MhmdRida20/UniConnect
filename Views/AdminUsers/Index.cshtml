@@ -28,6 +28,29 @@
     <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
 }
 
+@section Scripts {
+    <script>
+        // "Set" stays inert while the dropdown still shows the role the user
+        // already has — otherwise clicking it just bounces back an
+        // "already has the X role" error, which reads like a failure.
+        // uc-select.js re-dispatches `change` on the native <select>, so this
+        // works for both the styled listbox and the plain fallback.
+        document.querySelectorAll('form[data-role-form]').forEach(function (form) {
+            var select = form.querySelector('select[name="newRole"]');
+            // Explicit hook: uc-select.js swaps in its own <button class="ucs-trigger">
+            // ahead of this one, so a bare 'button' selector would match that instead.
+            var button = form.querySelector('button[data-role-set]');
+            if (!select || !button) return;
+
+            var sync = function () {
+                button.disabled = select.value === select.dataset.currentRole;
+            };
+            select.addEventListener('change', sync);
+            sync();
+        });
+    </script>
+}
+
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <h2 class="mb-0">Manage Users</h2>
     <span class="text-muted small">@totalUsers user@(totalUsers == 1 ? "" : "s") @(isSuperAdmin ? "across all universities" : "at your university")</span>
@@ -61,7 +84,7 @@
             </h6>
 
             <div class="st-table mb-2">
-                <div class="st-table-head" style="grid-template-columns: 1.2fr 1.1fr .7fr 260px !important;">
+                <div class="st-table-head" style="grid-template-columns: 1.2fr 1.1fr .7fr 310px !important;">
                     <span>Name</span>
                     <span>Email</span>
                     <span>Status</span>
@@ -74,7 +97,7 @@
                         && !roles.Contains("Admin") && !roles.Contains("Company")
                         && (isSuperAdmin || !roles.Contains("UniversityAdmin"));
 
-                    <div class="st-table-row" style="cursor:default; grid-template-columns: 1.2fr 1.1fr .7fr 260px !important;">
+                    <div class="st-table-row" style="cursor:default; grid-template-columns: 1.2fr 1.1fr .7fr 310px !important;">
                         <span class="st-title-cell">
                             @u.FullName
                             @if (roleGroup.RoleName == "DepartmentStaff" && !string.IsNullOrWhiteSpace(u.Department))
@@ -101,17 +124,24 @@
                             <div class="d-flex flex-wrap gap-1 justify-content-end">
                                 @if (isChangeable)
                                 {
+                                    @* The dropdown must start on the user's CURRENT role. Without the
+                                       `selected` below it always rendered the first option ("Student"),
+                                       which made a successful role change look like it hadn't applied —
+                                       the row moved into the right group, but the select snapped back. *@
                                     <form asp-action="ChangeRole" method="post" class="d-flex gap-1" data-loading
-                                          data-confirm="Change @u.FullName's role?">
+                                          data-confirm="Change @u.FullName's role?" data-role-form>
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="userId" value="@u.Id" />
-                                        <select name="newRole" class="form-select form-select-sm" style="width:auto;">
+                                        <select name="newRole" class="form-select form-select-sm" style="width:auto;"
+                                                data-current-role="@roleGroup.RoleName">
                                             @foreach (var role in assignableRoles)
                                             {
-                                                <option value="@role">@role</option>
+                                                <option value="@role" selected="@(role == roleGroup.RoleName)">@role</option>
                                             }
                                         </select>
-                                        <button class="btn btn-outline-secondary btn-sm">Set</button>
+                                        @* Not disabled in markup — the script below turns it off until the
+                                           value actually changes, so the button still works without JS. *@
+                                        <button class="btn btn-outline-secondary btn-sm" data-role-set>Set</button>
                                     </form>
                                 }
                                 <form asp-action="ToggleSuspend" method="post"

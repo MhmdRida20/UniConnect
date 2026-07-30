@@ -5,16 +5,35 @@
    topbar already shows the page title).
    ========================================================================== */
 
-.nt-page { max-width: 720px; margin: 0 auto; padding: 1.5rem 0 2.5rem; }
-.nt-page-portal { max-width: 720px; margin: 0; padding: 0; }
+.nt-page { max-width: 760px; margin: 0 auto; padding: 1.25rem 0 2rem; }
+/* Centred, not margin:0 — in the bare admin shell there is no sidebar to
+   balance against, so a left-hugging column left a huge void to its right. */
+.nt-page-portal { max-width: 760px; margin: 0 auto; padding: 0; }
+
+/* ── Compact header (admin + portal shells) ── */
+.nt-head {
+    display: flex; align-items: center; gap: .85rem;
+    margin-bottom: 1.15rem;
+}
+.nt-head-ico {
+    width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    background: linear-gradient(135deg, var(--uc-primary-light), var(--uc-primary-dark));
+    box-shadow: var(--uc-shadow-green);
+}
+.nt-head-ico .hgi { width: 22px; height: 22px; }
+.nt-head-text { min-width: 0; }
+.nt-head h1 { font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+.nt-head p { margin: .15rem 0 0; font-size: .85rem; color: var(--uc-muted); }
 
 /* ── Gradient hero (student layout only) ── */
 .nt-hero {
     position: relative;
     overflow: hidden;
     border-radius: var(--uc-radius-lg);
-    padding: 1.6rem 1.75rem;
-    margin-bottom: 1.5rem;
+    padding: 1.35rem 1.5rem;
+    margin-bottom: 1.15rem;
     color: #fff;
     background: linear-gradient(135deg, var(--uc-primary-deep) 0%, var(--uc-primary-darker) 45%, var(--uc-primary) 100%);
     box-shadow: var(--uc-shadow-md);
@@ -54,9 +73,9 @@
 
 /* ── Date bucket headings ── */
 .nt-bucket {
-    font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
     color: var(--uc-muted);
-    margin: 1.4rem 0 .6rem .25rem;
+    margin: 1.1rem 0 .5rem .2rem;
 }
 .nt-bucket:first-child { margin-top: 0; }
 
@@ -139,7 +158,8 @@
 
 /* ── Empty state ── */
 .nt-empty {
-    text-align: center; padding: 3.5rem 1.5rem;
+    text-align: center; padding: 2.5rem 1.5rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     background: var(--uc-surface);
     border: 1px dashed var(--uc-border);
     border-radius: var(--uc-radius-lg);

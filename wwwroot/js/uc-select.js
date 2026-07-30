@@ -179,36 +179,20 @@
             setActive(items.indexOf(vis[next]));
         }
 
-        // An ancestor with a transform/filter (the auth field wrapper has one)
-        // creates a stacking context, which traps the panel's z-index inside
-        // it — later siblings then paint straight over the open list. Lift
-        // those ancestors while the panel is open, then put them back.
-        var lifted = [];
-        function liftAncestors() {
-            var el = wrap.parentElement;
-            while (el && el !== document.body) {
-                var cs = getComputedStyle(el);
-                if (cs.transform !== 'none' || cs.filter !== 'none' ||
-                    cs.perspective !== 'none' || cs.isolation === 'isolate') {
-                    el.classList.add('ucs-lift');
-                    lifted.push(el);
-                }
-                el = el.parentElement;
-            }
-        }
-        function dropAncestors() {
-            lifted.forEach(function (el) { el.classList.remove('ucs-lift'); });
-            lifted = [];
-        }
-
+        // The panel is moved to <body> while open and positioned with fixed
+        // coordinates. Rendering it in place looked fine in isolation but was
+        // clipped by any ancestor with overflow (table cards, scroll regions)
+        // and trapped behind siblings by any ancestor with a transform. A
+        // portal sidesteps both without having to police every container.
         function openPanel() {
             if (open && open !== api) open.close();
             open = api;
+            document.body.appendChild(panel);
             panel.hidden = false;
             wrap.classList.add('is-open');
             trigger.setAttribute('aria-expanded', 'true');
-            liftAncestors();
             placePanel();
+            attachReposition();
             if (search) { search.value = ''; filter(''); search.focus(); }
             var selectedIdx = items.findIndex(function (li) { return li.classList.contains('is-selected'); });
             setActive(selectedIdx >= 0 ? selectedIdx : items.indexOf(visibleItems()[0]));
@@ -216,21 +200,53 @@
 
         function close(focusTrigger) {
             panel.hidden = true;
-            wrap.classList.remove('is-open', 'ucs-drop-up');
+            wrap.classList.remove('is-open');
+            panel.classList.remove('ucs-drop-up');
             trigger.setAttribute('aria-expanded', 'false');
-            dropAncestors();
+            detachReposition();
+            if (panel.parentNode !== wrap) wrap.appendChild(panel);   // un-portal
             if (open === api) open = null;
             if (focusTrigger) trigger.focus();
         }
 
-        // Flip above the trigger when there isn't room below — otherwise the
-        // list is cut off by the viewport on short screens.
+        // Fixed-position the portalled panel against the trigger, flipping
+        // above it when there isn't room below.
         function placePanel() {
-            wrap.classList.remove('ucs-drop-up');
-            var rect = trigger.getBoundingClientRect();
-            var spaceBelow = window.innerHeight - rect.bottom;
-            var needed = Math.min(panel.scrollHeight || 260, 280) + 12;
-            if (spaceBelow < needed && rect.top > spaceBelow) wrap.classList.add('ucs-drop-up');
+            var r = trigger.getBoundingClientRect();
+
+            // Never narrower than the trigger, but give short triggers enough
+            // room that option text isn't needlessly truncated (the role
+            // pickers in the admin user table are only ~130px wide).
+            var width = Math.max(r.width, 190);
+            var left = Math.min(r.left, window.innerWidth - width - 8);
+            panel.style.width = width + 'px';
+            panel.style.left = Math.max(8, left) + 'px';
+
+            panel.style.top = '0px';                  // measure unconstrained
+            var height = Math.min(panel.scrollHeight, 280);
+            var spaceBelow = window.innerHeight - r.bottom;
+            var dropUp = spaceBelow < height + 12 && r.top > spaceBelow;
+
+            panel.classList.toggle('ucs-drop-up', dropUp);
+            panel.style.top = (dropUp ? Math.max(8, r.top - height - 6) : r.bottom + 6) + 'px';
+        }
+
+        // Anything that scrolls under a fixed panel has to move it too, or it
+        // detaches from its trigger. Capture phase catches scrolling ancestors,
+        // not just the window.
+        function onReposition() {
+            if (panel.hidden) return;
+            var r = trigger.getBoundingClientRect();
+            if (r.bottom < 0 || r.top > window.innerHeight) { close(false); return; }
+            placePanel();
+        }
+        function attachReposition() {
+            window.addEventListener('scroll', onReposition, true);
+            window.addEventListener('resize', onReposition);
+        }
+        function detachReposition() {
+            window.removeEventListener('scroll', onReposition, true);
+            window.removeEventListener('resize', onReposition);
         }
 
         function filter(term) {
@@ -308,8 +324,12 @@
             return Array.prototype.find.call(select.options, function (o) { return o.value === value; });
         }
 
+        // The panel is portalled to <body> while open, so it is NOT a
+        // descendant of wrap — both have to be checked, or the first click on
+        // an option would register as an outside click and close the list.
         document.addEventListener('click', function (e) {
-            if (!wrap.contains(e.target) && !panel.hidden) close(false);
+            if (panel.hidden) return;
+            if (!wrap.contains(e.target) && !panel.contains(e.target)) close(false);
         });
 
         // Server-side re-render or JS changing the value must refresh the label.
@@ -325,5 +345,9 @@
             .observe(select, { attributes: true, attributeFilter: ['class'] });
     }
 
-    window.addEventListener('resize', function () { if (open) open.close(); });
+    // Each open instance repositions itself on scroll/resize; nothing global
+    // to do here beyond closing on a page-level Escape.
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && open) open.close();
+    });
 })();

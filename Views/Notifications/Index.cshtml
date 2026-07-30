@@ -92,15 +92,31 @@
             </div>
         </section>
     }
-    else if (notifications.Any())
+    else
     {
-        <p class="text-muted mb-3">
-            @if (newCount > 0)
-            {
-                <span class="nt-newcount"><svg class="hgi hgi-sm"><use href="#i-sparkles"></use></svg>@newCount new</span>
-            }
-            @notifications.Count notification@(notifications.Count == 1 ? "" : "s")
-        </p>
+        @* Always rendered, including when the list is empty — previously the
+           count line only appeared when there WERE notifications, so an admin
+           with an empty inbox landed on a page with no title at all. *@
+        <div class="nt-head">
+            <span class="nt-head-ico"><svg class="hgi"><use href="#i-bell"></use></svg></span>
+            <div class="nt-head-text">
+                <h1>Notifications</h1>
+                <p>
+                    @if (newCount > 0)
+                    {
+                        <span class="nt-newcount"><svg class="hgi hgi-sm"><use href="#i-sparkles"></use></svg>@newCount new</span>
+                    }
+                    @if (notifications.Any())
+                    {
+                        <text>@notifications.Count notification@(notifications.Count == 1 ? "" : "s")</text>
+                    }
+                    else
+                    {
+                        <text>Nothing waiting for you right now</text>
+                    }
+                </p>
+            </div>
+        </div>
     }
 
     @if (!notifications.Any())

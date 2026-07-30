@@ -26,18 +26,23 @@
     <partial name="_Icons" />
 
     <header class="minimal-topbar">
-        <a class="uc-brand-mark minimal-brand" asp-controller="Home" asp-action="Index">
-            <svg class="hgi"><use href="#i-graduation"></use></svg>
-            <span>Uni<b>Connect</b></span>
-        </a>
-        <a class="minimal-back" asp-controller="Home" asp-action="Index">
-            <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>
-            Back to Dashboard
-        </a>
+        <div class="minimal-topbar-inner">
+            @* The mark is its own element: .uc-brand-mark is a fixed 34px
+               overflow:hidden tile, so putting it on the anchor itself clipped
+               the wordmark down to a couple of letters. *@
+            <a class="minimal-brand" asp-controller="Home" asp-action="Index">
+                <span class="uc-brand-mark"><svg class="hgi"><use href="#i-graduation"></use></svg></span>
+                <span class="minimal-brand-text">Uni<b>Connect</b></span>
+            </a>
+            <a class="minimal-back" asp-controller="Home" asp-action="Index">
+                <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>
+                <span>Back to Dashboard</span>
+            </a>
+        </div>
     </header>
 
     <main class="minimal-main" role="main">
-        <div class="container">
+        <div class="minimal-container">
             @if (TempData["Success"] != null)
             {
                 <div class="alert alert-success uc-flash">@TempData["Success"]</div>

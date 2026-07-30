@@ -857,7 +857,10 @@ a:focus-visible, button:focus-visible {
 
 /* ── Panel ── */
 .ucs-panel {
-    position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + .35rem);
+    /* Fixed + portalled to <body> by uc-select.js: an absolutely-positioned
+       panel got clipped by any ancestor with overflow (the admin user table
+       cards) and trapped behind siblings by any ancestor with a transform. */
+    position: fixed; z-index: 1080;
     background: var(--uc-surface);
     border: 1px solid var(--uc-border);
     border-radius: var(--uc-radius);
@@ -867,15 +870,12 @@ a:focus-visible, button:focus-visible {
     animation: ucsPanelIn .16s cubic-bezier(.4, 0, .2, 1) both;
     transform-origin: top center;
 }
-.ucs.ucs-drop-up .ucs-panel {
-    top: auto; bottom: calc(100% + .35rem);
-    transform-origin: bottom center;
-}
+.ucs-panel.ucs-drop-up { transform-origin: bottom center; }
 @keyframes ucsPanelIn {
     from { opacity: 0; transform: translateY(-.35rem) scale(.985); }
     to   { opacity: 1; transform: none; }
 }
-.ucs.ucs-drop-up .ucs-panel { animation-name: ucsPanelUpIn; }
+.ucs-panel.ucs-drop-up { animation-name: ucsPanelUpIn; }
 @keyframes ucsPanelUpIn {
     from { opacity: 0; transform: translateY(.35rem) scale(.985); }
     to   { opacity: 1; transform: none; }
@@ -956,14 +956,9 @@ a:focus-visible, button:focus-visible {
 .ucs-auth .ucs-trigger:hover { background: transparent; }
 .ucs-auth .ucs-trigger:focus-visible { box-shadow: none; }
 .ucs-auth .ucs-caret { display: none; }        /* .auth-field--select draws its own */
-.ucs-auth .ucs-panel { left: -.75rem; right: -1.75rem; }
 
 @media (prefers-reduced-motion: reduce) {
     .ucs-panel, .ucs-pop .ucs-value { animation: none; }
     .ucs-trigger, .ucs-caret, .ucs-opt, .ucs-opt::before, .ucs-opt-check { transition: none; }
 }
 
-/* Ancestors that create a stacking context (the auth field wrapper has a
-   transform) get lifted while a dropdown inside them is open — otherwise the
-   panel is trapped behind later siblings. Applied/removed by uc-select.js. */
-.ucs-lift { z-index: 55; }
