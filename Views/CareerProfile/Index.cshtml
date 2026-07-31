@@ -22,8 +22,8 @@
     <div class="uc-form-card mb-3">
         <h3 class="mb-3">Profile Details</h3>
         <p class="text-muted small mb-3">
-            <i class="bi bi-info-circle"></i> This "Save Profile" button only saves the fields below.
-            Skills and your CV (further down) each save immediately when you click their own button —
+            <i class="bi bi-info-circle"></i> This button only saves the fields below.
+            Skills and your CV (further down) each have their own save step —
             you don't need to come back here afterward.
         </p>
         <form asp-action="Edit" method="post" data-loading id="careerProfileForm">
@@ -52,15 +52,28 @@
         </form>
     </div>
 
-    <div class="uc-form-card mb-3">
+    @* Adds and removals are staged in the browser and posted together by
+       #skillsBatchForm. The per-skill AddSkill/RemoveSkill forms below are
+       still real, working forms — they're the no-JS fallback, and
+       career-skills.js intercepts them when it loads. *@
+    <div class="uc-form-card mb-3" id="skillsCard">
         <h3 class="mb-3">Skills</h3>
-        <p class="text-muted small mb-2"><i class="bi bi-lightning-charge"></i> Each skill saves immediately when you click "Add" — no separate save step needed.</p>
-        <div class="d-flex flex-wrap gap-2 mb-3">
+        <p class="text-muted small mb-2" data-skills-hint="js" hidden>
+            <i class="bi bi-lightning-charge"></i> Add as many as you like — they're saved together when you click <strong>Save skills</strong>.
+        </p>
+        <p class="text-muted small mb-2" data-skills-hint="nojs">
+            <i class="bi bi-lightning-charge"></i> Each skill saves immediately when you click "Add".
+        </p>
+
+        <div class="d-flex flex-wrap gap-2 mb-3" id="skillChips">
             @foreach (var s in skills)
             {
-                <span class="skill-chip">
+                <span class="skill-chip" data-skill-id="@s.Id" data-skill-name="@s.SkillName">
                     @s.SkillName
-                    @if (s.ProficiencyLevel.HasValue) { <small>(@s.ProficiencyLevel)</small> }
+                    @if (s.ProficiencyLevel.HasValue)
+                    {
+                        <small>(@s.ProficiencyLevel)</small>
+                    }
                     <form asp-action="RemoveSkill" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@s.Id" />
@@ -68,14 +81,12 @@
                     </form>
                 </span>
             }
-            @if (!skills.Any())
-            {
-                <p class="text-muted small mb-0">No skills added yet.</p>
-            }
+            <p class="text-muted small mb-0" id="skillsEmpty" @(skills.Any() ? "hidden" : "")>No skills added yet.</p>
         </div>
-        <form asp-action="AddSkill" method="post" class="d-flex gap-2" data-loading>
+
+        <form asp-action="AddSkill" method="post" class="d-flex gap-2" data-loading id="skillAddForm">
             @Html.AntiForgeryToken()
-            <input type="text" name="skillName" class="form-control" placeholder="Add a skill, e.g. C#" required />
+            <input type="text" name="skillName" class="form-control" placeholder="Add a skill, e.g. C#" maxlength="100" required />
             <select name="proficiencyLevel" class="form-select" style="max-width:160px">
                 <option value="">Level (optional)</option>
                 <option value="Beginner">Beginner</option>
@@ -83,6 +94,19 @@
                 <option value="Advanced">Advanced</option>
             </select>
             <button class="btn btn-outline-primary">Add</button>
+        </form>
+
+        @* Unhidden by career-skills.js as soon as there is something staged. *@
+        <form asp-action="SaveSkills" method="post" data-loading id="skillsBatchForm" hidden>
+            @Html.AntiForgeryToken()
+            <div class="skills-save-bar">
+                <span class="skills-save-summary" id="skillsSummary"></span>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="skillsDiscard">Discard</button>
+                <button type="submit" class="btn btn-primary btn-sm" data-loading-text="Saving…">
+                    <i class="bi bi-check-lg me-1"></i>Save skills
+                </button>
+            </div>
+            <div id="skillsBatchInputs" hidden></div>
         </form>
     </div>
 
@@ -122,7 +146,7 @@
         <h2><svg class="hgi"><use href="#i-idea"></use></svg>Why this matters</h2>
         <ul>
             <li><strong>This feeds your match score.</strong> Every internship shows a percentage calculated from what's here.</li>
-            <li><strong>Skills carry the most weight.</strong> Add them individually — each one saves the moment you click Add.</li>
+            <li><strong>Skills carry the most weight.</strong> Add as many as you like, then save them in one go.</li>
             <li><strong>Employers see your CV.</strong> Applications without one are far weaker.</li>
             <li><strong>Be specific about interests.</strong> "Backend development" matches better than "technology".</li>
         </ul>
@@ -134,4 +158,5 @@
 @section Scripts {
     <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/career-profile-cv.js" asp-append-version="true"></script>
+    <script src="~/js/pages/career-skills.js" asp-append-version="true"></script>
 }

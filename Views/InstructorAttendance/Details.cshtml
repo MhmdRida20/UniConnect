@@ -124,6 +124,23 @@
             @if (Model.Status == UniConnect.Models.AttendanceSessionStatus.Active)
             {
                 <div id="qrCanvas"></div>
+
+                @* Full screen for projecting onto a lecture-hall screen; download/share
+                   for pushing the code out over email or a course channel. Hidden when
+                   JS is off, since all three are entirely client-side. *@
+                <div class="attendance-qr-actions" id="qrActions" hidden>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="qrFullscreenBtn">
+                        <i class="bi bi-arrows-fullscreen"></i> Full screen
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="qrDownloadBtn">
+                        <i class="bi bi-download"></i> Download
+                    </button>
+                    @* Only unhidden where navigator.canShare() accepts a PNG file. *@
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="qrShareBtn" hidden>
+                        <i class="bi bi-share"></i> Share
+                    </button>
+                </div>
+
                 <p class="text-muted small mt-2 mb-1">Or share this token for manual entry:</p>
                 <code class="attendance-token">@Model.QrToken</code>
                 <p class="text-muted small mt-2 mb-0">Expires @Model.QrExpiresAt.ToString("HH:mm")</p>
@@ -136,7 +153,33 @@
     </div>
 </div>
 
-<div id="attendanceConfig" data-session-id="@Model.Id" data-scan-url="@scanUrl" hidden></div>
+@if (Model.Status == UniConnect.Models.AttendanceSessionStatus.Active)
+{
+    @* Projection view. Lives outside .attendance-detail-grid so no ancestor's
+       overflow or transform can interfere when it goes fullscreen. *@
+    <div class="qr-stage" id="qrStage" hidden>
+        <button type="button" class="qr-stage-close" id="qrStageClose" aria-label="Exit full screen">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="qr-stage-inner">
+            <p class="qr-stage-course">@Model.CourseName</p>
+            <p class="qr-stage-code">@Model.CourseCode</p>
+            <div class="qr-stage-qr" id="qrStageCanvas"></div>
+            <p class="qr-stage-label">Scan to check in — or enter this token manually</p>
+            <p class="qr-stage-token">@Model.QrToken</p>
+            <p class="qr-stage-hint">Expires @Model.QrExpiresAt.ToString("HH:mm") · press Esc to exit</p>
+        </div>
+    </div>
+}
+
+<div id="attendanceConfig"
+     data-session-id="@Model.Id"
+     data-scan-url="@scanUrl"
+     data-course-name="@Model.CourseName"
+     data-course-code="@Model.CourseCode"
+     data-token="@Model.QrToken"
+     data-session-date="@Model.StartTime.ToString("yyyy-MM-dd")"
+     hidden></div>
 
 @section Scripts {
     <script src="https://unpkg.com/qrcode@1.5.0/build/qrcode.js"></script>

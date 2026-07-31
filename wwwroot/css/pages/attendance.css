@@ -86,6 +86,62 @@
     border-radius: 6px; font-size: .85rem; letter-spacing: .03em; word-break: break-all;
 }
 
+/* ── QR actions (project / download / share) ── */
+.attendance-qr-actions {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: .4rem; margin-top: .85rem;
+}
+.attendance-qr-actions .btn { display: inline-flex; align-items: center; gap: .35rem; }
+
+/* ── Full-screen projection stage ──
+   Fixed rather than relying on the Fullscreen API alone: requestFullscreen()
+   can be refused (permissions policy, embedded contexts), and the overlay has
+   to fill the viewport either way. */
+.qr-stage {
+    position: fixed; inset: 0; z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; padding: 2rem 1.5rem; overflow: auto;
+}
+.qr-stage[hidden] { display: none; }
+body.qr-presenting { overflow: hidden; }
+
+.qr-stage-inner { text-align: center; max-width: min(100%, 900px); }
+.qr-stage-course {
+    font-size: clamp(1.4rem, 3.2vw, 2.6rem); font-weight: 700;
+    color: var(--uc-text); margin: 0 0 .15rem;
+}
+.qr-stage-code {
+    font-size: clamp(.9rem, 1.6vw, 1.15rem); color: var(--uc-muted);
+    margin: 0 0 1.25rem; letter-spacing: .04em; text-transform: uppercase;
+}
+.qr-stage-qr { display: flex; justify-content: center; }
+.qr-stage-qr canvas { border-radius: 10px; max-width: 100%; height: auto; }
+.qr-stage-label {
+    margin: 1.25rem 0 .5rem; color: var(--uc-muted);
+    font-size: clamp(.85rem, 1.4vw, 1.05rem);
+}
+.qr-stage-token {
+    display: inline-block; margin: 0; padding: .5rem 1.1rem;
+    background: var(--uc-bg); border: 1px solid var(--uc-border); border-radius: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(1rem, 2.4vw, 1.9rem); font-weight: 600;
+    letter-spacing: .08em; word-break: break-all; color: var(--uc-text);
+}
+.qr-stage-hint {
+    margin: 1rem 0 0; color: var(--uc-muted);
+    font-size: clamp(.75rem, 1.1vw, .9rem);
+}
+
+.qr-stage-close {
+    position: absolute; top: 1rem; right: 1rem; z-index: 1;
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-bg); border: 1px solid var(--uc-border);
+    color: var(--uc-muted); font-size: 1.1rem; cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+.qr-stage-close:hover { background: #fee2e2; color: var(--uc-danger); }
+
 @media (max-width: 1000px) {
     .attendance-detail-grid { grid-template-columns: 1fr; }
 }

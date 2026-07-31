@@ -192,6 +192,67 @@ namespace UniConnect.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>
+        /// Saves a batch of staged skill additions/removals in one round trip.
+        /// AddSkill/RemoveSkill below are still the no-JS fallback — this is
+        /// what the Skills card posts once JS has taken over the buttons.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveSkills(SkillsBatchVM vm)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Challenge();
+
+            var owned = await _db.StudentSkills.Where(s => s.UserId == user.Id).ToListAsync();
+
+            // Removals first, so a student can delete "C#" and re-add it as
+            // "C# (Advanced)" in the same save without tripping the duplicate check.
+            var removed = 0;
+            if (vm.RemovedIds.Count > 0)
+            {
+                var toRemove = owned.Where(s => vm.RemovedIds.Contains(s.Id)).ToList();
+                _db.StudentSkills.RemoveRange(toRemove);
+                foreach (var s in toRemove) owned.Remove(s);
+                removed = toRemove.Count;
+            }
+
+            // Case-insensitive, and seeded with what survives the removals so
+            // the batch is de-duplicated against itself as well as the DB.
+            var seen = owned
+                .Select(s => s.SkillName.Trim().ToLowerInvariant())
+                .ToHashSet();
+
+            var added = 0;
+            foreach (var pending in vm.NewSkills)
+            {
+                var name = pending.Name?.Trim();
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                if (name.Length > 100) name = name[..100];
+                if (!seen.Add(name.ToLowerInvariant())) continue;
+
+                _db.StudentSkills.Add(new StudentSkill
+                {
+                    UserId = user.Id,
+                    SkillName = name,
+                    ProficiencyLevel = pending.Level
+                });
+                added++;
+            }
+
+            if (added > 0 || removed > 0)
+            {
+                await _db.SaveChangesAsync();
+
+                var parts = new List<string>();
+                if (added > 0) parts.Add($"{added} skill{(added == 1 ? "" : "s")} added");
+                if (removed > 0) parts.Add($"{removed} removed");
+                TempData["Success"] = string.Join(", ", parts) + ".";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveSkill(int id)

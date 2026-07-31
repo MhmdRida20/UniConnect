@@ -16,6 +16,42 @@
 }
 .skill-chip-remove:hover { color: var(--uc-danger); }
 
+/* ── Staged (unsaved) skill edits ──
+   Adds and removals are held client-side until "Save skills", so both states
+   need to read as provisional rather than done. */
+.skill-chip.is-pending {
+    background: transparent; color: var(--uc-primary-darker);
+    border-style: dashed; border-color: var(--uc-primary);
+    animation: skillChipIn .18s cubic-bezier(.4, 0, .2, 1) both;
+}
+.skill-chip.is-removing {
+    background: var(--uc-bg); color: var(--uc-muted);
+    border-color: var(--uc-border); text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+.skill-chip.is-removing .skill-chip-remove { color: var(--uc-muted); text-decoration: none; }
+.skill-chip.is-removing .skill-chip-remove:hover { color: var(--uc-primary); }
+
+@keyframes skillChipIn {
+    from { opacity: 0; transform: scale(.94); }
+    to   { opacity: 1; transform: none; }
+}
+
+.skills-save-bar {
+    display: flex; align-items: center; flex-wrap: wrap; gap: .5rem;
+    margin-top: .9rem; padding-top: .9rem;
+    border-top: 1px dashed var(--uc-border);
+}
+.skills-save-summary {
+    flex: 1 1 auto; min-width: 0;
+    font-size: .82rem; font-weight: 600; color: var(--uc-primary-darker);
+}
+.skills-save-bar .btn { flex: 0 0 auto; }
+
+@media (prefers-reduced-motion: reduce) {
+    .skill-chip.is-pending { animation: none; }
+}
+
 /* ── Matching score badge ── */
 .match-badge {
     display: inline-flex; align-items: center; padding: .25rem .6rem;
