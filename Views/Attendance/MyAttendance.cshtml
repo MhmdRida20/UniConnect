@@ -6,6 +6,10 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+    @* The .st-table primitives this page's record list is built from live in
+       staff-tickets.css, which it never loaded — so the table rendered as
+       unstyled inline text. Loaded the same way AdminUsers/Index does. *@
+    <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
 }
 
 <div class="attendance-header uc-hero">

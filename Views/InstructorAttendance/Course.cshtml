@@ -1,0 +1,232 @@
+@using UniConnect.ViewModels
+@model UniConnect.ViewModels.CourseAttendanceSummaryVM
+@{
+    ViewData["Title"] = Model.CourseName;
+
+    string Pct(double? v) => v is null ? "—" : $"{v.Value.ToString("0.#")}%";
+
+    string StandingClass(AttendanceStanding s) => s switch
+    {
+        AttendanceStanding.AtRisk => "ic-standing-risk",
+        AttendanceStanding.Watch => "ic-standing-watch",
+        AttendanceStanding.NotRegistered => "ic-standing-none",
+        _ => "ic-standing-good"
+    };
+
+    string StandingLabel(AttendanceStanding s) => s switch
+    {
+        AttendanceStanding.AtRisk => "At risk",
+        AttendanceStanding.Watch => "Watch",
+        AttendanceStanding.NotRegistered => "Not registered",
+        _ => "Good"
+    };
+
+    var unregistered = Model.Students.Count(s => !s.HasAccount);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/instructor-course.css" asp-append-version="true" />
+}
+
+<a asp-action="Courses" class="form-back mb-3 d-inline-block">
+    <i class="bi bi-arrow-left"></i> Back to my courses
+</a>
+
+<div class="ic-head">
+    <div class="ic-head-main">
+        <p class="ic-head-code"><i class="bi bi-tag"></i>@Model.CourseCode · @Model.Credits credits</p>
+        <h1>@Model.CourseName</h1>
+        <p class="ic-head-sub">
+            @Model.EnrolledCount enrolled
+            @if (unregistered > 0)
+            {
+                <text>· <span class="ic-warn">@unregistered not registered</span></text>
+            }
+            @if (Model.FirstSessionAt is { } first)
+            {
+                var last = Model.LastSessionAt!.Value;
+                @* One session shouldn't render as "Jul 31 – Jul 31, 2026". *@
+                <text>· @(first.Date == last.Date
+                    ? last.ToString("MMM dd, yyyy")
+                    : $"{first:MMM dd} – {last:MMM dd, yyyy}")</text>
+            }
+        </p>
+    </div>
+    <div class="ic-head-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-action="ExportCourse" asp-route-id="@Model.CourseCode">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+        <a class="btn btn-primary btn-sm" asp-action="Create">
+            <i class="bi bi-plus-lg"></i> New session
+        </a>
+    </div>
+</div>
+
+@* Everything below is computed over CLOSED sessions only — an in-progress
+   session has records for attenders and nobody else, so counting it would
+   inflate every figure on the page. Said plainly rather than left implicit. *@
+@if (Model.ActiveSessions > 0)
+{
+    <p class="ic-note">
+        <i class="bi bi-info-circle"></i>
+        @Model.ActiveSessions session@(Model.ActiveSessions == 1 ? " is" : "s are") still in progress and
+        @(Model.ActiveSessions == 1 ? "isn't" : "aren't") counted below — figures update once
+        @(Model.ActiveSessions == 1 ? "it's" : "they're") closed.
+    </p>
+}
+
+@if (!Model.HasData)
+{
+    <div class="uc-empty">
+        <span class="uc-empty-icon"><i class="bi bi-bar-chart"></i></span>
+        <h5>Nothing to summarise yet</h5>
+        <p>Attendance figures appear here once you've closed your first session for this course.</p>
+        <a class="btn btn-primary mt-2" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Create Session</a>
+    </div>
+}
+else
+{
+    <div class="ic-tiles">
+        <div class="ic-tile">
+            <strong>@Model.SessionsHeld</strong>
+            <span>Sessions held</span>
+        </div>
+        <div class="ic-tile is-primary">
+            <strong>@Pct(Model.OverallRate)</strong>
+            <span>Overall attendance</span>
+        </div>
+        <div class="ic-tile">
+            <strong>@(Model.AvgAttendedPerSession?.ToString("0.#") ?? "—")</strong>
+            <span>Avg present / session</span>
+        </div>
+        <div class="ic-tile @(Model.AtRiskCount > 0 ? "is-risk" : "")">
+            <strong>@Model.AtRiskCount</strong>
+            <span>Below @Model.WatchThreshold%</span>
+        </div>
+        <div class="ic-tile @(Model.SuspiciousCount > 0 ? "is-risk" : "")">
+            <strong>@Model.SuspiciousCount</strong>
+            <span>Suspicious</span>
+        </div>
+    </div>
+
+    @* Pure-CSS bars — five data points don't justify pulling in a chart library. *@
+    <section class="ic-panel">
+        <div class="ic-panel-head">
+            <h2>Attendance per session</h2>
+            <span class="ic-panel-note">@Model.RegisteredCount tracked students</span>
+        </div>
+        <div class="ic-trend">
+            @foreach (var point in Model.Trend)
+            {
+                @* Fixed-width bars sitting on a baseline. Stretching them to
+                   fill the panel made two sessions look like two lost columns
+                   floating in whitespace. *@
+                <a class="ic-trend-bar" asp-action="Details" asp-route-id="@point.SessionId"
+                   title="@point.Date.ToString("MMM dd, yyyy") — @point.Attended of @point.Total present or late">
+                    <span class="ic-trend-val">@point.Rate.ToString("0")%</span>
+                    <span class="ic-trend-track">
+                        <span class="ic-trend-fill @(point.Rate < Model.WatchThreshold ? "is-low" : "")"
+                              style="height:@point.Rate.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                    </span>
+                    <span class="ic-trend-label">@point.Date.ToString("MMM dd")</span>
+                </a>
+            }
+        </div>
+    </section>
+
+    <section class="ic-panel" id="studentPanel">
+        <div class="ic-panel-head">
+            <h2>Students</h2>
+            <div class="ic-filters" role="group" aria-label="Filter students">
+                <button type="button" class="ic-filter is-active" data-filter="all">All @Model.Students.Count</button>
+                <button type="button" class="ic-filter" data-filter="risk">At risk @Model.AtRiskCount</button>
+                @if (unregistered > 0)
+                {
+                    <button type="button" class="ic-filter" data-filter="none">Not registered @unregistered</button>
+                }
+            </div>
+        </div>
+
+        <div class="ic-table-wrap">
+            <table class="ic-table" id="studentTable">
+                <thead>
+                    <tr>
+                        <th data-sort="text" aria-sort="none">Student</th>
+                        <th data-sort="num" class="ic-num">P</th>
+                        <th data-sort="num" class="ic-num">L</th>
+                        <th data-sort="num" class="ic-num">A</th>
+                        <th data-sort="num" class="ic-num">E</th>
+                        <th data-sort="num" class="ic-num">Attended</th>
+                        <th data-sort="num" aria-sort="ascending">Attendance</th>
+                        <th data-sort="text">Standing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Students)
+                    {
+                        <tr data-standing="@(s.HasAccount ? (s.Standing == AttendanceStanding.AtRisk ? "risk" : "ok") : "none")">
+                            <td>
+                                <span class="ic-student">@s.FullName</span>
+                                <span class="ic-student-id">@s.StudentNumber</span>
+                            </td>
+
+                            @if (!s.HasAccount)
+                            {
+                                @* No account means no records at all — printing zeros
+                                   here would read as "never attended", which is a
+                                   different and much worse claim. Dashes, and the
+                                   standing pill carries the explanation.
+                                   Kept as six separate cells rather than a colspan so
+                                   the client-side column sort stays index-aligned. *@
+                                @for (var i = 0; i < 5; i++)
+                                {
+                                    <td class="ic-num ic-muted" data-value="-1">—</td>
+                                }
+                                <td data-value="-1" class="ic-muted">—</td>
+                            }
+                            else
+                            {
+                                <td class="ic-num" data-value="@s.Present">@s.Present</td>
+                                <td class="ic-num" data-value="@s.Late">@s.Late</td>
+                                <td class="ic-num" data-value="@s.Absent">@s.Absent</td>
+                                <td class="ic-num" data-value="@s.Excused">@s.Excused</td>
+                                <td class="ic-num" data-value="@s.Attended">@s.Attended / @s.EligibleSessions</td>
+                                <td data-value="@(s.Rate?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-1")">
+                                    <div class="ic-rate">
+                                        <span class="ic-rate-num">@Pct(s.Rate)</span>
+                                        <span class="ic-rate-track">
+                                            <span class="ic-rate-fill @StandingClass(s.Standing)"
+                                                  style="width:@((s.Rate ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                                        </span>
+                                    </div>
+                                </td>
+                            }
+
+                            <td>
+                                @* Razor drops the attribute entirely when the value is null. *@
+                                <span class="ic-standing @StandingClass(s.Standing)"
+                                      title="@(s.HasAccount ? null : "No UniConnect account, so nothing can be recorded for them")">@StandingLabel(s.Standing)</span>
+                                @if (s.SuspiciousCount > 0)
+                                {
+                                    <i class="bi bi-exclamation-triangle-fill text-danger ms-1"
+                                       title="@s.SuspiciousCount suspicious submission@(s.SuspiciousCount == 1 ? "" : "s")"></i>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <p class="ic-legend">
+            P present · L late · A absent · E excused. Excused sessions are removed from a
+            student's denominator. Good ≥&nbsp;@Model.GoodThreshold%, Watch @Model.WatchThreshold–@(Model.GoodThreshold - 1)%,
+            At risk &lt;&nbsp;@Model.WatchThreshold%.
+        </p>
+    </section>
+}
+
+@section Scripts {
+    <script src="~/js/pages/course-dashboard.js" asp-append-version="true"></script>
+}

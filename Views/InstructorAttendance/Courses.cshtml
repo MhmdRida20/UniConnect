@@ -1,0 +1,77 @@
+@model List<UniConnect.ViewModels.InstructorCourseListItemVM>
+@{
+    ViewData["Title"] = "My Courses";
+    var totalHeld = Model.Sum(c => c.SessionsHeld);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/instructor-course.css" asp-append-version="true" />
+}
+
+<div class="attendance-header uc-hero">
+    <div class="uc-hero-inner d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+        <div>
+            <p class="uc-eyebrow"><i class="bi bi-journal-bookmark"></i>Smart Attendance</p>
+            <h1 class="uc-hero-title mb-1">My Courses</h1>
+            <p class="uc-hero-sub">
+                @Model.Count course@(Model.Count == 1 ? "" : "s") ·
+                @totalHeld session@(totalHeld == 1 ? "" : "s") held
+            </p>
+        </div>
+        <a class="btn btn-light home-cta-light fw-bold" asp-action="Create">
+            <i class="bi bi-plus-lg me-1"></i>Create Session
+        </a>
+    </div>
+</div>
+
+<div class="attendance-body">
+    @if (!Model.Any())
+    {
+        <div class="uc-empty">
+            <span class="uc-empty-icon"><i class="bi bi-journal-bookmark"></i></span>
+            <h5>No assigned courses</h5>
+            <p>Your university hasn't assigned you to any courses yet — contact your admin.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var c in Model)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <a class="ic-course-card" asp-action="Course" asp-route-id="@c.CourseCode">
+                        <div class="ic-course-head">
+                            <span class="ic-course-code">@c.CourseCode</span>
+                            @if (c.ActiveSessions > 0)
+                            {
+                                <span class="uc-pill status-active">@c.ActiveSessions live</span>
+                            }
+                        </div>
+                        <h3 class="ic-course-name">@c.CourseName</h3>
+
+                        <div class="ic-course-meta">
+                            <span><i class="bi bi-award"></i>@c.Credits credits</span>
+                            <span><i class="bi bi-qr-code"></i>@c.SessionsHeld held</span>
+                        </div>
+
+                        <p class="ic-course-last">
+                            @if (c.LastSessionAt is { } last)
+                            {
+                                <text>Last session @last.ToString("MMM dd, yyyy")</text>
+                            }
+                            else
+                            {
+                                <text>No sessions yet</text>
+                            }
+                        </p>
+
+                        <span class="ic-course-cta">
+                            View dashboard <svg class="hgi hgi-sm"><use href="#i-arrow-right"></use></svg>
+                        </span>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>

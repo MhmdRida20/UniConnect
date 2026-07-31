@@ -126,6 +126,7 @@ builder.Services.AddScoped<UniConnect.Services.UniversityApiSyncRunner>();
 builder.Services.AddScoped<UniConnect.Services.EnrollmentRevalidationRunner>();
 builder.Services.AddScoped<UniConnect.Services.NotificationService>();
 builder.Services.AddScoped<UniConnect.Services.MatchingScoreService>();
+builder.Services.AddScoped<UniConnect.Services.AttendanceSummaryService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UniConnect.Services.AuditLogService>();
 

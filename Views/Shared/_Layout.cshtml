@@ -30,6 +30,12 @@
     var isServicesActive = groupedControllers.Any(g =>
         currentController == g.Controller && (g.Action == null || currentAction == g.Action));
 
+    // InstructorAttendance backs two separate nav items, so highlighting can't
+    // key off the controller alone: the course dashboard and the session list
+    // would both light up.
+    var isCourseView = currentController == "InstructorAttendance"
+        && (currentAction == "Courses" || currentAction == "Course" || currentAction == "ExportCourse");
+
     // Only show nav items for services the current user's university has
     // actually enabled (Front Design doc: nav is filtered by "enabled
     // services for the university"). Anonymous visitors still see everything,
@@ -104,8 +110,18 @@
                             // at all, just the two things actually relevant.
                             @if (ShowNav(ServiceCodes.Attendance))
                             {
+                                @* Two views of the same data: Sessions is
+                                   "what did I run?", Courses is "how is this
+                                   class doing?". *@
                                 <li class="nav-item">
-                                    <a class="nav-link @NavActive("InstructorAttendance")" asp-controller="InstructorAttendance" asp-action="Index">
+                                    <a class="nav-link @(isCourseView ? "active" : "")"
+                                       asp-controller="InstructorAttendance" asp-action="Courses">
+                                        <svg class="hgi hgi-sm"><use href="#i-book"></use></svg>My Courses
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(isCourseView ? "" : NavActive("InstructorAttendance"))"
+                                       asp-controller="InstructorAttendance" asp-action="Index">
                                         <svg class="hgi hgi-sm"><use href="#i-qr"></use></svg>My Sessions
                                     </a>
                                 </li>

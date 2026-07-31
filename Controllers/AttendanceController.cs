@@ -189,7 +189,14 @@ namespace UniConnect.Controllers
             {
                 AttendanceSessionId = session.Id,
                 UserId = user.Id,
-                SubmittedAt = DateTime.UtcNow,
+                // Local, not UtcNow. Every other time on this entity graph is
+                // local — the session's StartTime/EndTime, and the `now` two
+                // dozen lines up that decides Present vs Late — so storing this
+                // one in UTC left submission times rendering hours adrift of
+                // the session they belong to. (CreatedAt-style audit stamps
+                // stay UTC; this is a domain time, compared and displayed
+                // against other domain times.)
+                SubmittedAt = now,
                 Status = status,
                 SubmittedLat = lat,
                 SubmittedLng = lng,

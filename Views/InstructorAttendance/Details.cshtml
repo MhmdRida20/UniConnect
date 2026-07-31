@@ -7,6 +7,10 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/attendance.css" asp-append-version="true" />
+    @* The roster below is built from .st-table, which is defined in
+       staff-tickets.css — never loaded here, so the whole table rendered as
+       unstyled inline text. Loaded the same way AdminUsers/Index does. *@
+    <link rel="stylesheet" href="~/css/pages/staff-tickets.css" asp-append-version="true" />
 }
 
 <a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to my sessions</a>

@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,7 @@ using UniConnect.Data;
 using UniConnect.Filters;
 using UniConnect.Hubs;
 using UniConnect.Models;
+using UniConnect.Services;
 using UniConnect.ViewModels;
 
 namespace UniConnect.Controllers
@@ -27,19 +29,22 @@ namespace UniConnect.Controllers
         private readonly IUniversityProviderResolver _providerResolver;
         private readonly IHubContext<AttendanceHub> _hub;
         private readonly IConfiguration _config;
+        private readonly AttendanceSummaryService _summary;
 
         public InstructorAttendanceController(
             ApplicationDbContext db,
             UserManager<ApplicationUser> userManager,
             IUniversityProviderResolver providerResolver,
             IHubContext<AttendanceHub> hub,
-            IConfiguration config)
+            IConfiguration config,
+            AttendanceSummaryService summary)
         {
             _db = db;
             _userManager = userManager;
             _providerResolver = providerResolver;
             _hub = hub;
             _config = config;
+            _summary = summary;
         }
 
         // Builds the URL encoded in the QR code. By default this uses
@@ -71,6 +76,110 @@ namespace UniConnect.Controllers
                 .ToListAsync();
 
             return View(sessions);
+        }
+
+        // ---------- COURSES: dashboard entry point --------------------------
+        // The Index above is session-first, which answers "what did I run?".
+        // This is course-first, and answers "how is this class doing?".
+        public async Task<IActionResult> Courses()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Challenge();
+
+            return View(await _summary.GetCourseListAsync(user));
+        }
+
+        // ---------- COURSE DASHBOARD ----------------------------------------
+        // Conventional route, so this is /InstructorAttendance/Course/MAT202
+        // (the app registers no attribute routing — see Program.cs).
+        public async Task<IActionResult> Course(string id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Challenge();
+
+            // Null means "not a course you teach". Forbid rather than NotFound:
+            // the roster call inside is keyed only by course code, so this is
+            // the authorization boundary, not a lookup miss.
+            var vm = await _summary.BuildCourseSummaryAsync(user, id);
+            if (vm is null) return Forbid();
+
+            return View(vm);
+        }
+
+        // ---------- EXPORT --------------------------------------------------
+        // CSV rather than a real workbook, matching AdminReportsController —
+        // Excel opens it directly and it costs no dependency.
+        public async Task<IActionResult> ExportCourse(string id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Challenge();
+
+            var vm = await _summary.BuildCourseSummaryAsync(user, id);
+            if (vm is null) return Forbid();
+
+            var sb = new StringBuilder();
+
+            sb.AppendLine(CsvRow("Course", vm.CourseName));
+            sb.AppendLine(CsvRow("Course code", vm.CourseCode));
+            sb.AppendLine(CsvRow("Instructor", user.FullName));
+            sb.AppendLine(CsvRow("Sessions held", vm.SessionsHeld.ToString()));
+            sb.AppendLine(CsvRow("Date range", vm.FirstSessionAt is null
+                ? "—"
+                : $"{vm.FirstSessionAt:yyyy-MM-dd} to {vm.LastSessionAt:yyyy-MM-dd}"));
+            sb.AppendLine(CsvRow("Enrolled", vm.EnrolledCount.ToString()));
+            sb.AppendLine(CsvRow("Registered on UniConnect", vm.RegisteredCount.ToString()));
+            sb.AppendLine(CsvRow("Overall attendance", vm.OverallRate is null ? "—" : $"{vm.OverallRate}%"));
+            sb.AppendLine(CsvRow("Generated", DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
+            sb.AppendLine();
+
+            sb.AppendLine(string.Join(",", new[]
+            {
+                "Student number", "Full name", "Email", "Present", "Late", "Absent",
+                "Excused", "Attended", "Eligible sessions", "Attendance %", "Standing"
+            }.Select(CsvEscape)));
+
+            foreach (var s in vm.Students)
+            {
+                sb.AppendLine(string.Join(",", new[]
+                {
+                    s.StudentNumber,
+                    s.FullName,
+                    s.Email,
+                    s.HasAccount ? s.Present.ToString() : "",
+                    s.HasAccount ? s.Late.ToString() : "",
+                    s.HasAccount ? s.Absent.ToString() : "",
+                    s.HasAccount ? s.Excused.ToString() : "",
+                    s.HasAccount ? s.Attended.ToString() : "",
+                    s.HasAccount ? s.EligibleSessions.ToString() : "",
+                    s.Rate?.ToString("0.#") ?? "",
+                    s.Standing switch
+                    {
+                        AttendanceStanding.NotRegistered => "Not registered",
+                        AttendanceStanding.AtRisk => "At risk",
+                        AttendanceStanding.Watch => "Watch",
+                        _ => "Good"
+                    }
+                }.Select(CsvEscape)));
+            }
+
+            // Excel reads a BOM-less UTF-8 CSV as the system codepage, which
+            // mangles any non-ASCII name.
+            var bytes = Encoding.UTF8.GetPreamble()
+                .Concat(Encoding.UTF8.GetBytes(sb.ToString()))
+                .ToArray();
+
+            var fileName = $"attendance-{vm.CourseCode}-{DateTime.Now:yyyy-MM-dd}.csv";
+            return File(bytes, "text/csv", fileName);
+        }
+
+        private static string CsvRow(string label, string value) =>
+            CsvEscape(label) + "," + CsvEscape(value);
+
+        private static string CsvEscape(string value)
+        {
+            if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+                return "\"" + value.Replace("\"", "\"\"") + "\"";
+            return value;
         }
 
         // ---------- CREATE (GET) ------------------------------------------
