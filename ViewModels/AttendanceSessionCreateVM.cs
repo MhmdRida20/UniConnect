@@ -11,14 +11,19 @@ namespace UniConnect.ViewModels
         [Display(Name = "Course")]
         public string CourseCode { get; set; } = string.Empty;
 
+        // datetime-local expects "yyyy-MM-ddTHH:mm". Without an explicit edit
+        // format the raw model value renders as "01:13:00.906 PM" — seconds
+        // and milliseconds included — which the field then displays verbatim.
         [Required(ErrorMessage = "Please set a start time.")]
         [Display(Name = "Start Time")]
         [DataType(DataType.DateTime)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
         public DateTime StartTime { get; set; } = DateTime.Now.AddMinutes(5);
 
         [Required(ErrorMessage = "Please set an end time.")]
         [Display(Name = "End Time")]
         [DataType(DataType.DateTime)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
         public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
 
         [Range(0, 60)]

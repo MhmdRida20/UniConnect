@@ -40,9 +40,9 @@
             <h1 class="uc-hero-title mb-1">Available Rides</h1>
             <p class="uc-hero-sub">@rides.Count ride@(rides.Count == 1 ? "" : "s") · @totalSeats open seat@(totalSeats == 1 ? "" : "s") right now</p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
+        <div class="uc-hero-actions">
             <a class="btn btn-outline-light" asp-action="MyRides"><i class="bi bi-list-check me-1"></i>My Rides</a>
-            <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Offer a Ride</a>
+            <a class="btn btn-light" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Offer a Ride</a>
         </div>
     </div>
 </div>

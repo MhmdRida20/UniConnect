@@ -9,10 +9,10 @@
     <link rel="stylesheet" href="~/css/pages/internships.css" asp-append-version="true" />
 }
 
-<div class="uc-hero" style="padding:1.5rem 0;">
+<div class="uc-hero uc-hero-compact">
     <div class="uc-hero-inner">
         <p class="uc-eyebrow"><i class="bi bi-person-badge"></i>Internships</p>
-        <h1 class="uc-hero-title mb-0" style="font-size:1.6rem;">My Career Profile</h1>
+        <h1 class="uc-hero-title mb-0">My Career Profile</h1>
     </div>
 </div>
 
@@ -127,7 +127,7 @@
         }
         <form asp-action="UploadCv" method="post" enctype="multipart/form-data" class="d-flex gap-2 mt-2" data-loading id="cvUploadForm">
             @Html.AntiForgeryToken()
-            <input type="file" name="cv" id="cvFileInput" class="form-control" accept=".pdf,.doc,.docx" required />
+            <input type="file" name="cv" id="cvFileInput" class="form-control" accept=".pdf,.doc,.docx" data-max-mb="5" required />
             <button class="btn btn-outline-primary" id="cvUploadButton">Upload</button>
         </form>
         <small class="text-muted d-block mt-1">PDF or Word document, max 5 MB. Uploads as soon as you pick a file.</small>

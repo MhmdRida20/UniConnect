@@ -15,6 +15,8 @@ namespace UniConnect.ViewModels
         [Required]
         [Display(Name = "Departure Time")]
         [DataType(DataType.DateTime)]
+        // Keeps the datetime-local field from rendering trailing seconds/ms.
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
         public DateTime DepartureTime { get; set; } = DateTime.Now.AddHours(1);
 
         [Required(ErrorMessage = "Please select which vehicle you're using for this ride.")]

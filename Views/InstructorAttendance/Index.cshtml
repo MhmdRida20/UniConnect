@@ -15,7 +15,9 @@
             <h1 class="uc-hero-title mb-1">My Sessions</h1>
             <p class="uc-hero-sub">@sessions.Count session@(sessions.Count == 1 ? "" : "s") created</p>
         </div>
-        <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Create Session</a>
+        <div class="uc-hero-actions">
+            <a class="btn btn-light" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Create Session</a>
+        </div>
     </div>
 </div>
 

@@ -22,4 +22,14 @@
 		<Folder Include="wwwroot\NewFolder\" />
 	</ItemGroup>
 
+	<!-- The test project sits under test/, which is inside this project's own
+	     directory, so the SDK's default **/*.cs glob would otherwise compile it
+	     (and its generated AssemblyInfo) straight into the web assembly. -->
+	<ItemGroup>
+		<Compile Remove="test\**" />
+		<Content Remove="test\**" />
+		<EmbeddedResource Remove="test\**" />
+		<None Remove="test\**" />
+	</ItemGroup>
+
 </Project>

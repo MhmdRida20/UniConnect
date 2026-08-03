@@ -277,9 +277,22 @@
             wrap.classList.contains('is-open') ? close(true) : openPanel();
         });
 
+        // Opening keys only. Once the panel is up, handleListKeys below owns
+        // these same keys — and this listener is registered first, so without
+        // the guard every ArrowDown re-ran openPanel(), which resets the active
+        // option back to the selected one. The arrow then moved one step from
+        // there, so the highlight never advanced past the first option, and
+        // Enter committed the already-selected value instead of the arrowed-to
+        // one. Lists with a search box escaped it only because focus moves off
+        // the trigger when they open.
         trigger.addEventListener('keydown', function (e) {
+            if (!panel.hidden) return;
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
+                // Stop the list handler on this same element from also acting on
+                // the keypress that opened the panel — opening should land on the
+                // current selection, not one step past it.
+                e.stopImmediatePropagation();
                 openPanel();
             }
         });

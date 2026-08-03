@@ -14,29 +14,37 @@
 
 <a asp-action="Index" class="form-back mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to reports</a>
 
-<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-    <h2 class="mb-0">@Model.Title</h2>
+<div class="report-head">
+    <div class="report-head-text">
+        <h1>@Model.Title</h1>
+        <p>@Model.Rows.Count row@(Model.Rows.Count == 1 ? "" : "s")@(Model.Truncated ? " (truncated)" : "")</p>
+    </div>
     <a asp-action="Export" asp-route-type="@ViewBag.Type" asp-route-from="@ViewBag.From" asp-route-to="@ViewBag.To"
-       asp-route-universityCode="@ViewBag.UniversityCode" class="btn btn-outline-primary btn-sm">
-        <i class="bi bi-download me-1"></i>Export CSV
+       asp-route-universityCode="@ViewBag.UniversityCode" class="rp-btn rp-btn-export">
+        <i class="bi bi-download"></i><span>Export CSV</span>
     </a>
 </div>
 
-<form method="get" class="d-flex flex-wrap gap-2 mb-3">
+@* Grouped into one bar so the controls share a baseline. Previously each
+   field was a bare div and Apply relied on align-self-end, which lined it up
+   with the tallest neighbour rather than with the inputs. *@
+<form method="get" class="report-filters">
     <input type="hidden" name="type" value="@ViewBag.Type" />
-    <div>
-        <label class="form-label small mb-0">From</label>
-        <input type="date" name="from" class="form-control form-control-sm" value="@(((DateTime?)ViewBag.From)?.ToString("yyyy-MM-dd"))" />
+
+    <div class="rf-field">
+        <label for="rfFrom">From</label>
+        <input id="rfFrom" type="date" name="from" value="@(((DateTime?)ViewBag.From)?.ToString("yyyy-MM-dd"))" />
     </div>
-    <div>
-        <label class="form-label small mb-0">To</label>
-        <input type="date" name="to" class="form-control form-control-sm" value="@(((DateTime?)ViewBag.To)?.ToString("yyyy-MM-dd"))" />
+    <div class="rf-field">
+        <label for="rfTo">To</label>
+        <input id="rfTo" type="date" name="to" value="@(((DateTime?)ViewBag.To)?.ToString("yyyy-MM-dd"))" />
     </div>
+
     @if (showUniversityFilter)
     {
-        <div>
-            <label class="form-label small mb-0">University</label>
-            <select name="universityCode" class="form-select form-select-sm">
+        <div class="rf-field rf-field-wide">
+            <label for="rfUni">University</label>
+            <select id="rfUni" name="universityCode">
                 <option value="">All</option>
                 @foreach (var u in universities)
                 {
@@ -52,9 +60,10 @@
             </select>
         </div>
     }
-    <div class="align-self-end">
-        <button class="btn btn-outline-secondary btn-sm">Apply</button>
-    </div>
+
+    <button class="rp-btn rp-btn-apply" type="submit">
+        <i class="bi bi-funnel"></i><span>Apply</span>
+    </button>
 </form>
 
 @if (Model.Truncated)
@@ -66,9 +75,12 @@
 }
 
 <div class="report-summary-grid mb-3">
+    @{ var tileIndex = 0; }
     @foreach (var (label, value) in Model.Summary)
     {
-        <div class="report-summary-card">
+        @* --i staggers the entrance so the tiles resolve left-to-right
+           instead of snapping in as one block. *@
+        <div class="report-summary-card" style="--i:@(tileIndex++)">
             <strong>@value</strong>
             <span>@label</span>
         </div>
@@ -85,7 +97,7 @@
 }
 else
 {
-    <div class="table-responsive">
+    <div class="table-responsive report-table-card">
         <table class="table table-sm table-hover report-table">
             <thead>
                 <tr>

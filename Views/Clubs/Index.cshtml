@@ -17,7 +17,9 @@
             <h1 class="uc-hero-title mb-1">Clubs & Organizations</h1>
             <p class="uc-hero-sub">@clubs.Count club@(clubs.Count == 1 ? "" : "s") at your university</p>
         </div>
-        <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Register a Club</a>
+        <div class="uc-hero-actions">
+            <a class="btn btn-light" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Register a Club</a>
+        </div>
     </div>
 </div>
 

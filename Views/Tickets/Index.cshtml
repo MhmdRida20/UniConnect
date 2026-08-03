@@ -18,8 +18,8 @@
             <h1 class="uc-hero-title mb-1">My Tickets</h1>
             <p class="uc-hero-sub">@tickets.Count ticket@(tickets.Count == 1 ? "" : "s") · @openCount currently open</p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Submit a Ticket</a>
+        <div class="uc-hero-actions">
+            <a class="btn btn-light" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Submit a Ticket</a>
         </div>
     </div>
 </div>

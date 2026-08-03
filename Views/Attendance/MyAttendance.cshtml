@@ -19,7 +19,9 @@
             <h1 class="uc-hero-title mb-1">My Attendance</h1>
             <p class="uc-hero-sub">@records.Count record@(records.Count == 1 ? "" : "s")</p>
         </div>
-        <a class="btn btn-light home-cta-light fw-bold" asp-action="ManualEntry"><i class="bi bi-keyboard me-1"></i>Enter Token Manually</a>
+        <div class="uc-hero-actions">
+            <a class="btn btn-light" asp-action="ManualEntry"><i class="bi bi-keyboard me-1"></i>Enter Token Manually</a>
+        </div>
     </div>
 </div>
 

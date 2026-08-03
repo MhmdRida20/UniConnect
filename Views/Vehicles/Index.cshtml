@@ -5,13 +5,15 @@
     var inUseIds = ViewBag.VehicleIdsInUse as List<int> ?? new();
 }
 
-<div class="uc-hero" style="padding:1.5rem 0;">
-    <div class="uc-hero-inner d-flex justify-content-between align-items-end flex-wrap gap-2">
+<div class="uc-hero uc-hero-compact">
+    <div class="uc-hero-inner d-flex flex-column flex-sm-row justify-content-between align-items-sm-end gap-3">
         <div>
             <p class="uc-eyebrow"><i class="bi bi-car-front"></i>Ride Sharing</p>
-            <h1 class="uc-hero-title mb-0" style="font-size:1.6rem;">My Vehicles</h1>
+            <h1 class="uc-hero-title mb-0">My Vehicles</h1>
         </div>
-        <a class="btn btn-light home-cta-light fw-bold" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Register Vehicle</a>
+        <div class="uc-hero-actions">
+            <a class="btn btn-light" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Register Vehicle</a>
+        </div>
     </div>
 </div>
 

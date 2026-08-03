@@ -116,8 +116,15 @@ namespace UniConnect.Controllers
                 ModelState.AddModelError(nameof(vm.DepartureTime),
                     "Departure time must be in the future.");
 
-            if (string.Equals(vm.DepartureLocation?.Trim(), vm.Destination?.Trim(),
-                              StringComparison.OrdinalIgnoreCase))
+            // Trimmed once, up front, and reused for both the comparison below
+            // and the saved entity. Doing it inline in two places meant the
+            // first use needed `?.` (model binding can hand back null for an
+            // omitted field), which then marked both properties maybe-null for
+            // the rest of the method and made the later .Trim() calls warn.
+            var departure = vm.DepartureLocation?.Trim() ?? string.Empty;
+            var destination = vm.Destination?.Trim() ?? string.Empty;
+
+            if (string.Equals(departure, destination, StringComparison.OrdinalIgnoreCase))
                 ModelState.AddModelError(nameof(vm.Destination),
                     "Destination must be different from the departure location.");
 
@@ -144,8 +151,8 @@ namespace UniConnect.Controllers
             {
                 UniversityCode = user.UniversityCode,
                 DriverId = user.Id,
-                DepartureLocation = vm.DepartureLocation.Trim(),
-                Destination = vm.Destination.Trim(),
+                DepartureLocation = departure,
+                Destination = destination,
                 DepartureTime = vm.DepartureTime,
                 VehicleId = vehicle!.Id,
                 TotalSeats = vm.TotalSeats,

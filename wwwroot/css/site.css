@@ -669,12 +669,26 @@ a:focus-visible, button:focus-visible {
 
 /* --------------------------------------------------------------------------
    11. Hero / section primitives (reusable across pages)
+
+   Every page banner is a .uc-hero. The negative side margins cancel the
+   .container gutter so the band reaches the full width of the content column
+   — which means the padding here is the ONLY thing keeping the heading and
+   the action buttons off the band's edge. Zero it out (as four pages used to,
+   with an inline `padding: 1.5rem 0`) and the content sits flush against the
+   edge, where overflow:hidden and the rounded corners clip it.
    -------------------------------------------------------------------------- */
 .uc-hero {
+    /* The exact half-gutter .container pads itself with, inherited from it.
+       Not hard-coded to 12px: the root font-size drops to 15px below 768px,
+       so the real gutter is 11.25px there and a fixed 12px pull-out pushed
+       the band 1.5px wider than the viewport. */
+    --uc-hero-bleed: calc(var(--bs-gutter-x, 1.5rem) * .5);
+    --uc-hero-pad-x: clamp(1.15rem, 3.2vw, 2rem);
+
     position: relative;
     overflow: hidden;
-    padding: 2.75rem 2rem 4.5rem;
-    margin: 0 -12px 0;
+    padding: clamp(1.75rem, 4.5vw, 2.75rem) var(--uc-hero-pad-x) clamp(2.5rem, 7vw, 4.5rem);
+    margin: 0 calc(-1 * var(--uc-hero-bleed));
     border-radius: 0 0 28px 28px;
     background: linear-gradient(135deg, var(--uc-primary-deep) 0%, var(--uc-primary-darker) 45%, var(--uc-primary) 100%);
     color: #fff;
@@ -687,6 +701,21 @@ a:focus-visible, button:focus-visible {
     pointer-events: none;
 }
 .uc-hero-inner { position: relative; z-index: 1; }
+
+/* Flex children default to min-width:auto, which refuses to shrink below the
+   longest unbreakable word — enough to push a long course title or a button
+   row past the band's edge. */
+.uc-hero-inner > * { min-width: 0; }
+
+/* Compact variant: the same band for pages whose header is just a label and
+   a couple of buttons, with no supporting paragraph. */
+.uc-hero-compact {
+    padding-top: clamp(1.15rem, 3vw, 1.6rem);
+    padding-bottom: clamp(1.15rem, 3vw, 1.6rem);
+    border-radius: 0 0 22px 22px;
+}
+.uc-hero-compact .uc-hero-title { font-size: clamp(1.3rem, 3.4vw, 1.7rem); }
+
 .uc-eyebrow {
     font-size: .72rem; font-weight: 700;
     letter-spacing: .12em; text-transform: uppercase;
@@ -698,8 +727,59 @@ a:focus-visible, button:focus-visible {
     font-size: clamp(1.7rem, 3.6vw, 2.5rem);
     font-weight: 800; letter-spacing: -.03em;
     color: #fff; margin: 0 0 .5rem; line-height: 1.12;
+    overflow-wrap: break-word;
 }
 .uc-hero-sub { font-size: .95rem; color: rgba(255, 255, 255, .72); margin: 0; max-width: 60ch; }
+
+/* Hero action buttons -------------------------------------------------------
+   Previously these leaned on .home-cta-light, which lives in home.css and is
+   therefore only loaded on the home page — everywhere else the buttons fell
+   back to plain Bootstrap. */
+.uc-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .55rem;
+    flex-shrink: 0;
+}
+.uc-hero-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    font-weight: 700;
+    border-radius: var(--uc-radius-pill);
+    padding: .5rem 1.15rem;
+    transition: transform var(--uc-transition), box-shadow var(--uc-transition),
+                background-color var(--uc-transition), color var(--uc-transition);
+}
+.uc-hero-actions .btn-light {
+    color: var(--uc-primary-darker);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+.uc-hero-actions .btn-light:hover,
+.uc-hero-actions .btn-light:focus-visible { background: #fff; color: var(--uc-primary-deep); }
+.uc-hero-actions .btn-outline-light { border-color: rgba(255, 255, 255, .55); }
+.uc-hero-actions .btn-outline-light:hover,
+.uc-hero-actions .btn-outline-light:focus-visible { background: rgba(255, 255, 255, .16); color: #fff; }
+.uc-hero-actions .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0, 0, 0, .22); }
+.uc-hero-actions .btn:active { transform: translateY(0); box-shadow: 0 4px 12px rgba(0, 0, 0, .18); }
+
+@media (max-width: 575.98px) {
+    .uc-hero { border-radius: 0 0 20px 20px; }
+    .uc-hero-compact { border-radius: 0 0 18px 18px; }
+    /* Stacked under the title, buttons share the row evenly instead of
+       shrinking until their labels clip. */
+    .uc-hero-actions { width: 100%; }
+    .uc-hero-actions .btn { flex: 1 1 10rem; }
+    .uc-hero-sub { font-size: .88rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .uc-hero-actions .btn { transition: none; }
+    .uc-hero-actions .btn:hover,
+    .uc-hero-actions .btn:active { transform: none; }
+}
 
 /* Section heading */
 .uc-section-head { margin-bottom: 1.25rem; }
@@ -962,3 +1042,304 @@ a:focus-visible, button:focus-visible {
     .ucs-trigger, .ucs-caret, .ucs-opt, .ucs-opt::before, .ucs-opt-check { transition: none; }
 }
 
+
+/* ==========================================================================
+   17. FILE INPUTS (uc-inputs.js)
+   The native input is stretched invisibly over the whole zone, so clicking,
+   dropping and `required` validation all stay native — everything below is
+   only the surface.
+   ========================================================================== */
+.ucf {
+    position: relative;
+    /* Some hosts are flex rows (the CV upload sits beside its Upload button),
+       so claim the free space rather than collapsing to content width. */
+    flex: 1 1 auto; min-width: 0;
+    border: 1.5px dashed var(--uc-border);
+    border-radius: var(--uc-radius-sm);
+    background: var(--uc-surface);
+    transition: border-color var(--uc-transition), background var(--uc-transition),
+                box-shadow var(--uc-transition), transform var(--uc-transition);
+}
+.ucf:hover { border-color: var(--uc-primary-light); background: var(--uc-primary-tint); }
+.ucf.is-focused { border-color: var(--uc-primary); box-shadow: 0 0 0 3px var(--uc-primary-tint); }
+.ucf.is-filled { border-style: solid; border-color: var(--uc-primary-light); background: var(--uc-surface); }
+.ucf.is-invalid { border-color: var(--uc-danger); background: #fef2f2; }
+
+/* Above the zone, below the remove button. */
+.ucf-native {
+    position: absolute; inset: 0; z-index: 2;
+    width: 100%; height: 100%;
+    opacity: 0; cursor: pointer;
+}
+.ucf-native::file-selector-button { cursor: pointer; }
+.ucf-native:disabled { cursor: not-allowed; }
+
+.ucf-body { position: relative; z-index: 1; padding: .85rem 1rem; }
+
+/* ── Empty state ── */
+.ucf-empty { display: flex; align-items: center; gap: .8rem; }
+.ucf-ico {
+    flex: 0 0 auto; width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-primary-tint); color: var(--uc-primary);
+    transition: transform var(--uc-transition), background var(--uc-transition), color var(--uc-transition);
+}
+.ucf:hover .ucf-ico { transform: translateY(-2px) scale(1.04); background: var(--uc-primary); color: #fff; }
+.ucf-copy { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.ucf-copy strong { font-size: .88rem; font-weight: 600; color: var(--uc-text); }
+.ucf-copy small { font-size: .74rem; color: var(--uc-muted); }
+
+/* ── Dragging ── */
+.ucf.is-dragging {
+    border-color: var(--uc-primary); background: var(--uc-primary-tint);
+    transform: scale(1.01); box-shadow: var(--uc-shadow-md);
+}
+.ucf.is-dragging .ucf-ico { transform: translateY(-3px) scale(1.1); background: var(--uc-primary); color: #fff; }
+.ucf.is-dragging .ucf-or { color: var(--uc-primary-darker); font-weight: 700; }
+
+/* ── Filled state ── */
+.ucf-filled { display: flex; align-items: center; gap: .8rem; animation: ucfIn .22s cubic-bezier(.4, 0, .2, 1) both; }
+.ucf-thumb {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 8px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-primary-tint); border: 1px solid var(--uc-border-soft);
+}
+.ucf-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ucf-ext { font-size: .62rem; font-weight: 800; letter-spacing: .04em; color: var(--uc-primary-darker); }
+.ucf-meta { display: flex; flex-direction: column; gap: .1rem; min-width: 0; flex: 1; }
+.ucf-meta strong {
+    font-size: .86rem; font-weight: 600; color: var(--uc-text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ucf-meta small { font-size: .73rem; color: var(--uc-muted); }
+
+.ucf-remove {
+    position: relative; z-index: 3; flex: 0 0 auto;
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-bg); border: 1px solid var(--uc-border);
+    color: var(--uc-muted); cursor: pointer;
+    transition: background var(--uc-transition), color var(--uc-transition),
+                border-color var(--uc-transition), transform var(--uc-transition);
+}
+.ucf-remove:hover { background: #fee2e2; border-color: var(--uc-danger); color: var(--uc-danger); transform: rotate(90deg); }
+.ucf-remove:focus-visible { outline: 2px solid var(--uc-primary); outline-offset: 2px; }
+
+.ucf-error {
+    margin: 0; padding: .5rem .8rem .6rem;
+    font-size: .76rem; font-weight: 600; color: var(--uc-danger);
+    animation: ucfIn .2s cubic-bezier(.4, 0, .2, 1) both;
+}
+
+@keyframes ucfIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (max-width: 480px) {
+    .ucf-or { display: none; }          /* no drag-and-drop on touch anyway */
+    .ucf-body { padding: .7rem .8rem; }
+}
+
+/* ==========================================================================
+   18. DATE / TIME INPUTS (uc-inputs.js)
+   The native picker is kept — it is localised, accessible and correct on
+   mobile. Only its cramped built-in indicator is replaced.
+   ========================================================================== */
+.ucd { position: relative; display: block; width: 100%; flex: 1 1 auto; min-width: 0; }
+.ucd-native { width: 100%; padding-right: 2.9rem !important; }
+
+/* For types we don't own a picker for (month/week), the native indicator is
+   stretched invisibly across the field so a click anywhere still opens it. */
+.ucd-native::-webkit-calendar-picker-indicator {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; cursor: pointer;
+}
+/* Where our own calendar takes over, the native one is removed outright —
+   otherwise clicking the field opened Chrome's popup on top of ours, and it
+   also blocked typing directly into the field. */
+.ucd-custom .ucd-native::-webkit-calendar-picker-indicator { display: none; }
+.ucd-native::-webkit-inner-spin-button,
+.ucd-native::-webkit-clear-button { display: none; }
+
+.ucd-btn {
+    position: absolute; top: 50%; right: .35rem; transform: translateY(-50%);
+    width: 34px; height: 34px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--uc-primary-tint); border: 1px solid transparent;
+    color: var(--uc-primary); cursor: pointer; pointer-events: auto;
+    transition: background var(--uc-transition), color var(--uc-transition),
+                border-color var(--uc-transition), transform .18s cubic-bezier(.4, 0, .2, 1);
+}
+.ucd-btn:hover {
+    background: var(--uc-primary); color: #fff;
+    transform: translateY(-50%) scale(1.08);
+}
+.ucd-btn:active { transform: translateY(-50%) scale(.94); }
+
+.ucd.is-focused .ucd-btn { background: var(--uc-primary); color: #fff; }
+.ucd.is-filled .ucd-btn { background: var(--uc-primary-soft); }
+.ucd.is-invalid .ucd-btn { background: #fee2e2; color: var(--uc-danger); }
+
+@media (prefers-reduced-motion: reduce) {
+    .ucf, .ucf-ico, .ucf-remove, .ucd-btn { transition: none; }
+    .ucf-filled, .ucf-error { animation: none; }
+    .ucf.is-dragging { transform: none; }
+    .ucf:hover .ucf-ico, .ucf.is-dragging .ucf-ico { transform: none; }
+    .ucf-remove:hover { transform: none; }
+    .ucd-btn:hover, .ucd-btn:active { transform: translateY(-50%); }
+}
+
+/* ==========================================================================
+   19. DATE PICKER PANEL (uc-datepicker.js)
+   Replaces Chrome's built-in popup, which is browser chrome and cannot be
+   styled. Fixed + portalled to <body> for the same reason .ucs-panel is.
+   ========================================================================== */
+.ucdp {
+    position: fixed; z-index: 1090;
+    width: 292px; padding: .8rem;
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow-lg);
+    animation: ucdpIn .16s cubic-bezier(.4, 0, .2, 1) both;
+    transform-origin: top center;
+}
+.ucdp.ucdp-up { transform-origin: bottom center; animation-name: ucdpUpIn; }
+
+@keyframes ucdpIn {
+    from { opacity: 0; transform: translateY(-.4rem) scale(.97); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes ucdpUpIn {
+    from { opacity: 0; transform: translateY(.4rem) scale(.97); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ── Header ── */
+.ucdp-head { display: flex; align-items: center; gap: .3rem; margin-bottom: .55rem; }
+.ucdp-nav {
+    width: 30px; height: 30px; flex: 0 0 auto; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; color: var(--uc-muted); cursor: pointer;
+    transition: background var(--uc-transition), color var(--uc-transition), transform .15s ease;
+}
+.ucdp-nav:hover { background: var(--uc-primary-tint); color: var(--uc-primary); }
+.ucdp-nav:active { transform: scale(.9); }
+.ucdp-title {
+    flex: 1; padding: .35rem .5rem; border-radius: 8px;
+    background: transparent; border: none; cursor: pointer;
+    font-size: .88rem; font-weight: 700; color: var(--uc-text);
+    transition: background var(--uc-transition), color var(--uc-transition);
+}
+.ucdp-title:hover { background: var(--uc-primary-tint); color: var(--uc-primary-darker); }
+
+/* ── Day grid ── */
+.ucdp-dow {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    margin-bottom: .2rem;
+}
+.ucdp-dow span {
+    text-align: center; font-size: .66rem; font-weight: 700;
+    color: var(--uc-muted); text-transform: uppercase; letter-spacing: .04em;
+    padding: .3rem 0;
+}
+.ucdp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+
+.ucdp-day {
+    aspect-ratio: 1; border: none; border-radius: 9px;
+    background: transparent; color: var(--uc-text);
+    font-size: .8rem; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--uc-transition), color var(--uc-transition), transform .14s ease;
+    animation: ucdpDay .2s ease both;
+    animation-delay: calc(var(--d, 0) * 12ms);
+}
+@keyframes ucdpDay {
+    from { opacity: 0; transform: scale(.86); }
+    to   { opacity: 1; transform: none; }
+}
+.ucdp-day:hover:not(.is-disabled) { background: var(--uc-primary-tint); color: var(--uc-primary-darker); }
+.ucdp-day:active:not(.is-disabled) { transform: scale(.9); }
+.ucdp-day:focus-visible { outline: 2px solid var(--uc-primary); outline-offset: -2px; }
+
+/* Neighbouring months. Kept visible so the weekday columns stay aligned —
+   they are real dates, not extra days in this month. */
+.ucdp-day.is-outside { color: var(--uc-border); font-weight: 500; }
+.ucdp-day.is-outside:hover:not(.is-disabled) { color: var(--uc-muted); }
+
+.ucdp-day.is-today { box-shadow: inset 0 0 0 1.5px var(--uc-primary-light); color: var(--uc-primary-darker); }
+.ucdp-day.is-selected {
+    background: var(--uc-primary); color: #fff;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .35);
+}
+.ucdp-day.is-selected:hover { background: var(--uc-primary-dark); color: #fff; }
+.ucdp-day.is-disabled { color: var(--uc-border); cursor: not-allowed; opacity: .5; }
+
+/* ── Month picker ── */
+.ucdp-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.ucdp-month {
+    padding: .6rem .2rem; border: none; border-radius: 9px;
+    background: transparent; color: var(--uc-text);
+    font-size: .78rem; font-weight: 600; cursor: pointer;
+    transition: background var(--uc-transition), color var(--uc-transition), transform .14s ease;
+}
+.ucdp-month:hover { background: var(--uc-primary-tint); color: var(--uc-primary-darker); }
+.ucdp-month:active { transform: scale(.94); }
+.ucdp-month.is-selected { background: var(--uc-primary); color: #fff; }
+
+/* ── Time ── */
+.ucdp-time {
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    margin-top: .7rem; padding-top: .7rem; border-top: 1px solid var(--uc-border-soft);
+}
+.ucdp-time-label { font-size: .72rem; font-weight: 700; color: var(--uc-muted); text-transform: uppercase; letter-spacing: .04em; }
+.ucdp-time-fields { display: flex; align-items: center; gap: .3rem; }
+.ucdp-num {
+    width: 40px; padding: .35rem 0; text-align: center;
+    font-size: .85rem; font-weight: 700; color: var(--uc-text);
+    background: var(--uc-bg); border: 1px solid var(--uc-border); border-radius: 7px;
+    transition: border-color var(--uc-transition), box-shadow var(--uc-transition);
+}
+.ucdp-num:focus { outline: none; border-color: var(--uc-primary); box-shadow: 0 0 0 3px var(--uc-primary-tint); }
+.ucdp-colon { font-weight: 800; color: var(--uc-muted); }
+.ucdp-ampm { display: flex; flex-direction: column; gap: 2px; margin-left: .2rem; }
+.ucdp-ampm button {
+    padding: .12rem .45rem; border-radius: 5px; border: 1px solid transparent;
+    background: transparent; color: var(--uc-muted);
+    font-size: .64rem; font-weight: 800; cursor: pointer;
+    transition: background var(--uc-transition), color var(--uc-transition);
+}
+.ucdp-ampm button:hover { background: var(--uc-primary-tint); color: var(--uc-primary-darker); }
+.ucdp-ampm button.is-active { background: var(--uc-primary); color: #fff; }
+
+/* ── Footer ── */
+.ucdp-foot {
+    display: flex; align-items: center; gap: .4rem;
+    margin-top: .7rem; padding-top: .6rem; border-top: 1px solid var(--uc-border-soft);
+}
+.ucdp-link {
+    background: none; border: none; cursor: pointer; padding: .3rem .4rem; border-radius: 6px;
+    font-size: .76rem; font-weight: 600; color: var(--uc-muted);
+    transition: background var(--uc-transition), color var(--uc-transition);
+}
+.ucdp-link:hover { background: var(--uc-primary-tint); color: var(--uc-primary-darker); }
+.ucdp-done {
+    margin-left: auto; padding: .35rem .9rem; border-radius: 7px;
+    background: var(--uc-primary); border: none; color: #fff;
+    font-size: .76rem; font-weight: 700; cursor: pointer;
+    transition: background var(--uc-transition), transform .14s ease, box-shadow var(--uc-transition);
+}
+.ucdp-done:hover { background: var(--uc-primary-dark); transform: translateY(-1px); box-shadow: var(--uc-shadow-xs); }
+.ucdp-done:active { transform: translateY(0) scale(.97); }
+
+@media (max-width: 380px) {
+    .ucdp { width: calc(100vw - 24px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ucdp, .ucdp-day { animation: none; }
+    .ucdp-nav, .ucdp-title, .ucdp-day, .ucdp-month, .ucdp-done { transition: none; }
+    .ucdp-nav:active, .ucdp-day:active, .ucdp-month:active,
+    .ucdp-done:hover, .ucdp-done:active { transform: none; }
+}

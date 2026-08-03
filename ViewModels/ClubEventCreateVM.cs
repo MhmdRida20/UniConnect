@@ -14,6 +14,8 @@ namespace UniConnect.ViewModels
         [Required(ErrorMessage = "Please choose a date and time.")]
         [Display(Name = "Date & Time")]
         [DataType(DataType.DateTime)]
+        // Keeps the datetime-local field from rendering trailing seconds/ms.
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
         public DateTime EventDateTime { get; set; } = DateTime.Now.AddDays(1);
 
         [Required(ErrorMessage = "Please enter a location.")]

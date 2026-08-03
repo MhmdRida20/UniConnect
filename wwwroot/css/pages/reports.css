@@ -17,15 +17,162 @@
     display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Report page — shared by all eight report types (the view is one file,
+   switched by ?type=), so everything below has to hold with the university
+   filter both present and absent.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.report-head {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;
+}
+.report-head-text h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+.report-head-text p { font-size: .8rem; color: var(--uc-muted); margin: .15rem 0 0; }
+
+/* ── Buttons ── */
+.rp-btn {
+    position: relative; overflow: hidden;
+    display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+    padding: .55rem 1.05rem; min-height: 42px;
+    border-radius: var(--uc-radius-sm); border: 1px solid transparent;
+    font-size: .85rem; font-weight: 600; line-height: 1;
+    text-decoration: none; cursor: pointer; white-space: nowrap;
+    transition: transform .18s cubic-bezier(.4, 0, .2, 1),
+                box-shadow .18s cubic-bezier(.4, 0, .2, 1),
+                background .18s ease, border-color .18s ease, color .18s ease;
+}
+.rp-btn i { font-size: .95rem; transition: transform .22s cubic-bezier(.4, 0, .2, 1); }
+.rp-btn:hover { transform: translateY(-2px); }
+.rp-btn:active { transform: translateY(0) scale(.98); }
+.rp-btn:focus-visible { outline: 2px solid var(--uc-primary); outline-offset: 2px; }
+
+/* Sheen sweep on hover — reads as a deliberate affordance on a page that is
+   otherwise entirely static tables. */
+.rp-btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .32) 50%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform .6s cubic-bezier(.4, 0, .2, 1);
+    pointer-events: none;
+}
+.rp-btn:hover::after { transform: translateX(120%); }
+
+.rp-btn-export {
+    background: var(--uc-primary); border-color: var(--uc-primary); color: #fff;
+    box-shadow: var(--uc-shadow-xs);
+}
+.rp-btn-export:hover { background: var(--uc-primary-dark); color: #fff; box-shadow: var(--uc-shadow-md); }
+/* The icon dips, echoing the download it triggers. */
+.rp-btn-export:hover i { transform: translateY(2px); }
+
+.rp-btn-apply {
+    background: var(--uc-surface); border-color: var(--uc-border); color: var(--uc-text);
+}
+.rp-btn-apply:hover {
+    background: var(--uc-primary-tint); border-color: var(--uc-primary);
+    color: var(--uc-primary-darker); box-shadow: var(--uc-shadow-xs);
+}
+.rp-btn-apply:hover i { transform: rotate(-12deg) scale(1.08); }
+
+/* ── Filter bar ── */
+.report-filters {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: .7rem;
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); box-shadow: var(--uc-shadow-xs);
+    padding: .9rem 1rem; margin-bottom: 1.1rem;
+}
+.rf-field { display: flex; flex-direction: column; gap: .3rem; min-width: 172px; }
+.rf-field-wide { min-width: 200px; }
+.rf-field label {
+    font-size: .7rem; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--uc-muted); text-align: center;
+}
+
+/* Values centred in their field — short dates and a one-word university name
+   looked adrift pinned to the left edge of a wide input. */
+.rf-field input,
+.rf-field select {
+    width: 100%; min-height: 42px;
+    padding: .5rem .7rem; text-align: center;
+    font: inherit; font-size: .88rem; color: var(--uc-text);
+    background: var(--uc-surface);
+    border: 1px solid var(--uc-border); border-radius: var(--uc-radius-sm);
+    transition: border-color var(--uc-transition), box-shadow var(--uc-transition), background var(--uc-transition);
+}
+.rf-field input:hover { border-color: var(--uc-primary-light); }
+.rf-field input:focus {
+    outline: none; border-color: var(--uc-primary);
+    box-shadow: 0 0 0 3px var(--uc-primary-tint);
+}
+/* uc-select.js swaps the native <select> for a button, so the centring has to
+   be reapplied to the trigger it builds. */
+.rf-field .ucs-trigger { min-height: 42px; font-size: .88rem; }
+.rf-field .ucs-value { flex: 1; text-align: center; }
+
+/* uc-inputs.js hides the native calendar indicator and supplies its own
+   button. Mirror its right-hand reservation on the left so the centred value
+   stays genuinely centred rather than pushed off-axis by one-sided padding. */
+.rf-field .ucd-native { padding-left: 2.4rem; padding-right: 2.4rem !important; }
+
+.report-filters .rp-btn { margin-left: auto; }
+
+/* ── Summary tiles ── */
 .report-summary-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .7rem;
 }
 .report-summary-card {
     background: var(--uc-surface); border: 1px solid var(--uc-border);
-    border-radius: var(--uc-radius-sm); padding: .8rem; text-align: center;
+    border-radius: var(--uc-radius-sm); padding: .9rem .8rem; text-align: center;
+    transition: transform var(--uc-transition), box-shadow var(--uc-transition), border-color var(--uc-transition);
+    animation: rpTileIn .32s cubic-bezier(.4, 0, .2, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
 }
-.report-summary-card strong { display: block; font-size: 1.3rem; font-weight: 800; color: var(--uc-primary-darker); }
-.report-summary-card span { font-size: .74rem; color: var(--uc-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
+.report-summary-card:hover {
+    transform: translateY(-3px); box-shadow: var(--uc-shadow-md);
+    border-color: var(--uc-primary-light);
+}
+.report-summary-card strong { display: block; font-size: 1.45rem; font-weight: 800; color: var(--uc-primary-darker); line-height: 1.15; }
+.report-summary-card span { font-size: .72rem; color: var(--uc-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
 
-.report-table { font-size: .85rem; }
-.report-table th { font-size: .74rem; text-transform: uppercase; letter-spacing: .02em; color: var(--uc-muted); }
+@keyframes rpTileIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ── Data table ── */
+.report-table-card {
+    background: var(--uc-surface); border: 1px solid var(--uc-border);
+    border-radius: var(--uc-radius); box-shadow: var(--uc-shadow-xs);
+    overflow: hidden;
+}
+.report-table { font-size: .85rem; margin: 0; }
+.report-table th {
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--uc-muted); font-weight: 700;
+    background: var(--uc-bg); border-bottom: 1px solid var(--uc-border);
+    padding: .7rem .8rem; white-space: nowrap;
+}
+.report-table td { padding: .6rem .8rem; border-color: var(--uc-border-soft); }
+.report-table tbody tr { transition: background var(--uc-transition); }
+
+/* ── Reports hub (Index) ── */
+.report-type-card i { transition: transform .22s cubic-bezier(.4, 0, .2, 1); }
+.report-type-card:hover { border-color: var(--uc-primary-light); }
+.report-type-card:hover .report-type-icon { background: var(--uc-primary); color: #fff; }
+.report-type-card:hover i { transform: scale(1.12); }
+.report-type-icon { transition: background var(--uc-transition), color var(--uc-transition); }
+
+@media (max-width: 640px) {
+    .report-filters { flex-direction: column; align-items: stretch; }
+    .rf-field { min-width: 0; }
+    .report-filters .rp-btn { margin-left: 0; width: 100%; }
+    .report-head { align-items: flex-start; }
+    .report-head .rp-btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rp-btn, .rp-btn i, .report-summary-card, .report-type-card i { transition: none; animation: none; }
+    .rp-btn::after { display: none; }
+    .rp-btn:hover, .report-summary-card:hover { transform: none; }
+}
