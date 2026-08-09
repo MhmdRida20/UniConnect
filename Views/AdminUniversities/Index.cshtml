@@ -97,6 +97,10 @@ else
                     {
                         <span class="au-sync-status is-ok"><svg class="hgi hgi-sm"><use href="#i-check-circle"></use></svg>Synced @u.LastSyncAt?.ToString("MMM dd, HH:mm")</span>
                     }
+                    else if (u.LastSyncStatus == "NotApplicable")
+                    {
+                        <span class="au-sync-status is-pending" title="@u.LastSyncError"><svg class="hgi hgi-sm"><use href="#i-info"></use></svg>Live API — no auto-sync</span>
+                    }
                     else if (u.LastSyncStatus == "Failed")
                     {
                         <span class="au-sync-status is-fail" title="@u.LastSyncError"><svg class="hgi hgi-sm"><use href="#i-alert"></use></svg>Sync failed @u.LastSyncAt?.ToString("MMM dd, HH:mm")</span>

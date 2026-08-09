@@ -24,6 +24,17 @@ namespace UniConnect.ViewModels
         [Display(Name = "API Key")]
         public string ApiKey { get; set; } = string.Empty;
 
+        // Which adapter shape this university's API actually speaks — see
+        // Adapters/UmsApiUniversityProvider.cs for what "Ums" specifically
+        // means. Drives which IUniversityProvider implementation
+        // UniversityProviderResolver picks for every request involving this
+        // university, from here on. Add a new option to this list (and a
+        // matching <option> in Create.cshtml) alongside any future real
+        // partner university whose API shape doesn't match either existing one.
+        [Required]
+        [Display(Name = "API Style")]
+        public string ApiStyle { get; set; } = "Simulated";
+
         // Used to auto-create this university's own internship-posting
         // account (Company.cs) at the same time — a real career-services
         // address the admin already knows, not a made-up one.

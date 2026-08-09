@@ -54,6 +54,24 @@ namespace UniConnect.Models
 
         public bool IsActive { get; set; } = true;
 
+        // Which adapter shape this university's API actually speaks.
+        // Null or "Simulated" = matches ExternalUniversityApiController's
+        // shape exactly — every university this project provisions itself
+        // (via AdminUniversitiesController.Create + "Generate") uses this.
+        // "Ums" = the specific real read-only API a partner university sent
+        // us (see Adapters/UmsApiUniversityProvider.cs) — different field
+        // names, nested course sections, no bulk student list. Add a new
+        // value here + a new IUniversityProvider implementation for any
+        // future real partner whose API shape doesn't match either.
+        //
+        // Nullable deliberately — every university row that already existed
+        // before this field was added has no value for it, and the
+        // resolver already treats "anything other than exactly 'Ums'" as
+        // the simulated default, so null is a perfectly safe, correct value
+        // here rather than something that needs backfilling.
+        [StringLength(20)]
+        public string? ApiStyle { get; set; }
+
         // Navigation: students belonging to this university
         public virtual ICollection<Student> Students { get; set; } = new List<Student>();
         public virtual ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();

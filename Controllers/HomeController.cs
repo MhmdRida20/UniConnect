@@ -100,8 +100,30 @@ namespace UniConnect.Controllers
                             m => m.UserId == user.Id && m.Status == MembershipStatus.Approved);
                         ViewBag.StudentRidesTaken = await _db.RideRequests.CountAsync(
                             r => r.PassengerId == user.Id && r.Status == RideRequestStatus.Accepted);
-                        ViewBag.StudentCoursesEnrolled = await _db.Enrollments.CountAsync(
-                            e => e.UniversityId == user.UniversityId && e.UniversityCode == user.UniversityCode);
+
+                        // Live via the adapter, not the local Enrollments cache —
+                        // that cache is only ever populated by the sync job,
+                        // which doesn't understand every university's API shape
+                        // yet (see University.ApiStyle). A live call works
+                        // identically for any adapter and always reflects the
+                        // student's real, current enrollment. Falls back to the
+                        // cached count only if the live call itself fails (e.g.
+                        // the university's API is briefly unreachable), so the
+                        // dashboard degrades gracefully instead of erroring.
+                        try
+                        {
+                            var provider = await _resolver.GetProviderAsync(user.UniversityCode);
+                            ViewBag.StudentCoursesEnrolled =
+                                (await provider.GetEnrolledCoursesAsync(user.UniversityCode, user.UniversityId)).Count;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Live enrollment count failed for {University}/{Id}; falling back to cached count.",
+                                user.UniversityCode, user.UniversityId);
+                            ViewBag.StudentCoursesEnrolled = await _db.Enrollments.CountAsync(
+                                e => e.UniversityId == user.UniversityId && e.UniversityCode == user.UniversityCode);
+                        }
+
                         ViewBag.StudentClubsJoined = await _db.ClubMembers.CountAsync(
                             m => m.UserId == user.Id && m.Status == ClubMembershipStatus.Approved);
                     }

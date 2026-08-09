@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using UniConnect.Adapters;
 using UniConnect.Data;
 using UniConnect.ExternalApi;
 using UniConnect.Models;
@@ -17,15 +18,18 @@ namespace UniConnect.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IUniversityProviderResolver _providerResolver;
         private readonly ILogger<UniversityApiSyncRunner> _logger;
 
         public UniversityApiSyncRunner(
             ApplicationDbContext db,
             IHttpClientFactory httpClientFactory,
+            IUniversityProviderResolver providerResolver,
             ILogger<UniversityApiSyncRunner> logger)
         {
             _db = db;
             _httpClientFactory = httpClientFactory;
+            _providerResolver = providerResolver;
             _logger = logger;
         }
 
@@ -41,6 +45,32 @@ namespace UniConnect.Services
 
         public async Task SyncOneUniversityAsync(University university, CancellationToken ct = default)
         {
+            // Ums-style universities get their own sync path — see
+            // SyncUmsStyleUniversityAsync below. It goes through
+            // IUniversityProvider (the same adapter registration and every
+            // other feature already use) instead of hardcoded HTTP calls,
+            // specifically because this API's shape (nested course sections,
+            // no bulk student list, PII-gated roster) doesn't match the
+            // built-in simulator's at all.
+            if (university.ApiStyle == "Ums")
+            {
+                await SyncUmsStyleUniversityAsync(university, ct);
+                return;
+            }
+
+            // Any OTHER non-"Simulated" style (a future third partner, say)
+            // has no sync implementation yet at all — rather than guess at
+            // a shape nobody's built an adapter for, report that plainly
+            // instead of attempting hardcoded calls that would just fail.
+            if (!string.IsNullOrWhiteSpace(university.ApiStyle) && university.ApiStyle != "Simulated")
+            {
+                university.LastSyncStatus = "NotApplicable";
+                university.LastSyncError = "Automatic sync isn't implemented yet for this API style.";
+                university.LastSyncAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(university.ApiBaseUrl))
             {
                 university.LastSyncStatus = "Failed";
@@ -226,6 +256,139 @@ namespace UniConnect.Services
                 await _db.SaveChangesAsync(ct);
 
                 _logger.LogWarning(ex, "Sync failed for university {Code} — will retry next cycle.", university.Code);
+            }
+        }
+
+        /// <summary>
+        /// Sync path for a real partner university (currently: the "Ums"
+        /// style — see Adapters/UmsApiUniversityProvider.cs). Deliberately
+        /// separate from the simulator sync above rather than merged into
+        /// it — that method's proven and tested; this one goes through
+        /// IUniversityProvider instead of raw HTTP because this API's shape
+        /// doesn't match the simulator's at all.
+        ///
+        /// Two real, permanent limitations from THEIR api, not bugs here:
+        ///   - No bulk "all students" endpoint exists, so students are only
+        ///     ever discovered by walking the course catalog's rosters — a
+        ///     student enrolled in nothing would never appear locally. Not
+        ///     fixable on our end; would need them to add one.
+        ///   - Roster entries carry studentId/fullName/sectionName only —
+        ///     no email/major/year (that's PII-gated to the single-student
+        ///     lookup endpoint instead). So a Student row created by THIS
+        ///     sync has a blank email — that's fine, nothing reads a
+        ///     student's email from this cache (registration already
+        ///     verifies live, not from cache — see Register.cshtml.cs).
+        /// </summary>
+        private async Task SyncUmsStyleUniversityAsync(University university, CancellationToken ct)
+        {
+            try
+            {
+                var provider = await _providerResolver.GetProviderAsync(university.Code);
+
+                // No separate health check here — GetAllCoursesAsync itself
+                // throwing IS the connectivity signal; no need for a second
+                // round-trip just to confirm what the very next call would
+                // tell us anyway.
+                var externalCourses = await provider.GetAllCoursesAsync(university.Code);
+
+                var existingCourses = await _db.Courses.Where(c => c.UniversityCode == university.Code).ToListAsync(ct);
+                var existingStudents = await _db.Students.Where(s => s.UniversityCode == university.Code).ToListAsync(ct);
+                var existingEnrollments = await _db.Enrollments.Where(e => e.UniversityCode == university.Code).ToListAsync(ct);
+
+                var currentExternalEnrollments = new HashSet<(string StudentNumber, string CourseCode)>();
+                var coursesWeGotRostersFor = new HashSet<string>();
+
+                foreach (var ext in externalCourses)
+                {
+                    var local = existingCourses.FirstOrDefault(c => c.CourseCode == ext.CourseCode);
+                    if (local is null)
+                    {
+                        local = new Course { UniversityCode = university.Code, CourseCode = ext.CourseCode };
+                        _db.Courses.Add(local);
+                        existingCourses.Add(local);
+                    }
+                    local.CourseName = ext.CourseName;
+                    local.InstructorName = ext.InstructorName; // first section's first instructor only — see UmsApiUniversityProvider
+                    local.Credits = ext.Credits;
+                    // No InstructorStaffId from this API at all (no
+                    // instructor directory) — local.InstructorId is left as
+                    // whatever it already was; nothing to match it against.
+
+                    List<UniversityStudentDto> roster;
+                    try
+                    {
+                        roster = await provider.GetEnrolledStudentsAsync(university.Code, ext.CourseCode);
+                    }
+                    catch (Exception ex)
+                    {
+                        // One bad course roster shouldn't sink the whole
+                        // sync — skip it this cycle (leaving its cached
+                        // enrollments untouched, deliberately excluded from
+                        // the stale-cleanup below too) and keep going.
+                        _logger.LogWarning(ex, "Roster fetch failed for {University}/{Course} during sync — left unchanged this cycle.",
+                            university.Code, ext.CourseCode);
+                        continue;
+                    }
+
+                    coursesWeGotRostersFor.Add(ext.CourseCode);
+
+                    foreach (var rosterStudent in roster)
+                    {
+                        currentExternalEnrollments.Add((rosterStudent.StudentNumber, ext.CourseCode));
+
+                        var localStudent = existingStudents.FirstOrDefault(s => s.UniversityId == rosterStudent.StudentNumber);
+                        if (localStudent is null)
+                        {
+                            localStudent = new Student
+                            {
+                                UniversityId = rosterStudent.StudentNumber,
+                                UniversityCode = university.Code,
+                                UniversityEmail = string.Empty, // not available from the roster endpoint — see method comment
+                            };
+                            _db.Students.Add(localStudent);
+                            existingStudents.Add(localStudent);
+                        }
+                        localStudent.FullName = rosterStudent.FullName;
+
+                        var localEnrollment = existingEnrollments.FirstOrDefault(
+                            e => e.UniversityId == rosterStudent.StudentNumber && e.CourseCode == ext.CourseCode);
+                        if (localEnrollment is null)
+                        {
+                            _db.Enrollments.Add(new Enrollment
+                            {
+                                UniversityCode = university.Code,
+                                UniversityId = rosterStudent.StudentNumber,
+                                CourseCode = ext.CourseCode,
+                                Semester = "Synced"
+                            });
+                        }
+                    }
+                }
+
+                // Same drop-detection logic as the simulator path — only for
+                // courses whose roster call actually succeeded this cycle.
+                var staleEnrollments = existingEnrollments
+                    .Where(e => coursesWeGotRostersFor.Contains(e.CourseCode)
+                             && !currentExternalEnrollments.Contains((e.UniversityId, e.CourseCode)))
+                    .ToList();
+                if (staleEnrollments.Count > 0)
+                    _db.Enrollments.RemoveRange(staleEnrollments);
+
+                university.LastSyncAt = DateTime.UtcNow;
+                university.LastSyncStatus = "Success";
+                university.LastSyncError = null;
+                await _db.SaveChangesAsync(ct);
+
+                _logger.LogInformation("Synced {Count} course(s) for university {Code} (Ums style).", externalCourses.Count, university.Code);
+            }
+            catch (Exception ex)
+            {
+                university.LastSyncAt = DateTime.UtcNow;
+                university.LastSyncStatus = "Failed";
+                university.LastSyncError = ex.Message.Length > 290 ? ex.Message[..290] : ex.Message;
+                await _db.SaveChangesAsync(ct);
+
+                _logger.LogWarning(ex, "Ums-style sync failed for university {Code} — will retry next cycle.", university.Code);
             }
         }
     }

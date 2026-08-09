@@ -8,8 +8,11 @@
 //      there is no mock data path anywhere in this project.
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using UniConnect.Data;
 using UniConnect.Models;
 using UniConnect.Hubs;
@@ -119,8 +122,22 @@ builder.Services.Configure<Microsoft.AspNetCore.Identity.SecurityStampValidatorO
 builder.Services.AddScoped<UniConnect.ExternalApi.ExternalUniversityDataStore>();
 
 // Named HttpClient used by both RealApiUniversityProvider (on-demand calls)
+// Named client for RealApiUniversityProvider, UmsApiUniversityProvider,
 // and UniversityApiSyncRunner (the periodic sync job) to call a university's API.
-builder.Services.AddHttpClient("UniversityApi");
+// PooledConnectionLifetime forces a fresh TCP connection every 2 minutes
+// instead of reusing one indefinitely — without this, a small/personal
+// external server that silently drops idle connections (rather than closing
+// them cleanly) can leave .NET's pool holding a connection that LOOKS fine
+// but hangs the moment it's reused, right up until HttpClient.Timeout kills
+// it. Diagnosed from a real timeout against the partner university's test
+// server: their own Swagger page (fresh connection every click) responded
+// instantly to the identical request that hung for 8+ seconds through this
+// client's pooled connection.
+builder.Services.AddHttpClient("UniversityApi")
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+    });
 
 builder.Services.AddScoped<UniConnect.Services.UniversityApiSyncRunner>();
 builder.Services.AddScoped<UniConnect.Services.EnrollmentRevalidationRunner>();
@@ -150,8 +167,67 @@ builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>();
 
 // Multi-university adapter core — see /Adapters/IUniversityProvider.cs
 builder.Services.AddScoped<UniConnect.Adapters.RealApiUniversityProvider>();
+builder.Services.AddScoped<UniConnect.Adapters.UmsApiUniversityProvider>();
 builder.Services.AddScoped<UniConnect.Adapters.IUniversityProviderResolver, UniConnect.Adapters.UniversityProviderResolver>();
 builder.Services.AddScoped<UniConnect.Services.IServiceCatalogService, UniConnect.Services.ServiceCatalogService>();
+
+// ---------- JWT bearer auth for the mobile (MAUI) API ------------------------
+// Cookie auth (registered above by AddDefaultIdentity) stays the DEFAULT
+// scheme, so the web app's login/[Authorize] behavior is completely
+// unaffected. This just adds a second, explicitly-opted-into scheme for the
+// api/ controllers the mobile app calls — a mobile client can't hold a
+// browser cookie session, so it authenticates once (POST /api/auth/login),
+// gets a signed token back, and sends it as "Authorization: Bearer <token>"
+// on every subsequent request.
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "UniConnect";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "UniConnectMobile";
+
+builder.Services.AddAuthentication()
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateLifetime = true,
+            // Default 5-minute allowance is unnecessary here — an expired
+            // mobile token should mean "log in again," not "mostly expired."
+            ClockSkew = TimeSpan.FromSeconds(30)
+        };
+
+        // SignalR's JS client can attach a token to the querystring but not
+        // to a custom header for WebSocket upgrades — needed for the mobile
+        // app to use the same hubs (StudyGroupHub, NotificationHub, etc.)
+        // the web app already uses.
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                var isHubPath = path.StartsWithSegments("/studygroupHub")
+                    || path.StartsWithSegments("/rideTrackingHub") || path.StartsWithSegments("/ticketHub")
+                    || path.StartsWithSegments("/clubHub") || path.StartsWithSegments("/attendanceHub")
+                    || path.StartsWithSegments("/notificationHub");
+
+                if (!string.IsNullOrEmpty(accessToken) && isHubPath)
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+// Issues/validates tokens; used by AuthApiController and the JWT options above.
+builder.Services.AddScoped<UniConnect.Services.JwtTokenService>();
+builder.Services.AddScoped<UniConnect.Services.AttendanceSubmissionService>();
 
 var app = builder.Build();
 

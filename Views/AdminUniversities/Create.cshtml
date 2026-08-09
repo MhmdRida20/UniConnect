@@ -38,6 +38,20 @@
                 <span asp-validation-for="Code" class="text-danger"></span>
             </div>
 
+            <div class="mb-3">
+                <label asp-for="ApiStyle" class="form-label"></label>
+                <select asp-for="ApiStyle" id="ApiStyleSelect" class="form-select">
+                    <option value="Simulated">Simulated — this project's own built-in test API (default; use "Generate" below)</option>
+                    <option value="Ums">Real external API — university's own read-only API (paste their API key below)</option>
+                </select>
+                <small class="text-muted d-block mt-1">
+                    Choose "Real external API" for an actual university partner's own system — their field names and
+                    endpoints are different from the simulator, and get handled by a separate adapter automatically
+                    from here on. Course/roster auto-sync isn't available for this option yet; student registration,
+                    enrollment checks, and attendance all still work — they call the university's API live instead.
+                </small>
+            </div>
+
             <div class="mb-3" id="apiUrlField">
                 <label asp-for="ApiBaseUrl" class="form-label"></label>
                 <div class="uc-input-icon">
@@ -53,7 +67,7 @@
                 <label asp-for="ApiKey" class="form-label mt-3"></label>
                 <div class="input-group">
                     <span class="input-group-text bg-white"><svg class="hgi hgi-sm text-muted"><use href="#i-shield"></use></svg></span>
-                    <input asp-for="ApiKey" id="ApiKeyInput" class="form-control" placeholder="Click Generate →" readonly />
+                    <input asp-for="ApiKey" id="ApiKeyInput" class="form-control" placeholder="Click Generate, or paste a real API key" />
                     <button type="button" class="btn btn-outline-secondary" id="generateApiKeyBtn" data-url="@Url.Action("GenerateApiKey", "AdminUniversities")">
                         <svg class="hgi hgi-sm me-1"><use href="#i-magic"></use></svg>Generate
                     </button>
@@ -134,4 +148,29 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/form-progress.js" asp-append-version="true"></script>
     <script src="~/js/pages/admin-universities.js" asp-append-version="true"></script>
+    <script>
+        // Adjusts the API Key field's hint + hides "Generate" for a real
+        // external university — Generate only makes sense for this project's
+        // own simulator, since it provisions fake data alongside the key.
+        (function () {
+            const styleSelect = document.getElementById('ApiStyleSelect');
+            const generateBtn = document.getElementById('generateApiKeyBtn');
+            const hint = document.getElementById('apiKeyHint');
+            const keyInput = document.getElementById('ApiKeyInput');
+
+            const simulatedHint = 'Generates a unique key AND provisions a fresh, independent set of at least 5 students (each enrolled ' +
+                'in at least 4 courses) for it — every university gets its own data, never shared with another.';
+            const realHint = 'Paste the API key the university gave you directly — there is nothing to generate here.';
+
+            function applyStyle() {
+                const isReal = styleSelect.value === 'Ums';
+                generateBtn.style.display = isReal ? 'none' : '';
+                hint.textContent = isReal ? realHint : simulatedHint;
+                keyInput.placeholder = isReal ? 'Paste the real API key here' : 'Click Generate →';
+            }
+
+            styleSelect.addEventListener('change', applyStyle);
+            applyStyle(); // run once on load in case the browser restored a previous selection
+        })();
+    </script>
 }

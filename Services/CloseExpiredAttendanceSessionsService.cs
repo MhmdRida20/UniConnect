@@ -64,7 +64,15 @@ namespace UniConnect.Services
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var hub = scope.ServiceProvider.GetRequiredService<IHubContext<AttendanceHub>>();
 
-            var now = DateTime.UtcNow;
+            // NOTE: session.EndTime is stored as LOCAL time (it's set from
+            // DateTime.Now when the instructor creates/edits a session — see
+            // InstructorAttendanceController.Create/EditSession, and the same
+            // convention AttendanceController.Submit uses for Present-vs-Late).
+            // Comparing it against DateTime.UtcNow silently closed sessions
+            // late/early by exactly the server's UTC offset. Fixed by using
+            // DateTime.Now here too, so both sides of the comparison are the
+            // same clock.
+            var now = DateTime.Now;
             var expiredSessions = await db.AttendanceSessions
                 .Where(s => s.Status == AttendanceSessionStatus.Active && s.EndTime < now)
                 .ToListAsync(ct);

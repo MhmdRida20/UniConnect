@@ -1,14 +1,4 @@
-﻿// Areas/Identity/Pages/Account/Register.cshtml.cs
-//
-// This file REPLACES the default Register page that Visual Studio scaffolds.
-// To get this file in your project, you must first SCAFFOLD the Identity Register page:
-//   - In Solution Explorer, right-click the project → Add → New Scaffolded Item...
-//   - Choose "Identity" → Add
-//   - Tick "Account/Register" → choose your ApplicationDbContext → Add
-// Visual Studio will then create this file under Areas/Identity/Pages/Account/.
-// Replace its contents with the code below.
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
@@ -18,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using UniConnect.Adapters;
 using UniConnect.Data;
 using UniConnect.Models;
 
@@ -32,6 +23,7 @@ namespace UniConnect.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _db;
+        private readonly IUniversityProviderResolver _providerResolver;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
@@ -39,7 +31,8 @@ namespace UniConnect.Areas.Identity.Pages.Account
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            ApplicationDbContext db)
+            ApplicationDbContext db,
+            IUniversityProviderResolver providerResolver)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -48,6 +41,7 @@ namespace UniConnect.Areas.Identity.Pages.Account
             _logger = logger;
             _emailSender = emailSender;
             _db = db;
+            _providerResolver = providerResolver;
         }
 
         [BindProperty] public InputModel Input { get; set; } = new();
@@ -100,10 +94,39 @@ namespace UniConnect.Areas.Identity.Pages.Account
 
             if (!ModelState.IsValid) return Page();
 
-            // ---------- Step 1: verify the University ID exists (synced student data) ---------
+            var selectedUniversity = Universities.FirstOrDefault(u => u.Code == Input.UniversityCode);
+            if (selectedUniversity is null)
+            {
+                ModelState.AddModelError(string.Empty, "Please select a valid university.");
+                return Page();
+            }
+
+            // ---------- Step 1: verify the University ID LIVE, through the adapter ---------
             // This is UC-01 / FR-06 — only registered university students can sign up.
-            var student = await _db.Students
-                .FirstOrDefaultAsync(s => s.UniversityId == Input.UniversityId);
+            // Deliberately calls the university's API directly (through
+            // IUniversityProvider) rather than checking the local Students
+            // cache table — that cache is only ever populated by
+            // UniversityApiSyncRunner, which some real partner universities'
+            // APIs (anything other than "Simulated" — see University.ApiStyle)
+            // aren't compatible with yet. A live check works the same way
+            // regardless of which adapter a university uses, and matches how
+            // every other feature (enrollment checks, attendance) already
+            // reads academic data — the cache was the one inconsistent
+            // exception, not the rule.
+            UniversityStudentDto? student;
+            try
+            {
+                var provider = await _providerResolver.GetProviderAsync(Input.UniversityCode);
+                student = await provider.GetStudentInfoAsync(Input.UniversityCode, Input.UniversityId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Live student lookup failed during registration for {University}/{Id}.",
+                    Input.UniversityCode, Input.UniversityId);
+                ModelState.AddModelError(string.Empty,
+                    "We couldn't reach the university's system right now to verify this ID. Please try again shortly.");
+                return Page();
+            }
 
             if (student is null)
             {
@@ -112,17 +135,10 @@ namespace UniConnect.Areas.Identity.Pages.Account
                 return Page();
             }
 
-            // Step 1b: the selected university must match the one this student
-            // actually belongs to (multi-tenant isolation — a student can't
-            // activate an account under the wrong university).
-            if (!string.Equals(student.UniversityCode, Input.UniversityCode, StringComparison.Ordinal))
-            {
-                ModelState.AddModelError(string.Empty,
-                    "This University ID does not belong to the selected university.");
-                return Page();
-            }
-
-            // Step 2: make sure the email matches the one on file
+            // Step 2: make sure the email matches the one on file. (No separate
+            // "does this ID belong to the selected university" check is needed
+            // here anymore — GetStudentInfoAsync above was already scoped to
+            // Input.UniversityCode, so a null result already covers that case.)
             if (!string.Equals(student.UniversityEmail, Input.Email,
                                StringComparison.OrdinalIgnoreCase))
             {
@@ -144,8 +160,8 @@ namespace UniConnect.Areas.Identity.Pages.Account
             // ---------- Step 4: create the Identity user ----------
             var user = new ApplicationUser
             {
-                UniversityId = student.UniversityId,
-                UniversityCode = student.UniversityCode,
+                UniversityId = student.StudentNumber,
+                UniversityCode = Input.UniversityCode,
                 FullName = student.FullName,
                 EmailConfirmed = false, // explicit: ownership isn't proven until they click the link we email them
             };

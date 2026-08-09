@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{0C88DD14-F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniConnect.Tests", "test\UniConnect.Tests\UniConnect.Tests.csproj", "{AEDFDA21-767A-4F94-B1B4-E25CBDBE45AB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniConnect.Mobile", "..\UniConnect.Mobile\UniConnect.Mobile.csproj", "{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,24 @@ Global
 		{AEDFDA21-767A-4F94-B1B4-E25CBDBE45AB}.Release|x64.Build.0 = Release|Any CPU
 		{AEDFDA21-767A-4F94-B1B4-E25CBDBE45AB}.Release|x86.ActiveCfg = Release|Any CPU
 		{AEDFDA21-767A-4F94-B1B4-E25CBDBE45AB}.Release|x86.Build.0 = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|x64.Build.0 = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|x64.Deploy.0 = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|x86.Build.0 = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Debug|x86.Deploy.0 = Debug|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|x64.ActiveCfg = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|x64.Build.0 = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|x64.Deploy.0 = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|x86.ActiveCfg = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|x86.Build.0 = Release|Any CPU
+		{7F676C37-59C3-4EFD-A1D8-5EBDBCE36A28}.Release|x86.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

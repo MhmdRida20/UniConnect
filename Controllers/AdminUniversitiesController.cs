@@ -160,14 +160,16 @@ namespace UniConnect.Controllers
                 Name = vm.Name.Trim(),
                 ApiBaseUrl = vm.ApiBaseUrl.Trim(),
                 ApiKey = vm.ApiKey.Trim(),
+                ApiStyle = vm.ApiStyle,
                 IsActive = true
             };
             _db.Universities.Add(university);
             _db.UniversitySettings.Add(new UniversitySettings { UniversityCode = code });
             await _db.SaveChangesAsync();
 
-            // Don't make the admin wait for the next scheduled sync cycle to
-            // see whether the connection actually works.
+            // SyncOneUniversityAsync itself now knows to report "NotApplicable"
+            // rather than attempt anything for a non-Simulated university —
+            // see the guard at the top of that method for why.
             await _syncRunner.SyncOneUniversityAsync(university);
 
             var credentialMessages = new List<string>();
@@ -265,7 +267,12 @@ namespace UniConnect.Controllers
                     "they can self-register using the Staff IDs shown on this page below.");
             }
 
-            TempData["Success"] = $"{university.Name} added and synced (status: {university.LastSyncStatus}). " +
+            var syncStatusNote = university.LastSyncStatus == "NotApplicable"
+                ? "added. This university uses a real external API — student registration, enrollment checks, and " +
+                  "attendance will call it live; the automatic course/roster sync isn't supported for this API style yet. "
+                : $"added and synced (status: {university.LastSyncStatus}). ";
+
+            TempData["Success"] = $"{university.Name} {syncStatusNote}" +
                 string.Join(" | ", credentialMessages) +
                 " (save these now, they won't be shown again). Now choose which services to enable.";
 
@@ -296,9 +303,12 @@ namespace UniConnect.Controllers
 
             await _syncRunner.SyncOneUniversityAsync(university);
 
-            TempData["Success"] = university.LastSyncStatus == "Success"
-                ? $"{university.Name} synced successfully."
-                : $"Sync failed for {university.Name}: {university.LastSyncError}";
+            TempData["Success"] = university.LastSyncStatus switch
+            {
+                "Success" => $"{university.Name} synced successfully.",
+                "NotApplicable" => $"{university.Name} uses a real external API — there's nothing to sync automatically yet; registration and enrollment checks already call it live.",
+                _ => $"Sync failed for {university.Name}: {university.LastSyncError}"
+            };
             return RedirectToAction(nameof(Index));
         }
 

@@ -42,13 +42,15 @@ public class AttendanceSubmissionTests : IDisposable
 
     public void Dispose() => _test.Dispose();
 
+    private UniConnect.Services.AttendanceSubmissionService SubmissionService() =>
+        new UniConnect.Services.AttendanceSubmissionService(_test.Db, _provider, ServiceHarness.AuditLog(_test.Db));
+
     private AttendanceController Controller() =>
         new AttendanceController(
                 _test.Db,
                 IdentityHarness.CreateUserManager(_test.Db),
-                _provider,
                 _hub,
-                ServiceHarness.AuditLog(_test.Db))
+                SubmissionService())
             .SignedInAs(_student, "Student");
 
     private async Task<(bool Success, string Message)> Submit(
@@ -265,8 +267,8 @@ public class AttendanceSubmissionTests : IDisposable
         _provider.WithStudent("U2024002").Enroll("U2024002", Course);
 
         var first = new AttendanceController(
-                _test.Db, IdentityHarness.CreateUserManager(_test.Db), _provider, _hub,
-                ServiceHarness.AuditLog(_test.Db))
+                _test.Db, IdentityHarness.CreateUserManager(_test.Db), _hub,
+                SubmissionService())
             .SignedInAs(classmate, "Student");
         await Submit(first, session.QrToken, device: "shared-phone");
 
@@ -287,8 +289,8 @@ public class AttendanceSubmissionTests : IDisposable
         _provider.WithStudent("U2024002").Enroll("U2024002", Course);
 
         await Submit(new AttendanceController(
-                    _test.Db, IdentityHarness.CreateUserManager(_test.Db), _provider, _hub,
-                    ServiceHarness.AuditLog(_test.Db))
+                    _test.Db, IdentityHarness.CreateUserManager(_test.Db), _hub,
+                    SubmissionService())
                 .SignedInAs(classmate, "Student"),
             session.QrToken, device: "shared-phone");
 
