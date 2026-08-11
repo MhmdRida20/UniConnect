@@ -46,7 +46,8 @@ public class StudyGroupMembershipTests : IDisposable
                 _hub,
                 _provider,
                 ServiceHarness.AuditLog(_test.Db),
-                ServiceHarness.Notifications(_test.Db))
+                ServiceHarness.Notifications(_test.Db),
+                ServiceHarness.StudyGroups(_test.Db, _provider, _hub))
             .SignedInAs(user, "Student");
 
     private static StudyGroupCreateVM NewGroup(int max = 10, int min = 2) => new()

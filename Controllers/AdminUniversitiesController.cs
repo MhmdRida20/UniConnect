@@ -126,6 +126,15 @@ namespace UniConnect.Controllers
         {
             if (string.IsNullOrWhiteSpace(vm.ApiBaseUrl))
                 ModelState.AddModelError(nameof(vm.ApiBaseUrl), "An API base URL is required.");
+            // Caught here so a mistyped address is a field error on the form
+            // rather than a half-created university: this method saves the
+            // University row before it provisions the accounts and service
+            // catalog, so anything that throws in between leaves an institution
+            // that exists, can't be used, and blocks the code from being reused.
+            else if (!Uri.TryCreate(vm.ApiBaseUrl.Trim(), UriKind.Absolute, out var parsedApiBaseUrl)
+                     || (parsedApiBaseUrl.Scheme != Uri.UriSchemeHttp && parsedApiBaseUrl.Scheme != Uri.UriSchemeHttps))
+                ModelState.AddModelError(nameof(vm.ApiBaseUrl),
+                    "Enter the full address including https://, e.g. https://registrar.uni.edu/api/v1.");
             if (string.IsNullOrWhiteSpace(vm.ApiKey))
                 ModelState.AddModelError(nameof(vm.ApiKey), "Click \"Generate\" to create an API key for this university.");
 

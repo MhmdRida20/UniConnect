@@ -59,6 +59,12 @@
             <div><strong id="countLate">@ViewBag.LateCount</strong><span>Late</span></div>
             <div><strong id="countAbsent">@ViewBag.AbsentCount</strong><span>Absent</span></div>
             <div><strong id="countPending">@ViewBag.PendingCount</strong><span>Pending</span></div>
+            @if ((int)ViewBag.NotRegisteredCount > 0)
+            {
+                <div class="is-unregistered" title="Enrolled in the course but has never signed up for UniConnect, so they can't check in at all.">
+                    <strong id="countNotRegistered">@ViewBag.NotRegisteredCount</strong><span>No account</span>
+                </div>
+            }
             <div class="is-suspicious"><strong id="countSuspicious">@ViewBag.SuspiciousCount</strong><span>Suspicious</span></div>
         </div>
 
@@ -82,7 +88,11 @@
                                 <i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="@row.Record.SuspiciousReason"></i>
                             }
                         </span>
-                        @if (row.Record is null)
+                        @if (row.UserId is null)
+                        {
+                            <span class="uc-pill uc-pill-grey" title="No UniConnect account — this student can't check in.">No account</span>
+                        }
+                        else if (row.Record is null)
                         {
                             <span class="uc-pill uc-pill-grey">Pending</span>
                         }

@@ -61,9 +61,22 @@ namespace UniConnect.Services
         private async Task CloseExpiredSessionsAsync(CancellationToken ct)
         {
             using var scope = _services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var hub = scope.ServiceProvider.GetRequiredService<IHubContext<AttendanceHub>>();
+            await CloseExpiredSessionsAsync(
+                scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(),
+                scope.ServiceProvider.GetRequiredService<IHubContext<AttendanceHub>>(),
+                ct);
+        }
 
+        /// <summary>
+        /// The actual work, with its dependencies passed in rather than resolved
+        /// from a scope. Split out purely so it can be exercised directly — the
+        /// timing rules below are the kind that stay silently wrong for a long
+        /// time, and reaching them through ExecuteAsync would mean waiting on
+        /// the loop's startup delay.
+        /// </summary>
+        public async Task CloseExpiredSessionsAsync(
+            ApplicationDbContext db, IHubContext<AttendanceHub> hub, CancellationToken ct = default)
+        {
             // NOTE: session.EndTime is stored as LOCAL time (it's set from
             // DateTime.Now when the instructor creates/edits a session — see
             // InstructorAttendanceController.Create/EditSession, and the same

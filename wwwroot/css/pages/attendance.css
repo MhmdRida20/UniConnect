@@ -61,7 +61,10 @@
 .attendance-session-info h1 { font-size: 1.3rem; font-weight: 800; margin: 0; }
 
 .attendance-counts-bar {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: .6rem;
+    /* auto-fit rather than a fixed 5: the "No account" tile only appears when
+       the roster actually has unregistered students, and five fixed columns
+       were far too cramped on a phone regardless. */
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: .6rem;
     margin-bottom: 1.25rem;
 }
 .attendance-counts-bar > div {

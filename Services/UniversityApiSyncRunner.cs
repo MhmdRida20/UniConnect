@@ -80,8 +80,29 @@ namespace UniConnect.Services
                 return;
             }
 
+            // TryCreate, not `new Uri(...)`. Every other way this sync can fail —
+            // host unreachable, 503, malformed JSON — is caught below and
+            // recorded as LastSyncStatus = "Failed". A malformed ApiBaseUrl was
+            // the one that escaped, because the constructor threw before the try
+            // block was ever entered, taking the whole request down with it
+            // (a 500 on AdminUniversities/Create). An address the admin mistyped
+            // is bad configuration, not a crash, and belongs in the same failure
+            // channel as everything else.
+            if (!Uri.TryCreate(university.ApiBaseUrl.Trim().TrimEnd('/') + "/", UriKind.Absolute, out var baseAddress)
+                || (baseAddress.Scheme != Uri.UriSchemeHttp && baseAddress.Scheme != Uri.UriSchemeHttps))
+            {
+                university.LastSyncStatus = "Failed";
+                university.LastSyncError = $"'{university.ApiBaseUrl}' isn't a valid http(s) address.";
+                university.LastSyncAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+                _logger.LogWarning(
+                    "Sync skipped for {Code} — ApiBaseUrl '{Url}' is not an absolute http(s) URL.",
+                    university.Code, university.ApiBaseUrl);
+                return;
+            }
+
             var client = _httpClientFactory.CreateClient("UniversityApi");
-            client.BaseAddress = new Uri(university.ApiBaseUrl.TrimEnd('/') + "/");
+            client.BaseAddress = baseAddress;
             client.Timeout = TimeSpan.FromSeconds(10);
             if (!string.IsNullOrWhiteSpace(university.ApiKey))
                 client.DefaultRequestHeaders.Add("X-Api-Key", university.ApiKey);

@@ -228,6 +228,9 @@ builder.Services.AddAuthentication()
 // Issues/validates tokens; used by AuthApiController and the JWT options above.
 builder.Services.AddScoped<UniConnect.Services.JwtTokenService>();
 builder.Services.AddScoped<UniConnect.Services.AttendanceSubmissionService>();
+// Every Study Groups rule, shared by StudyGroupsController (web) and
+// StudyGroupsApiController (mobile) so the two can't drift apart.
+builder.Services.AddScoped<UniConnect.Services.StudyGroupService>();
 
 var app = builder.Build();
 

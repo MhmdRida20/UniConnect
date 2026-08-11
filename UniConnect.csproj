@@ -24,14 +24,22 @@
 		<Folder Include="wwwroot\NewFolder\" />
 	</ItemGroup>
 
-	<!-- The test project sits under test/, which is inside this project's own
-	     directory, so the SDK's default **/*.cs glob would otherwise compile it
-	     (and its generated AssemblyInfo) straight into the web assembly. -->
+	<!-- The test and mobile projects sit under test/ and mobile/, both inside
+	     this project's own directory, so the SDK's default **/*.cs glob would
+	     otherwise compile them — and their generated AssemblyInfo, XAML type
+	     info and Android resource designers — straight into the web assembly.
+	     That produces hundreds of errors that look like missing MAUI references
+	     but are really this project trying to compile another project's code. -->
 	<ItemGroup>
 		<Compile Remove="test\**" />
 		<Content Remove="test\**" />
 		<EmbeddedResource Remove="test\**" />
 		<None Remove="test\**" />
+
+		<Compile Remove="mobile\**" />
+		<Content Remove="mobile\**" />
+		<EmbeddedResource Remove="mobile\**" />
+		<None Remove="mobile\**" />
 	</ItemGroup>
 
 </Project>

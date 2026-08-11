@@ -80,7 +80,12 @@ namespace UniConnect.Controllers
             foreach (var row in result.Rows)
                 sb.AppendLine(string.Join(",", row.Select(CsvEscape)));
 
-            var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+            // Excel reads a BOM-less UTF-8 CSV as the system codepage, which
+            // mangles any non-ASCII text — Arabic addresses/names in these
+            // reports included. The BOM tells it to read UTF-8 instead.
+            var bytes = Encoding.UTF8.GetPreamble()
+                .Concat(Encoding.UTF8.GetBytes(sb.ToString()))
+                .ToArray();
             var fileName = $"{type}-report-{DateTime.UtcNow:yyyyMMdd}.csv";
             return File(bytes, "text/csv", fileName);
         }

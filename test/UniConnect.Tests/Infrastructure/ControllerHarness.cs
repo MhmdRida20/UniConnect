@@ -66,6 +66,32 @@ public static class ControllerHarness
         return controller;
     }
 
+    /// <summary>
+    /// The same, for an API controller. ControllerBase has no TempData and no
+    /// views, so this only needs the signed-in principal — but it does need a
+    /// StubUrlHelper, since CreatedAtAction builds a Location header.
+    /// </summary>
+    public static TController SignedInApi<TController>(
+        this TController controller, ApplicationUser user, params string[] roles)
+        where TController : ControllerBase
+    {
+        var httpContext = new DefaultHttpContext
+        {
+            User = PrincipalFor(user, roles),
+            RequestServices = new ServiceCollection().AddLogging().BuildServiceProvider()
+        };
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext,
+            RouteData = new RouteData(),
+            ActionDescriptor = new Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor()
+        };
+        controller.Url = new StubUrlHelper(controller.ControllerContext);
+
+        return controller;
+    }
+
     private sealed class StubUrlHelper : IUrlHelper
     {
         public StubUrlHelper(ActionContext actionContext) => ActionContext = actionContext;

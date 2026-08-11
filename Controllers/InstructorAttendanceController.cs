@@ -391,7 +391,16 @@ namespace UniConnect.Controllers
             ViewBag.LateCount = rows.Count(r => r.Record?.Status == AttendanceStatus.Late);
             ViewBag.AbsentCount = rows.Count(r => r.Record?.Status == AttendanceStatus.Absent);
             ViewBag.SuspiciousCount = rows.Count(r => r.Record?.IsSuspicious == true);
-            ViewBag.PendingCount = rows.Count(r => r.Record is null);
+
+            // "Pending" is only meaningful for someone who could still submit.
+            // A roster entry with no UniConnect account has no record and never
+            // will — CloseSession can only backfill Absent rows for students it
+            // can match to an account — so lumping them in made every closed
+            // session look like it was still waiting on people who were never
+            // coming. They get their own count, matching the NotRegistered
+            // standing the course dashboard already uses.
+            ViewBag.PendingCount = rows.Count(r => r.UserId is not null && r.Record is null);
+            ViewBag.NotRegisteredCount = rows.Count(r => r.UserId is null);
             ViewBag.ScanUrl = BuildScanUrl(session.QrToken);
 
             return View(session);

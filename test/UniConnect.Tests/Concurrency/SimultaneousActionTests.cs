@@ -270,7 +270,8 @@ public class SimultaneousActionTests
                     new StubHubContext<StudyGroupHub>(),
                     provider,
                     ServiceHarness.AuditLog(db),
-                    ServiceHarness.Notifications(db))
+                    ServiceHarness.Notifications(db),
+                    ServiceHarness.StudyGroups(db, provider))
                 .SignedInAs(creator, "Student");
         }
 
