@@ -204,6 +204,38 @@ namespace UniConnect.Services
             ApplicationUser user, CreateRequest request)
         {
             var errors = new List<FieldError>();
+
+            // Field-shape rules. The web form never reaches the service with
+            // these violated, because StudyGroupCreateVM's annotations fail
+            // ModelState first — but the mobile API binds a plain DTO with no
+            // annotations, so without these a request with a blank name would
+            // create a nameless group. Both callers now pass through the same
+            // checks, which is the point of this class.
+            var name = request.GroupName?.Trim() ?? string.Empty;
+            if (name.Length == 0)
+                errors.Add(new FieldError(nameof(request.GroupName), "Group name is required."));
+            else if (name.Length > 100)
+                errors.Add(new FieldError(nameof(request.GroupName), "Group name cannot exceed 100 characters."));
+
+            if (string.IsNullOrWhiteSpace(request.CourseCode))
+                errors.Add(new FieldError(nameof(request.CourseCode), "Please choose a course."));
+
+            if ((request.Description?.Trim().Length ?? 0) > 500)
+                errors.Add(new FieldError(nameof(request.Description), "Description cannot exceed 500 characters."));
+
+            if ((request.MeetingLocation?.Trim().Length ?? 0) > 100)
+                errors.Add(new FieldError(nameof(request.MeetingLocation), "Meeting location cannot exceed 100 characters."));
+
+            if (request.MinMembers is < 2 or > 50)
+                errors.Add(new FieldError(nameof(request.MinMembers), "Minimum members must be between 2 and 50."));
+
+            if (request.MaxMembers is < 2 or > 50)
+                errors.Add(new FieldError(nameof(request.MaxMembers), "Maximum members must be between 2 and 50."));
+
+            // Stop here rather than asking the adapter whether the student is
+            // enrolled in a course code we already know is missing.
+            if (errors.Count > 0) return (errors, null);
+
             var provider = await _providerResolver.GetProviderAsync(user.UniversityCode);
 
             // E1 of FR-46: must be enrolled in the course.
@@ -236,7 +268,8 @@ namespace UniConnect.Services
 
             var group = new StudyGroup
             {
-                GroupName = request.GroupName.Trim(),
+                // Already trimmed and length-checked above.
+                GroupName = name,
                 Description = request.Description?.Trim(),
                 // Taken from the creator, never from the client.
                 UniversityCode = user.UniversityCode,
@@ -468,6 +501,73 @@ namespace UniConnect.Services
         /// relationship with this group" action either way, but with different
         /// consequences and different messages.
         /// </summary>
+        /// <summary>
+        /// Deletes a group. Only the creator may do it.
+        ///
+        /// The group is archived rather than physically removed: StudyGroup is
+        /// the parent of its members and its whole message history, so a real
+        /// delete would take an entire conversation with it and leave the audit
+        /// trail pointing at a row that no longer exists. Archived is already
+        /// how this codebase retires a group — LeaveAsync archives one when its
+        /// last member leaves — and GetVisibleGroupsAsync already filters
+        /// archived groups out of browse, so nothing else has to change for it
+        /// to disappear.
+        /// </summary>
+        public async Task<Result> DeleteAsync(ApplicationUser user, int groupId)
+        {
+            var group = await _db.StudyGroups
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (group is null) return Result.NotFound();
+
+            // Never let one university's student touch another's group.
+            if (group.UniversityCode != user.UniversityCode) return Result.NotFound();
+
+            if (group.CreatorId != user.Id) return Result.Forbidden();
+
+            if (group.Status == StudyGroupStatus.Archived)
+                return Result.Refused("This group has already been deleted.", "ALREADY_DELETED");
+
+            // Everyone who was in it deserves to be told, and the creator's own
+            // notification would be noise.
+            var membersToNotify = group.Members
+                .Where(m => m.Status == MembershipStatus.Approved && m.UserId != user.Id)
+                .Select(m => m.UserId)
+                .ToList();
+
+            var groupName = group.GroupName;
+
+            group.Status = StudyGroupStatus.Archived;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Concurrency("Someone else changed this group while you were deleting it. Please try again.");
+            }
+
+            foreach (var memberId in membersToNotify)
+            {
+                await _notifications.NotifyAsync(
+                    memberId, "Study group deleted",
+                    $"\"{groupName}\" was deleted by its creator.",
+                    "/StudyGroups/Index");
+            }
+
+            await _auditLog.LogAsync(
+                "StudyGroupDeleted", userId: user.Id, universityCode: user.UniversityCode,
+                entityType: "StudyGroup", entityId: group.Id.ToString(),
+                details: $"{groupName} ({group.CourseCode})");
+
+            await BroadcastGroupUpdated(groupId);
+            await BroadcastListChanged();
+
+            return Result.Success("Study group deleted.");
+        }
+
         public async Task<Result> LeaveAsync(ApplicationUser user, int groupId)
         {
             var membership = await _db.StudyGroupMembers

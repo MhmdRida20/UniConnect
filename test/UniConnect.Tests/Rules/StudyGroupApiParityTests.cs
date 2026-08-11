@@ -383,4 +383,62 @@ public class StudyGroupApiParityTests : IDisposable
         Assert.False(asRequester.CanPost);
         Assert.Equal("Pending", asRequester.MyMembership!.Status);
     }
+
+    // ---------- membership on the browse list ----------
+    //
+    // The web's Index view works out "you're a member of this one" from the
+    // member collection it already has loaded. A mobile client gets only the
+    // summary, so the server has to say it — MyStatus is what carries it.
+
+    [Fact]
+    public async Task Browse_marks_the_creator_as_a_member_of_their_own_group()
+    {
+        await CreateGroupAsync();
+
+        var groups = Body<List<StudyGroupsApiController.GroupSummary>>(await Api(_creator).Index(null));
+
+        Assert.Equal("Approved", groups[0].MyStatus);
+        Assert.True(groups[0].AmMember);
+    }
+
+    [Fact]
+    public async Task Browse_reports_no_membership_for_a_student_who_has_not_joined()
+    {
+        await CreateGroupAsync();
+
+        var groups = Body<List<StudyGroupsApiController.GroupSummary>>(await Api(_student).Index(null));
+
+        Assert.Null(groups[0].MyStatus);
+        Assert.False(groups[0].AmMember);
+    }
+
+    [Fact]
+    public async Task Browse_reports_a_pending_request_as_pending_not_as_membership()
+    {
+        var groupId = await CreateGroupAsync();
+        await Api(_student).Join(groupId);
+
+        var groups = Body<List<StudyGroupsApiController.GroupSummary>>(await Api(_student).Index(null));
+
+        Assert.Equal("Pending", groups[0].MyStatus);
+
+        // The distinction matters: a pending request must not light up the
+        // "Member" badge or count towards "N you're in".
+        Assert.False(groups[0].AmMember);
+    }
+
+    [Fact]
+    public async Task Membership_is_reported_per_caller_not_per_group()
+    {
+        var groupId = await CreateGroupAsync();
+        await Api(_student).Join(groupId);
+        await Api(_creator).ApproveMember(
+            _test.Db.StudyGroupMembers.First(m => m.UserId == _student.Id && m.StudyGroupId == groupId).Id);
+
+        var forCreator = Body<List<StudyGroupsApiController.GroupSummary>>(await Api(_creator).Index(null));
+        var forStudent = Body<List<StudyGroupsApiController.GroupSummary>>(await Api(_student).Index(null));
+
+        Assert.True(forCreator[0].AmMember);
+        Assert.True(forStudent[0].AmMember);
+    }
 }

@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:UniConnect.Mobile.Services"
+             x:Class="UniConnect.Mobile.Pages.GroupsPage"
+             Title="Study Groups"
+             Shell.NavBarIsVisible="False">
+
+    <!--
+        Shell's navigation bar is hidden on every page that has a hero: it drew
+        the page title immediately above a hero that draws the same title again.
+        The hero is the header now, and carries its own controls.
+    -->
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- ===== Hero band (.sg-header / .uc-hero) ===== -->
+        <Border
+            Grid.Row="0"
+            Background="{StaticResource UcHeroBrush}"
+            StrokeThickness="0"
+            Padding="18,18,18,20">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="0,0,26,26" />
+            </Border.StrokeShape>
+
+            <VerticalStackLayout Spacing="12">
+
+                <!-- Top row: identity on the left, sign out on the right -->
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                    <HorizontalStackLayout Grid.Column="0" Spacing="7" VerticalOptions="Center">
+                        <Image Source="ic_users_white.png" Style="{StaticResource UcIconSm}" />
+                        <Label Text="COLLABORATE" Style="{StaticResource UcEyebrow}" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+
+                    <ImageButton
+                        Grid.Column="2"
+                        Source="ic_logout_white.png"
+                        Style="{StaticResource UcHeroIconBtn}"
+                        Clicked="OnSignOutClicked"
+                        SemanticProperties.Description="Sign out" />
+                </Grid>
+
+            <Grid x:Name="HeroGrid" ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                    <Label Text="Study Groups" Style="{StaticResource UcDisplay}" />
+
+                    <Label
+                        x:Name="HeroSubLabel"
+                        Style="{StaticResource UcHeroSub}"
+                        LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+
+                <Button
+                    x:Name="CreateBtn"
+                    Grid.Column="1"
+                    Text="+  New Group"
+                    Style="{StaticResource UcBtnOnHero}"
+                    Clicked="OnCreateClicked"
+                    VerticalOptions="End" />
+            </Grid>
+
+                <!-- On a phone there is no room beside the title, so the
+                     action becomes a full-width button underneath it. -->
+                <Button
+                    x:Name="NarrowCreateBtn"
+                    Text="+  Create New Group"
+                    Style="{StaticResource UcBtnOnHero}"
+                    Clicked="OnCreateClicked"
+                    IsVisible="False"
+                    HorizontalOptions="Fill" />
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- ===== Controls (.sg-controls) ===== -->
+        <VerticalStackLayout
+            x:Name="ControlsColumn"
+            Grid.Row="1"
+            Padding="14,12,14,4"
+            Spacing="9">
+
+            <Grid x:Name="FilterGrid" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="9" RowSpacing="9">
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource UcInputFrame}" Padding="12,0">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Image Grid.Column="0" Source="ic_search_muted.png" Style="{StaticResource UcIconSm}" />
+                        <!--
+                            A plain Entry rather than a SearchBar: SearchBar
+                            brings its own frame and internal padding, which
+                            fought this bordered frame and pushed the
+                            placeholder off-centre.
+                        -->
+                        <Entry
+                            Grid.Column="1"
+                            x:Name="SearchInput"
+                            Placeholder="Search name, course, or creator…"
+                            ClearButtonVisibility="WhileEditing"
+                            TextChanged="OnSearchTextChanged" />
+                    </Grid>
+                </Border>
+
+                <Border x:Name="FilterFrame" Grid.Row="0" Grid.Column="1" Style="{StaticResource UcInputFrame}" Padding="12,0">
+                    <!--
+                        No Title set. On Windows a Picker renders its Title as a
+                        header AND the selection below it, so the filter showed
+                        "All my courses" twice. Item 0 carries that wording
+                        instead, which is also what the web's dropdown does.
+                    -->
+                    <Picker
+                        x:Name="CoursePicker"
+                        WidthRequest="165"
+                        VerticalOptions="Center"
+                        SelectedIndexChanged="OnCourseFilterChanged" />
+                </Border>
+            </Grid>
+
+            <!--
+                .sg-update-banner : the web offers a refresh rather than
+                reloading under you, and the same reasoning applies harder on a
+                phone where the list may be mid-scroll.
+            -->
+            <Border
+                x:Name="UpdateBanner"
+                IsVisible="False"
+                BackgroundColor="{StaticResource UcPrimarySoft}"
+                StrokeThickness="0"
+                Padding="12,9">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="11" />
+                </Border.StrokeShape>
+
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
+                    <Image Grid.Column="0" Source="ic_refresh_green.png" Style="{StaticResource UcIconSm}" />
+                    <Label
+                        Grid.Column="1"
+                        Text="New study group activity is available."
+                        FontSize="13"
+                        TextColor="{StaticResource UcPrimaryDarker}"
+                        VerticalOptions="Center" />
+                    <Button
+                        Grid.Column="2"
+                        Text="Refresh"
+                        Style="{StaticResource UcBtnTiny}"
+                        Clicked="OnBannerRefreshClicked" />
+                </Grid>
+            </Border>
+
+            <Label x:Name="ResultsLabel" Style="{StaticResource UcTiny}" />
+        </VerticalStackLayout>
+
+        <!-- ===== List ===== -->
+        <RefreshView
+            x:Name="Refresher"
+            Grid.Row="2"
+            Refreshing="OnRefreshing">
+
+            <CollectionView
+                x:Name="GroupsView"
+                Margin="10,4,10,12"
+                SelectionMode="Single"
+                SelectionChanged="OnGroupSelected">
+
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="1" />
+                </CollectionView.ItemsLayout>
+
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Padding="30,44" Spacing="10">
+                        <Border
+                            BackgroundColor="{StaticResource UcPrimarySoft}"
+                            StrokeThickness="0"
+                            HeightRequest="66"
+                            WidthRequest="66"
+                            HorizontalOptions="Center">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="22" />
+                            </Border.StrokeShape>
+                            <Image
+                                Source="ic_users_green.png"
+                                WidthRequest="30"
+                                HeightRequest="30"
+                                Aspect="AspectFit"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+
+                        <Label
+                            x:Name="EmptyTitle"
+                            Text="No study groups yet"
+                            Style="{StaticResource UcH2}"
+                            HorizontalTextAlignment="Center" />
+                        <Label
+                            x:Name="EmptyBody"
+                            Text="There are no groups for your courses right now. Be the first to start one!"
+                            Style="{StaticResource UcMutedText}"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:GroupSummary">
+                        <Border Style="{StaticResource UcCardInteractive}" Margin="4,5">
+                            <VerticalStackLayout Spacing="6">
+
+                                <!-- .sg-card-top : course pill + status pill -->
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Style="{StaticResource UcPillGreen}">
+                                        <Label Text="{Binding CourseCode}" Style="{StaticResource UcPillText}" />
+                                    </Border>
+
+                                    <Border Grid.Column="2" Style="{StaticResource UcPillGrey}">
+                                        <Label Text="{Binding StatusPillText}" Style="{StaticResource UcPillTextGrey}" />
+                                    </Border>
+                                </Grid>
+
+                                <Label
+                                    Text="{Binding GroupName}"
+                                    Style="{StaticResource UcH2}"
+                                    FontSize="17"
+                                    Margin="0,4,0,0"
+                                    LineBreakMode="TailTruncation" />
+
+                                <Label
+                                    Text="{Binding CourseName}"
+                                    FontSize="13"
+                                    FontFamily="OpenSansSemibold"
+                                    TextColor="{StaticResource UcPrimaryDark}"
+                                    LineBreakMode="TailTruncation" />
+
+                                <Label
+                                    Text="{Binding DescriptionOrPlaceholder}"
+                                    Style="{StaticResource UcMutedText}"
+                                    MaxLines="2"
+                                    LineBreakMode="TailTruncation" />
+
+                                <!-- .sg-progress -->
+                                <ProgressBar
+                                    Progress="{Binding MemberProgress}"
+                                    Margin="0,6,0,2" />
+
+                                <!-- .sg-card-meta -->
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+                                    <HorizontalStackLayout Grid.Column="0" Spacing="5">
+                                        <Image Source="ic_user_multiple_muted.png" Style="{StaticResource UcIconSm}" />
+                                        <Label Text="{Binding MembersLine}" Style="{StaticResource UcTiny}" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+
+                                    <HorizontalStackLayout Grid.Column="2" Spacing="5">
+                                        <Image Source="ic_user_circle_muted.png" Style="{StaticResource UcIconSm}" />
+                                        <Label
+                                            Text="{Binding CreatorLabel}"
+                                            Style="{StaticResource UcTiny}"
+                                            VerticalOptions="Center"
+                                            LineBreakMode="TailTruncation" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+
+                                <!-- .sg-card-foot -->
+                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,8,0,0">
+                                    <Label
+                                        Grid.Column="0"
+                                        Text="View group  ›"
+                                        FontFamily="OpenSansSemibold"
+                                        FontSize="14"
+                                        TextColor="{StaticResource UcPrimaryDark}"
+                                        VerticalOptions="Center" />
+
+                                    <Border
+                                        Grid.Column="2"
+                                        Style="{StaticResource UcPillGreen}"
+                                        IsVisible="{Binding AmMember}">
+                                        <Label Text="MEMBER" Style="{StaticResource UcPillText}" />
+                                    </Border>
+
+                                    <Border
+                                        Grid.Column="2"
+                                        Style="{StaticResource UcPillAmber}"
+                                        IsVisible="{Binding AmPending}">
+                                        <Label Text="PENDING" Style="{StaticResource UcPillTextAmber}" />
+                                    </Border>
+                                </Grid>
+
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+            </CollectionView>
+        </RefreshView>
+
+        <Border
+            x:Name="ErrorBox"
+            Grid.Row="2"
+            IsVisible="False"
+            Margin="20,16"
+            VerticalOptions="Start"
+            BackgroundColor="{StaticResource UcPillRedBg}"
+            StrokeThickness="0"
+            Padding="14,12">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="11" />
+            </Border.StrokeShape>
+            <Label
+                x:Name="ErrorLabel"
+                FontSize="13.5"
+                TextColor="{StaticResource UcPillRedFg}"
+                HorizontalTextAlignment="Center"
+                LineBreakMode="WordWrap" />
+        </Border>
+
+    </Grid>
+
+</ContentPage>

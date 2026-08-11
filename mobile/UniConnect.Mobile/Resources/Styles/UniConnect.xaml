@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    The web app's design tokens, ported.
+
+    Values come from the :root block in wwwroot/css/site.css and the component
+    rules in wwwroot/css/pages/study-groups.css and study-group-details.css, so
+    the two clients look like one product. Keep them in step: if a token changes
+    on the web, it changes here.
+
+    Merged after Colors.xaml and Styles.xaml in App.xaml, so anything defined
+    here wins over the MAUI template's defaults.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ===== Brand greens ===== -->
+    <Color x:Key="UcPrimary">#16a34a</Color>
+    <Color x:Key="UcPrimaryDark">#15803d</Color>
+    <Color x:Key="UcPrimaryDarker">#166534</Color>
+    <Color x:Key="UcPrimaryDeep">#14532d</Color>
+    <Color x:Key="UcPrimaryLight">#22c55e</Color>
+    <Color x:Key="UcPrimarySoft">#dcfce7</Color>
+    <Color x:Key="UcPrimaryTint">#f0fdf4</Color>
+    <Color x:Key="UcAccent">#0d9488</Color>
+    <Color x:Key="UcAccentSoft">#ccfbf1</Color>
+    <Color x:Key="UcAccentDeep">#115e59</Color>
+
+    <!-- ===== Neutrals ===== -->
+    <Color x:Key="UcText">#0f172a</Color>
+    <Color x:Key="UcTextSoft">#334155</Color>
+    <Color x:Key="UcMuted">#64748b</Color>
+    <Color x:Key="UcBorder">#e2e8f0</Color>
+    <Color x:Key="UcBorderSoft">#eef2f6</Color>
+    <Color x:Key="UcBg">#f6f9f7</Color>
+    <Color x:Key="UcSurface">#ffffff</Color>
+    <Color x:Key="UcSurfaceAlt">#f1f5f9</Color>
+
+    <!-- ===== Status ===== -->
+    <Color x:Key="UcWarning">#d97706</Color>
+    <Color x:Key="UcDanger">#dc2626</Color>
+
+    <!-- Pill fills, matching .uc-pill-* -->
+    <Color x:Key="UcPillAmberBg">#fef3c7</Color>
+    <Color x:Key="UcPillAmberFg">#92400e</Color>
+    <Color x:Key="UcPillGreyBg">#e2e8f0</Color>
+    <Color x:Key="UcPillGreyFg">#475569</Color>
+    <Color x:Key="UcPillRedBg">#fee2e2</Color>
+    <Color x:Key="UcPillRedFg">#991b1b</Color>
+
+    <!-- ===== Gradients =====
+         .uc-hero uses linear-gradient(135deg, deep 0%, darker 45%, primary 100%).
+         135deg in CSS runs top-left to bottom-right, which is 0,0 -> 1,1 here. -->
+    <LinearGradientBrush x:Key="UcHeroBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource UcPrimaryDeep}" Offset="0.0" />
+        <GradientStop Color="{StaticResource UcPrimaryDarker}" Offset="0.45" />
+        <GradientStop Color="{StaticResource UcPrimary}" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- .sgd-msg.is-mine .sgd-avatar -->
+    <LinearGradientBrush x:Key="UcAvatarMineBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource UcAccent}" Offset="0.0" />
+        <GradientStop Color="{StaticResource UcPrimaryDarker}" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="UcAvatarBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource UcPrimaryLight}" Offset="0.0" />
+        <GradientStop Color="{StaticResource UcAccent}" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- ===== Page ===== -->
+    <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcBg}" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <!-- Green chrome, matching the site header -->
+    <Style TargetType="Shell" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.BackgroundColor" Value="{StaticResource UcPrimaryDeep}" />
+        <Setter Property="Shell.ForegroundColor" Value="White" />
+        <Setter Property="Shell.TitleColor" Value="White" />
+        <Setter Property="Shell.DisabledColor" Value="#80FFFFFF" />
+        <Setter Property="Shell.UnselectedColor" Value="#CCFFFFFF" />
+        <Setter Property="Shell.NavBarHasShadow" Value="True" />
+    </Style>
+
+    <!-- ===== Type scale ===== -->
+    <Style TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+    </Style>
+
+    <Style x:Key="UcDisplay" TargetType="Label">
+        <Setter Property="FontSize" Value="27" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="TextColor" Value="White" />
+    </Style>
+
+    <Style x:Key="UcH1" TargetType="Label">
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+    </Style>
+
+    <Style x:Key="UcH2" TargetType="Label">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+    </Style>
+
+    <Style x:Key="UcH3" TargetType="Label">
+        <Setter Property="FontSize" Value="14.5" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+    </Style>
+
+    <Style x:Key="UcBody" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextColor" Value="{StaticResource UcTextSoft}" />
+        <Setter Property="LineHeight" Value="1.35" />
+    </Style>
+
+    <Style x:Key="UcMutedText" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
+    </Style>
+
+    <Style x:Key="UcTiny" TargetType="Label">
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
+    </Style>
+
+    <!-- .uc-eyebrow — the small tracked label above a hero title -->
+    <Style x:Key="UcEyebrow" TargetType="Label">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="CharacterSpacing" Value="1.6" />
+        <Setter Property="TextColor" Value="{StaticResource UcPrimarySoft}" />
+    </Style>
+
+    <Style x:Key="UcHeroSub" TargetType="Label">
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="TextColor" Value="#d1fae5" />
+    </Style>
+
+    <Style x:Key="UcDangerText" TargetType="Label">
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="TextColor" Value="{StaticResource UcDanger}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+    </Style>
+
+    <!-- ===== Icons ===== -->
+    <Style x:Key="UcIcon" TargetType="Image">
+        <Setter Property="WidthRequest" Value="20" />
+        <Setter Property="HeightRequest" Value="20" />
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="UcIconSm" TargetType="Image" BasedOn="{StaticResource UcIcon}">
+        <Setter Property="WidthRequest" Value="15" />
+        <Setter Property="HeightRequest" Value="15" />
+    </Style>
+
+    <Style x:Key="UcIconLg" TargetType="Image" BasedOn="{StaticResource UcIcon}">
+        <Setter Property="WidthRequest" Value="28" />
+        <Setter Property="HeightRequest" Value="28" />
+    </Style>
+
+    <!-- ===== Surfaces =====
+         .uc-card / .sgd-panel: white, hairline border, 14px radius, soft lift,
+         matching the uc-shadow token (0 1px 3px rgba(15,23,42,.08)). -->
+    <Style x:Key="UcCard" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="Stroke" Value="{StaticResource UcBorder}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="14" />
+        </Setter>
+        <Setter Property="Shadow">
+            <Shadow Brush="#0f172a" Offset="0,2" Radius="10" Opacity="0.07" />
+        </Setter>
+    </Style>
+
+    <!-- Cards in a tappable list: same surface, a little more lift on hover. -->
+    <Style x:Key="UcCardInteractive" TargetType="Border" BasedOn="{StaticResource UcCard}">
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="Stroke" Value="{StaticResource UcPrimaryLight}" />
+                            <Setter Property="BackgroundColor" Value="{StaticResource UcPrimaryTint}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- Flat surface for rows inside a card — no border, no shadow. -->
+    <Style x:Key="UcInset" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurfaceAlt}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="10" />
+        </Setter>
+    </Style>
+
+    <!-- ===== Avatars (.sgd-avatar) ===== -->
+    <Style x:Key="UcAvatar" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource UcAvatarBrush}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="HeightRequest" Value="38" />
+        <Setter Property="WidthRequest" Value="38" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="19" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcAvatarText" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- ===== Pills (.uc-pill) ===== -->
+    <Style x:Key="UcPill" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="999" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcPillGreen" TargetType="Border" BasedOn="{StaticResource UcPill}">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcPrimarySoft}" />
+    </Style>
+
+    <Style x:Key="UcPillAmber" TargetType="Border" BasedOn="{StaticResource UcPill}">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcPillAmberBg}" />
+    </Style>
+
+    <Style x:Key="UcPillGrey" TargetType="Border" BasedOn="{StaticResource UcPill}">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcPillGreyBg}" />
+    </Style>
+
+    <Style x:Key="UcPillRed" TargetType="Border" BasedOn="{StaticResource UcPill}">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcPillRedBg}" />
+    </Style>
+
+    <!-- Translucent pill for use on the hero gradient -->
+    <Style x:Key="UcPillOnHero" TargetType="Border" BasedOn="{StaticResource UcPill}">
+        <Setter Property="BackgroundColor" Value="#33ffffff" />
+    </Style>
+
+    <!-- .uc-pill text: small, bold, tracked -->
+    <Style x:Key="UcPillText" TargetType="Label">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="CharacterSpacing" Value="0.6" />
+        <Setter Property="TextColor" Value="{StaticResource UcPrimaryDarker}" />
+    </Style>
+
+    <Style x:Key="UcPillTextAmber" TargetType="Label" BasedOn="{StaticResource UcPillText}">
+        <Setter Property="TextColor" Value="{StaticResource UcPillAmberFg}" />
+    </Style>
+
+    <Style x:Key="UcPillTextGrey" TargetType="Label" BasedOn="{StaticResource UcPillText}">
+        <Setter Property="TextColor" Value="{StaticResource UcPillGreyFg}" />
+    </Style>
+
+    <Style x:Key="UcPillTextRed" TargetType="Label" BasedOn="{StaticResource UcPillText}">
+        <Setter Property="TextColor" Value="{StaticResource UcPillRedFg}" />
+    </Style>
+
+    <Style x:Key="UcPillTextOnHero" TargetType="Label" BasedOn="{StaticResource UcPillText}">
+        <Setter Property="TextColor" Value="White" />
+    </Style>
+
+    <!-- ===== Buttons ===== -->
+    <Style TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcPrimary}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="18,12" />
+        <Setter Property="MinimumHeightRequest" Value="46" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource UcPrimaryDark}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.97" />
+                            <Setter Property="BackgroundColor" Value="{StaticResource UcPrimaryDarker}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource UcBorder}" />
+                            <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- White button for use on the hero gradient (.btn-light) -->
+    <Style x:Key="UcBtnOnHero" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="White" />
+        <Setter Property="TextColor" Value="{StaticResource UcPrimaryDarker}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="18,12" />
+        <Setter Property="MinimumHeightRequest" Value="46" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource UcPrimarySoft}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.97" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcBtnOutline" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource UcPrimaryDark}" />
+        <Setter Property="BorderColor" Value="{StaticResource UcPrimary}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource UcPrimaryTint}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.97" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcBtnDanger" TargetType="Button" BasedOn="{StaticResource UcBtnOutline}">
+        <Setter Property="TextColor" Value="{StaticResource UcDanger}" />
+        <Setter Property="BorderColor" Value="{StaticResource UcDanger}" />
+    </Style>
+
+    <Style x:Key="UcBtnGhost" TargetType="Button" BasedOn="{StaticResource UcBtnOutline}">
+        <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
+        <Setter Property="BorderColor" Value="{StaticResource UcBorder}" />
+    </Style>
+
+    <!-- Compact approve/reject/remove actions in member rows -->
+    <Style x:Key="UcBtnTiny" TargetType="Button">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="11,6" />
+        <Setter Property="MinimumHeightRequest" Value="34" />
+        <Setter Property="MinimumWidthRequest" Value="0" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.94" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcBtnTinyGhost" TargetType="Button" BasedOn="{StaticResource UcBtnTiny}">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource UcTextSoft}" />
+        <Setter Property="BorderColor" Value="{StaticResource UcBorder}" />
+        <Setter Property="BorderWidth" Value="1" />
+    </Style>
+
+    <Style x:Key="UcBtnTinyDanger" TargetType="Button" BasedOn="{StaticResource UcBtnTiny}">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource UcDanger}" />
+        <Setter Property="BorderColor" Value="{StaticResource UcDanger}" />
+        <Setter Property="BorderWidth" Value="1" />
+    </Style>
+
+    <!-- ===== Inputs (.form-control) ===== -->
+    <Style TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource UcMuted}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <!-- Without this the text sits high in its bordered frame, which reads
+             as a misaligned placeholder rather than a centred one. -->
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- A round, borderless icon button for hero chrome (back, sign out). -->
+    <Style x:Key="UcHeroIconBtn" TargetType="ImageButton">
+        <Setter Property="BackgroundColor" Value="#26ffffff" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="HeightRequest" Value="38" />
+        <Setter Property="WidthRequest" Value="38" />
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="#40ffffff" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.92" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Editor">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource UcMuted}" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <Style TargetType="Picker">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+        <Setter Property="TitleColor" Value="{StaticResource UcMuted}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+    </Style>
+
+    <Style TargetType="SearchBar">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource UcMuted}" />
+        <Setter Property="CancelButtonColor" Value="{StaticResource UcMuted}" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <!-- The bordered shell an Entry/Picker/Editor sits inside, so inputs get a
+         consistent frame the way .form-control does on the web. -->
+    <Style x:Key="UcInputFrame" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="Stroke" Value="{StaticResource UcBorder}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="12,2" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="11" />
+        </Setter>
+    </Style>
+
+    <!-- Form field label (.form-label) -->
+    <Style x:Key="UcFieldLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="TextColor" Value="{StaticResource UcTextSoft}" />
+    </Style>
+
+    <Style x:Key="UcFieldHint" TargetType="Label">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
+    </Style>
+
+    <Style TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{StaticResource UcPrimary}" />
+    </Style>
+
+    <Style TargetType="ProgressBar">
+        <Setter Property="ProgressColor" Value="{StaticResource UcPrimary}" />
+    </Style>
+
+</ResourceDictionary>

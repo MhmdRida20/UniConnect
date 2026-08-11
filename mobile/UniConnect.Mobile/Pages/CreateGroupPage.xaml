@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.CreateGroupPage"
+             Title="Create a Study Group"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- The header card that used to sit here repeated the title Shell was
+             already drawing above it. One hero now does the job of both. -->
+        <Border
+            Grid.Row="0"
+            Background="{StaticResource UcHeroBrush}"
+            StrokeThickness="0"
+            Padding="18,16,18,20">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="0,0,26,26" />
+            </Border.StrokeShape>
+
+            <VerticalStackLayout Spacing="9">
+                <ImageButton
+                    Source="ic_arrow_left_white.png"
+                    Style="{StaticResource UcHeroIconBtn}"
+                    HorizontalOptions="Start"
+                    Clicked="OnCancelClicked"
+                    SemanticProperties.Description="Back to study groups" />
+
+                <Label Text="New Study Group" Style="{StaticResource UcDisplay}" FontSize="24" />
+
+                <Label
+                    Text="Set up a space for your course and invite classmates to join."
+                    Style="{StaticResource UcHeroSub}"
+                    LineBreakMode="WordWrap" />
+            </VerticalStackLayout>
+        </Border>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout x:Name="FormColumn" Padding="14" Spacing="12" HorizontalOptions="Center">
+
+                <Border Style="{StaticResource UcCard}" Padding="18">
+                    <VerticalStackLayout Spacing="15">
+
+                        <!-- Group name -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Group Name" Style="{StaticResource UcFieldLabel}" />
+                            <Border Style="{StaticResource UcInputFrame}">
+                                <Entry x:Name="NameEntry" Placeholder="e.g. Calculus Crew" MaxLength="100" />
+                            </Border>
+                            <Label x:Name="NameError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                        </VerticalStackLayout>
+
+                        <!-- Course -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Course" Style="{StaticResource UcFieldLabel}" />
+                            <Border Style="{StaticResource UcInputFrame}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                                    <Image Grid.Column="0" Source="ic_book_green.png" Style="{StaticResource UcIcon}" />
+                                    <!-- No Title: on Windows it renders as a header
+                                         above the selection, showing the same text
+                                         twice. The prompt is item 0 instead. -->
+                                    <Picker Grid.Column="1" x:Name="CoursePicker" VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                            <Label
+                                Text="Only courses you're enrolled in are shown."
+                                Style="{StaticResource UcFieldHint}" />
+                            <Label x:Name="CourseError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                        </VerticalStackLayout>
+
+                        <!-- Description -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Description" Style="{StaticResource UcFieldLabel}" />
+                            <Border Style="{StaticResource UcInputFrame}" Padding="12,6">
+                                <Editor
+                                    x:Name="DescriptionEditor"
+                                    Placeholder="What will this group focus on? When do you plan to meet?"
+                                    MaxLength="500"
+                                    HeightRequest="96"
+                                    TextChanged="OnDescriptionChanged" />
+                            </Border>
+                            <Label x:Name="DescriptionCount" Style="{StaticResource UcFieldHint}" HorizontalOptions="End" />
+                            <Label x:Name="DescriptionError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                        </VerticalStackLayout>
+
+                        <!-- Member bounds -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="11">
+                            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                <Label Text="Minimum Members" Style="{StaticResource UcFieldLabel}" />
+                                <Border Style="{StaticResource UcInputFrame}">
+                                    <Entry x:Name="MinEntry" Keyboard="Numeric" Text="2" />
+                                </Border>
+                                <Label x:Name="MinError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                <Label Text="Maximum Members" Style="{StaticResource UcFieldLabel}" />
+                                <Border Style="{StaticResource UcInputFrame}">
+                                    <Entry x:Name="MaxEntry" Keyboard="Numeric" Text="10" />
+                                </Border>
+                                <Label x:Name="MaxError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Meeting location -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Meeting Location" Style="{StaticResource UcFieldLabel}" />
+                            <Border Style="{StaticResource UcInputFrame}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                                    <Image Grid.Column="0" Source="ic_location_muted.png" Style="{StaticResource UcIcon}" />
+                                    <Entry Grid.Column="1" x:Name="LocationEntry" Placeholder="e.g. Library room 204, or Online" MaxLength="100" />
+                                </Grid>
+                            </Border>
+                            <Label x:Name="LocationError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                        </VerticalStackLayout>
+
+                        <Border
+                            x:Name="SummaryErrorBox"
+                            IsVisible="False"
+                            BackgroundColor="{StaticResource UcPillRedBg}"
+                            StrokeThickness="0"
+                            Padding="12,10">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
+                            <Label
+                                x:Name="SummaryError"
+                                FontSize="13.5"
+                                TextColor="{StaticResource UcPillRedFg}"
+                                LineBreakMode="WordWrap" />
+                        </Border>
+
+                        <Button
+                            x:Name="SubmitBtn"
+                            Text="Create Group"
+                            ImageSource="ic_check_circle_white.png"
+                            ContentLayout="Left,7"
+                            Clicked="OnCreateClicked"
+                            Margin="0,4,0,0"
+                            HorizontalOptions="Fill" />
+
+                        <Button
+                            Text="Cancel"
+                            Style="{StaticResource UcBtnGhost}"
+                            Clicked="OnCancelClicked"
+                            HorizontalOptions="Fill" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- .form-aside — the same guidance the web shows beside the form -->
+                <Border Style="{StaticResource UcCard}" BackgroundColor="{StaticResource UcPrimaryTint}">
+                    <VerticalStackLayout Spacing="8">
+                        <HorizontalStackLayout Spacing="8">
+                            <Image Source="ic_idea_green.png" Style="{StaticResource UcIcon}" />
+                            <Label Text="Tips for a great group" Style="{StaticResource UcH2}" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+
+                        <Label Style="{StaticResource UcMutedText}" LineBreakMode="WordWrap">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Be specific. " FontFamily="OpenSansSemibold" TextColor="{StaticResource UcTextSoft}" />
+                                    <Span Text="A clear name and focus help the right classmates find you." />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Label Style="{StaticResource UcMutedText}" LineBreakMode="WordWrap">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Set a realistic size. " FontFamily="OpenSansSemibold" TextColor="{StaticResource UcTextSoft}" />
+                                    <Span Text="Smaller groups (4–6) tend to stay active and focused." />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Label Style="{StaticResource UcMutedText}" LineBreakMode="WordWrap">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Pick a spot. " FontFamily="OpenSansSemibold" TextColor="{StaticResource UcTextSoft}" />
+                                    <Span Text="Whether it's the library or online, let people know where you'll meet." />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Label Style="{StaticResource UcMutedText}" LineBreakMode="WordWrap">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="You're the creator. " FontFamily="OpenSansSemibold" TextColor="{StaticResource UcTextSoft}" />
+                                    <Span Text="You'll be added automatically and can chat with members." />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <ActivityIndicator
+            x:Name="Busy"
+            IsRunning="False"
+            IsVisible="False"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+    </Grid>
+
+</ContentPage>

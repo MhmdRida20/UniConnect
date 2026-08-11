@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Android 9 (API 28) and later refuse cleartext HTTP by default: the request
+  fails with a bare "Cleartext HTTP traffic to ... not permitted" and no
+  network activity ever reaches the server.
+
+  The app talks HTTPS normally (see ApiConfig.UseHttps), so this file is only
+  needed for the fallback where the web project is started on its "http" launch
+  profile — there is no HTTPS port in that case, UseHttpsRedirection() cannot
+  redirect, and plain HTTP is served as-is.
+
+  The exemption is listed host by host rather than opened globally. Every entry
+  is a development machine address that means nothing in production, so this
+  cannot loosen a shipped build. Keep the LAN address in step with
+  ApiConfig.LanHost.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- The emulator's alias for its host machine's loopback. -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- The device itself; useful for adb reverse port forwarding. -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <!-- The development PC over Wi-Fi, for testing on a real phone. -->
+        <domain includeSubdomains="false">172.16.124.104</domain>
+    </domain-config>
+</network-security-config>

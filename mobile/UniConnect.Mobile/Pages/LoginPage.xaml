@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.LoginPage"
+             Title="Sign in"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- ===== Brand band (.uc-hero) ===== -->
+            <Border
+                Grid.Row="0"
+                Background="{StaticResource UcHeroBrush}"
+                StrokeThickness="0"
+                Padding="24,44,24,40">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="0,0,28,28" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
+                    <Border
+                        BackgroundColor="#33ffffff"
+                        StrokeThickness="0"
+                        HeightRequest="64"
+                        WidthRequest="64"
+                        HorizontalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20" />
+                        </Border.StrokeShape>
+                        <Image
+                            Source="ic_users_white.png"
+                            WidthRequest="32"
+                            HeightRequest="32"
+                            Aspect="AspectFit"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+
+                    <Label
+                        Text="UniConnect"
+                        Style="{StaticResource UcDisplay}"
+                        HorizontalOptions="Center" />
+
+                    <Label
+                        Text="Sign in with your university account"
+                        Style="{StaticResource UcHeroSub}"
+                        HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ===== Form ===== -->
+            <VerticalStackLayout
+                x:Name="FormColumn"
+                Grid.Row="1"
+                Padding="20,-22,20,28"
+                Spacing="14"
+                HorizontalOptions="Center">
+
+                <Border Style="{StaticResource UcCard}" Padding="20">
+                    <VerticalStackLayout Spacing="14">
+
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Email" Style="{StaticResource UcFieldLabel}" />
+                            <Border Style="{StaticResource UcInputFrame}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                                    <Image Grid.Column="0" Source="ic_mail_muted.png" Style="{StaticResource UcIcon}" />
+                                    <Entry
+                                        Grid.Column="1"
+                                        x:Name="EmailEntry"
+                                        Placeholder="you@university.edu"
+                                        Keyboard="Email"
+                                        ReturnType="Next"
+                                        SemanticProperties.Description="University email address" />
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Password" Style="{StaticResource UcFieldLabel}" />
+                            <Border Style="{StaticResource UcInputFrame}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                                    <Image Grid.Column="0" Source="ic_lock_muted.png" Style="{StaticResource UcIcon}" />
+                                    <Entry
+                                        Grid.Column="1"
+                                        x:Name="PasswordEntry"
+                                        Placeholder="Your password"
+                                        IsPassword="True"
+                                        ReturnType="Go"
+                                        Completed="OnSignInClicked"
+                                        SemanticProperties.Description="Password" />
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <Button
+                            x:Name="SignInBtn"
+                            Text="Sign in"
+                            Clicked="OnSignInClicked"
+                            Margin="0,4,0,0"
+                            HorizontalOptions="Fill" />
+
+                        <ActivityIndicator
+                            x:Name="Busy"
+                            IsRunning="False"
+                            IsVisible="False"
+                            HorizontalOptions="Center" />
+
+                        <Border
+                            x:Name="ErrorBox"
+                            IsVisible="False"
+                            BackgroundColor="{StaticResource UcPillRedBg}"
+                            StrokeThickness="0"
+                            Padding="12,10">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
+                            <Label
+                                x:Name="ErrorLabel"
+                                FontSize="13.5"
+                                TextColor="{StaticResource UcPillRedFg}"
+                                LineBreakMode="WordWrap" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource UcInset}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Source="ic_lock_green.png" Style="{StaticResource UcIcon}" VerticalOptions="Start" />
+                        <Label
+                            Grid.Column="1"
+                            Text="The mobile app is for students. Instructor, staff and admin accounts use the web portal."
+                            Style="{StaticResource UcTiny}"
+                            LineBreakMode="WordWrap" />
+                    </Grid>
+                </Border>
+
+                <Label
+                    x:Name="TargetLabel"
+                    Style="{StaticResource UcTiny}"
+                    Opacity="0.6"
+                    HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </ScrollView>
+
+</ContentPage>

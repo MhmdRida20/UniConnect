@@ -8,6 +8,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+                <!-- Ported from the web app's CSS; last so it wins. -->
+                <ResourceDictionary Source="Resources/Styles/UniConnect.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

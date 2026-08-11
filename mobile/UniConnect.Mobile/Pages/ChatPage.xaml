@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:UniConnect.Mobile.Services"
+             x:Class="UniConnect.Mobile.Pages.ChatPage"
+             Title="Group Chat"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="0">
+
+            <!-- Compact hero: back control, title, and the live indicator the
+                 web shows as .sgd-live, all in the space Shell's nav bar used
+                 to take on its own. -->
+            <Border
+                Background="{StaticResource UcHeroBrush}"
+                StrokeThickness="0"
+                Padding="14,12,14,14">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="0,0,22,22" />
+                </Border.StrokeShape>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <ImageButton
+                        Grid.Column="0"
+                        Source="ic_arrow_left_white.png"
+                        Style="{StaticResource UcHeroIconBtn}"
+                        Clicked="OnBackClicked"
+                        SemanticProperties.Description="Back to the group" />
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                        <Label Text="Group Chat" Style="{StaticResource UcDisplay}" FontSize="19" />
+
+                        <HorizontalStackLayout Spacing="7">
+                            <Ellipse
+                                x:Name="LiveDot"
+                                WidthRequest="8"
+                                HeightRequest="8"
+                                Fill="{StaticResource UcMuted}"
+                                VerticalOptions="Center" />
+                            <Label
+                                x:Name="LiveStatusLabel"
+                                Style="{StaticResource UcHeroSub}"
+                                FontSize="12"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Button
+                x:Name="LoadOlderBtn"
+                Text="Load earlier messages"
+                Style="{StaticResource UcBtnGhost}"
+                Margin="12,10,12,0"
+                IsVisible="False"
+                Clicked="OnLoadOlderClicked" />
+        </VerticalStackLayout>
+
+        <CollectionView
+            x:Name="MessagesView"
+            Grid.Row="1"
+            Margin="10,8">
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="30,44" Spacing="8">
+                    <Border
+                        BackgroundColor="{StaticResource UcAccentSoft}"
+                        StrokeThickness="0"
+                        HeightRequest="62"
+                        WidthRequest="62"
+                        HorizontalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="21" />
+                        </Border.StrokeShape>
+                        <Image
+                            Source="ic_send_white.png"
+                            WidthRequest="26"
+                            HeightRequest="26"
+                            Aspect="AspectFit"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                    <Label Text="No messages yet" Style="{StaticResource UcH2}" HorizontalTextAlignment="Center" />
+                    <Label Text="Say hello!" Style="{StaticResource UcMutedText}" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:MessageDto">
+                    <!--
+                        .sgd-msg : avatar beside a bubble. The web flips this to
+                        row-reverse for your own messages; FlowDirection is the
+                        equivalent here, and the bubble's own content is flipped
+                        back so the text still reads left-to-right.
+                    -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9" Padding="2,5">
+                        <Grid.Triggers>
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsMine}" Value="True">
+                                <Setter Property="FlowDirection" Value="RightToLeft" />
+                            </DataTrigger>
+                        </Grid.Triggers>
+
+                        <Border Grid.Column="0" Style="{StaticResource UcAvatar}" HeightRequest="34" WidthRequest="34" VerticalOptions="End">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="17" />
+                            </Border.StrokeShape>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsMine}" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource UcAvatarMineBrush}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label Text="{Binding Initials}" Style="{StaticResource UcAvatarText}" FontSize="12" />
+                        </Border>
+
+                        <!-- .sgd-bubble : the squared-off corner points at its sender -->
+                        <Border
+                            Grid.Column="1"
+                            BackgroundColor="{StaticResource UcSurfaceAlt}"
+                            StrokeThickness="0"
+                            Padding="12,9"
+                            HorizontalOptions="Start">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="4,14,14,14" />
+                            </Border.StrokeShape>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsMine}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource UcPrimarySoft}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+
+                            <VerticalStackLayout Spacing="3" FlowDirection="LeftToRight">
+                                <HorizontalStackLayout Spacing="8">
+                                    <Label
+                                        Text="{Binding SenderLabel}"
+                                        FontFamily="OpenSansSemibold"
+                                        FontSize="12.5"
+                                        TextColor="{StaticResource UcPrimaryDarker}" />
+                                    <Label
+                                        Text="{Binding SentAtLocal}"
+                                        Style="{StaticResource UcTiny}"
+                                        FontSize="11"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+
+                                <Label
+                                    Text="{Binding Content}"
+                                    Style="{StaticResource UcBody}"
+                                    TextColor="{StaticResource UcText}"
+                                    LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- .sgd-composer -->
+        <Border
+            Grid.Row="2"
+            BackgroundColor="{StaticResource UcSurface}"
+            StrokeThickness="0"
+            Padding="12,10">
+            <VerticalStackLayout Spacing="7">
+                <Label x:Name="ErrorLabel" IsVisible="False" Style="{StaticResource UcDangerText}" />
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="9">
+                    <Border Grid.Column="0" Style="{StaticResource UcInputFrame}">
+                        <Entry
+                            x:Name="MessageEntry"
+                            Placeholder="Write a message…"
+                            MaxLength="1000"
+                            ReturnType="Send"
+                            Completed="OnSendClicked" />
+                    </Border>
+
+                    <Button
+                        x:Name="SendBtn"
+                        Grid.Column="1"
+                        Text="Send"
+                        ImageSource="ic_send_white.png"
+                        ContentLayout="Left,6"
+                        Clicked="OnSendClicked" />
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <ActivityIndicator
+            x:Name="Busy"
+            Grid.Row="1"
+            IsRunning="True"
+            IsVisible="True"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+    </Grid>
+
+</ContentPage>

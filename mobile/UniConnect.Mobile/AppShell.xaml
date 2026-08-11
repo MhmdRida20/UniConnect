@@ -3,12 +3,24 @@
     x:Class="UniConnect.Mobile.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:UniConnect.Mobile"
-    Title="UniConnect.Mobile">
+    xmlns:pages="clr-namespace:UniConnect.Mobile.Pages"
+    Title="UniConnect"
+    FlyoutBehavior="Disabled">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <!--
+        Two separate ShellItems rather than two ShellContents, so Shell treats
+        them as independent sections and does not draw a tab bar across them.
+        Switching with an absolute route ("//groups") replaces the whole
+        navigation stack, which is what sign-in and sign-out both want: no back
+        button from the group list to the login screen.
+    -->
+
+    <ShellItem Route="login">
+        <ShellContent ContentTemplate="{DataTemplate pages:LoginPage}" />
+    </ShellItem>
+
+    <ShellItem Route="groups">
+        <ShellContent ContentTemplate="{DataTemplate pages:GroupsPage}" />
+    </ShellItem>
 
 </Shell>

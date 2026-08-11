@@ -131,9 +131,20 @@ namespace UniConnect.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user is null) return Challenge();
 
-            // Model-level validation (Required/Range) has already run; the
-            // service owns the rules that need the database or the adapter, and
-            // returns them as field errors so they land on the right input.
+            // Bail out before the service runs. Without this, a form that fails
+            // annotation validation still reached CreateAsync, which could
+            // succeed on its own rules and insert the group — and then the
+            // invalid ModelState below re-rendered the form, leaving the
+            // student looking at an error page for a group that now exists.
+            if (!ModelState.IsValid)
+            {
+                var courses = await _service.GetMyCoursesAsync(user);
+                vm.AvailableCourses = new SelectList(courses, "CourseCode", "CourseName", vm.CourseCode);
+                return View(vm);
+            }
+
+            // The service owns the rules that need the database or the adapter,
+            // and returns them as field errors so they land on the right input.
             var (errors, group) = await _service.CreateAsync(user,
                 new UniConnect.Services.StudyGroupService.CreateRequest(
                     vm.GroupName, vm.Description, vm.CourseCode,
@@ -247,6 +258,23 @@ namespace UniConnect.Controllers
 
             var (result, groupId) = await _service.TransferLeadershipAsync(user, memberId);
             return FromResult(result, groupId);
+        }
+
+        // ---------- DELETE ---------------------------------------------------------
+        // Creator only; the service archives rather than physically deleting so
+        // the chat history and audit trail survive.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Challenge();
+
+            var result = await _service.DeleteAsync(user, id);
+
+            // A deleted group has nowhere left to redirect back to, so success
+            // goes to the list rather than to the group that no longer shows.
+            return FromResult(result, id, fallbackAction: result.Ok ? nameof(Index) : null);
         }
 
         // ---------- LEAVE ----------------------------------------------------------

@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:UniConnect.Mobile.Services"
+             x:Class="UniConnect.Mobile.Pages.GroupDetailsPage"
+             Title="Group"
+             Shell.NavBarIsVisible="False">
+
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout x:Name="Body" IsVisible="False" Spacing="0">
+
+                <!-- ===== Header (.sgd-header) ===== -->
+                <Border
+                    Background="{StaticResource UcHeroBrush}"
+                    StrokeThickness="0"
+                    Padding="18,16,18,20">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="0,0,26,26" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="9">
+                        <!-- Shell's nav bar is hidden, so the hero owns the back
+                             control rather than repeating the page title. -->
+                        <ImageButton
+                            Source="ic_arrow_left_white.png"
+                            Style="{StaticResource UcHeroIconBtn}"
+                            HorizontalOptions="Start"
+                            Clicked="OnBackClicked"
+                            SemanticProperties.Description="Back to study groups" />
+
+                        <Border Style="{StaticResource UcPillOnHero}">
+                            <Label x:Name="CoursePill" Style="{StaticResource UcPillTextOnHero}" />
+                        </Border>
+
+                        <Label
+                            x:Name="NameLabel"
+                            Style="{StaticResource UcDisplay}"
+                            FontSize="24"
+                            LineBreakMode="WordWrap" />
+
+                        <HorizontalStackLayout Spacing="14">
+                            <HorizontalStackLayout Spacing="6">
+                                <Image Source="ic_user_circle_white.png" Style="{StaticResource UcIconSm}" />
+                                <Label x:Name="CreatorLabel" Style="{StaticResource UcHeroSub}" VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Spacing="6">
+                                <Image Source="ic_calendar_white.png" Style="{StaticResource UcIconSm}" />
+                                <Label x:Name="CreatedLabel" Style="{StaticResource UcHeroSub}" VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Inactive notice -->
+                <Border
+                    x:Name="InactiveNotice"
+                    IsVisible="False"
+                    BackgroundColor="{StaticResource UcPillAmberBg}"
+                    StrokeThickness="0"
+                    Padding="14,11"
+                    Margin="14,14,14,0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="11" />
+                    </Border.StrokeShape>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Source="ic_clock_amber.png" Style="{StaticResource UcIconSm}" VerticalOptions="Start" />
+                        <Label
+                            Grid.Column="1"
+                            x:Name="InactiveNoticeLabel"
+                            FontSize="13"
+                            TextColor="{StaticResource UcPillAmberFg}"
+                            LineBreakMode="WordWrap" />
+                    </Grid>
+                </Border>
+
+                <!-- Two columns on a wide window, stacked on a phone. The
+                     children are moved between cells in code. -->
+                <Grid
+                    x:Name="ContentGrid"
+                    Padding="14"
+                    ColumnSpacing="14"
+                    RowSpacing="12"
+                    HorizontalOptions="Center">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="MainColumn" Width="*" />
+                        <ColumnDefinition x:Name="SideColumn" Width="0" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- ===== Main column ===== -->
+                    <VerticalStackLayout x:Name="MainStack" Grid.Row="0" Grid.Column="0" Spacing="12">
+
+                        <!-- Membership state + primary action -->
+                        <Border Style="{StaticResource UcCard}">
+                            <VerticalStackLayout Spacing="11">
+                                <Grid x:Name="MembershipRow" ColumnDefinitions="Auto,*" ColumnSpacing="10" IsVisible="False">
+                                    <Image x:Name="MembershipIcon" Grid.Column="0" Source="ic_check_circle_green.png" Style="{StaticResource UcIcon}" VerticalOptions="Start" />
+                                    <Label
+                                        Grid.Column="1"
+                                        x:Name="MembershipLabel"
+                                        Style="{StaticResource UcBody}"
+                                        LineBreakMode="WordWrap" />
+                                </Grid>
+
+                                <Button
+                                    x:Name="ActionBtn"
+                                    IsVisible="False"
+                                    Clicked="OnActionClicked"
+                                    HorizontalOptions="Fill" />
+
+                                <Button
+                                    x:Name="WithdrawBtn"
+                                    IsVisible="False"
+                                    Text="Withdraw request"
+                                    Style="{StaticResource UcBtnDanger}"
+                                    Clicked="OnWithdrawClicked"
+                                    HorizontalOptions="Fill" />
+
+                                <Button
+                                    x:Name="ChatBtn"
+                                    IsVisible="False"
+                                    Text="Open group chat"
+                                    Style="{StaticResource UcBtnOutline}"
+                                    Clicked="OnChatClicked"
+                                    HorizontalOptions="Fill" />
+
+                                <!-- Creator only; the server enforces that too. -->
+                                <Button
+                                    x:Name="DeleteBtn"
+                                    IsVisible="False"
+                                    Text="Delete group"
+                                    ImageSource="ic_trash_red.png"
+                                    ContentLayout="Left,7"
+                                    Style="{StaticResource UcBtnDanger}"
+                                    Clicked="OnDeleteClicked"
+                                    HorizontalOptions="Fill" />
+
+                                <Grid x:Name="ChatLockedRow" ColumnDefinitions="Auto,*" ColumnSpacing="10" IsVisible="False">
+                                    <Image Grid.Column="0" Source="ic_lock_muted.png" Style="{StaticResource UcIconSm}" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="Join this group to take part in the chat."
+                                        Style="{StaticResource UcMutedText}"
+                                        VerticalOptions="Center" />
+                                </Grid>
+
+                                <Label
+                                    x:Name="ErrorLabel"
+                                    IsVisible="False"
+                                    Style="{StaticResource UcDangerText}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Stat tiles (.sgd-stats) -->
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="9">
+                            <Border Grid.Column="0" Style="{StaticResource UcCard}" Padding="11">
+                                <VerticalStackLayout Spacing="4">
+                                    <Image Source="ic_users_green.png" Style="{StaticResource UcIcon}" HorizontalOptions="Start" />
+                                    <Label x:Name="StatMembers" Style="{StaticResource UcH3}" />
+                                    <Label Text="Members" Style="{StaticResource UcTiny}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource UcCard}" Padding="11">
+                                <VerticalStackLayout Spacing="4">
+                                    <Image Source="ic_location_teal.png" Style="{StaticResource UcIcon}" HorizontalOptions="Start" />
+                                    <Label x:Name="StatLocation" Style="{StaticResource UcH3}" LineBreakMode="TailTruncation" />
+                                    <Label Text="Meeting spot" Style="{StaticResource UcTiny}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource UcCard}" Padding="11">
+                                <VerticalStackLayout Spacing="4">
+                                    <Image Source="ic_flag_amber.png" Style="{StaticResource UcIcon}" HorizontalOptions="Start" />
+                                    <Label x:Name="StatStatus" Style="{StaticResource UcH3}" />
+                                    <Label Text="Status" Style="{StaticResource UcTiny}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+
+                        <!-- About (.sgd-panel) -->
+                        <Border Style="{StaticResource UcCard}">
+                            <VerticalStackLayout Spacing="9">
+                                <HorizontalStackLayout Spacing="8">
+                                    <Image Source="ic_info_green.png" Style="{StaticResource UcIcon}" />
+                                    <Label Text="About this group" Style="{StaticResource UcH2}" VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                                <Label x:Name="AboutLabel" Style="{StaticResource UcBody}" LineBreakMode="WordWrap" />
+                                <Label x:Name="MinMembersLabel" Style="{StaticResource UcMutedText}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- ===== Side column ===== -->
+                    <VerticalStackLayout x:Name="SideStack" Grid.Row="1" Grid.Column="0" Spacing="12">
+
+                        <!-- Join requests (.sgd-pending), creator only -->
+                        <Border x:Name="PendingPanel" Style="{StaticResource UcCard}" IsVisible="False">
+                            <VerticalStackLayout Spacing="9">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                    <Image Grid.Column="0" Source="ic_user_add_amber.png" Style="{StaticResource UcIcon}" />
+                                    <Label Grid.Column="1" Text="Join Requests" Style="{StaticResource UcH2}" VerticalOptions="Center" />
+                                    <Border Grid.Column="2" Style="{StaticResource UcPillAmber}">
+                                        <Label x:Name="PendingCountLabel" Style="{StaticResource UcPillTextAmber}" />
+                                    </Border>
+                                </Grid>
+
+                                <VerticalStackLayout x:Name="PendingLayout" Spacing="4">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="models:MemberDto">
+                                            <Border Style="{StaticResource UcInset}" Margin="0,3">
+                                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8">
+
+                                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource UcAvatar}">
+                                                        <Label Text="{Binding Initials}" Style="{StaticResource UcAvatarText}" />
+                                                    </Border>
+
+                                                    <VerticalStackLayout Grid.Row="0" Grid.Column="1" VerticalOptions="Center">
+                                                        <Label Text="{Binding FullName}" Style="{StaticResource UcH3}" LineBreakMode="TailTruncation" />
+                                                        <Label Text="{Binding RequestedLabel}" Style="{StaticResource UcTiny}" />
+                                                    </VerticalStackLayout>
+
+                                                    <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="7">
+                                                        <Button
+                                                            Text="Approve"
+                                                            Style="{StaticResource UcBtnTiny}"
+                                                            Clicked="OnApproveClicked"
+                                                            CommandParameter="{Binding MemberId}" />
+                                                        <Button
+                                                            Text="Reject"
+                                                            Style="{StaticResource UcBtnTinyDanger}"
+                                                            Clicked="OnRejectClicked"
+                                                            CommandParameter="{Binding MemberId}" />
+                                                    </HorizontalStackLayout>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Members (.sgd-members) -->
+                        <Border Style="{StaticResource UcCard}">
+                            <VerticalStackLayout Spacing="9">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                    <Image Grid.Column="0" Source="ic_users_green.png" Style="{StaticResource UcIcon}" />
+                                    <Label Grid.Column="1" Text="Members" Style="{StaticResource UcH2}" VerticalOptions="Center" />
+                                    <Border Grid.Column="2" Style="{StaticResource UcPillGrey}">
+                                        <Label x:Name="MemberCountLabel" Style="{StaticResource UcPillTextGrey}" />
+                                    </Border>
+                                </Grid>
+
+                                <VerticalStackLayout x:Name="MembersLayout" Spacing="2">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="models:MemberDto">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Padding="0,7">
+
+                                                <Border Grid.Column="0" Style="{StaticResource UcAvatar}">
+                                                    <Label Text="{Binding Initials}" Style="{StaticResource UcAvatarText}" />
+                                                </Border>
+
+                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                    <Label Text="{Binding DisplayName}" Style="{StaticResource UcH3}" LineBreakMode="TailTruncation" />
+                                                    <Label Text="{Binding JoinedLabel}" Style="{StaticResource UcTiny}" />
+                                                </VerticalStackLayout>
+
+                                                <!-- Creator badge, or the creator's controls over this member -->
+                                                <Border
+                                                    Grid.Column="2"
+                                                    Style="{StaticResource UcPillGreen}"
+                                                    IsVisible="{Binding IsGroupCreator}">
+                                                    <Label Text="CREATOR" Style="{StaticResource UcPillText}" />
+                                                </Border>
+
+                                                <HorizontalStackLayout
+                                                    Grid.Column="2"
+                                                    Spacing="7"
+                                                    IsVisible="{Binding ShowManageActions}"
+                                                    VerticalOptions="Center">
+                                                    <Button
+                                                        Text="Make leader"
+                                                        Style="{StaticResource UcBtnTinyGhost}"
+                                                        Clicked="OnTransferClicked"
+                                                        CommandParameter="{Binding MemberId}" />
+                                                    <Button
+                                                        Text="Remove"
+                                                        Style="{StaticResource UcBtnTinyDanger}"
+                                                        Clicked="OnRemoveClicked"
+                                                        CommandParameter="{Binding MemberId}" />
+                                                </HorizontalStackLayout>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+
+                                    <BindableLayout.EmptyView>
+                                        <Label Text="No approved members yet." Style="{StaticResource UcMutedText}" />
+                                    </BindableLayout.EmptyView>
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <ActivityIndicator
+            x:Name="Busy"
+            IsRunning="True"
+            IsVisible="True"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+
+        <Label
+            x:Name="LoadErrorLabel"
+            IsVisible="False"
+            Margin="24"
+            HorizontalTextAlignment="Center"
+            VerticalOptions="Center"
+            Style="{StaticResource UcDangerText}" />
+    </Grid>
+
+</ContentPage>

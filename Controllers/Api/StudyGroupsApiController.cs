@@ -65,6 +65,17 @@ namespace UniConnect.Controllers.Api
             public string? MeetingLocation { get; set; }
             public DateTime CreatedAt { get; set; }
             public string? CreatorName { get; set; }
+
+            /// <summary>
+            /// The caller's membership status on this group, or null if they
+            /// have none. The browse list on the web shows a "Member" badge and
+            /// an "N you're in" count, which it derives from the loaded member
+            /// collection — a mobile client has no equivalent, so the server
+            /// states it outright.
+            /// </summary>
+            public string? MyStatus { get; set; }
+
+            public bool AmMember => MyStatus == nameof(MembershipStatus.Approved);
         }
 
         public class MemberDto
@@ -133,8 +144,11 @@ namespace UniConnect.Controllers.Api
 
         // ---------- mapping ----------
 
-        private static GroupSummary ToSummary(StudyGroup g) => new()
+        private static GroupSummary ToSummary(StudyGroup g, string? currentUserId = null) => new()
         {
+            MyStatus = currentUserId is null
+                ? null
+                : g.Members.FirstOrDefault(m => m.UserId == currentUserId)?.Status.ToString(),
             Id = g.Id,
             GroupName = g.GroupName,
             Description = g.Description,
@@ -181,7 +195,7 @@ namespace UniConnect.Controllers.Api
             if (user is null) return Unauthorized();
 
             var groups = await _service.GetVisibleGroupsAsync(user, courseCode);
-            return Ok(groups.Select(ToSummary).ToList());
+            return Ok(groups.Select(g => ToSummary(g, user.Id)).ToList());
         }
 
         [HttpGet("my-courses")]
@@ -208,7 +222,7 @@ namespace UniConnect.Controllers.Api
             var (result, detail) = await _service.GetDetailAsync(user, id);
             if (!result.Ok || detail is null) return Problem(result);
 
-            var summary = ToSummary(detail.Group);
+            var summary = ToSummary(detail.Group, user.Id);
             var response = new GroupDetailResponse
             {
                 Id = summary.Id,
@@ -223,6 +237,7 @@ namespace UniConnect.Controllers.Api
                 MeetingLocation = summary.MeetingLocation,
                 CreatedAt = summary.CreatedAt,
                 CreatorName = summary.CreatorName,
+                MyStatus = summary.MyStatus,
                 CreatorId = detail.Group.CreatorId,
                 AmCreator = detail.AmCreator,
                 CanJoin = detail.CanJoin,
@@ -293,7 +308,7 @@ namespace UniConnect.Controllers.Api
                 });
             }
 
-            return CreatedAtAction(nameof(Details), new { id = group.Id }, ToSummary(group));
+            return CreatedAtAction(nameof(Details), new { id = group.Id }, ToSummary(group, user.Id));
         }
 
         [HttpPost("{id:int}/join")]
@@ -303,6 +318,19 @@ namespace UniConnect.Controllers.Api
             if (user is null) return Unauthorized();
 
             var result = await _service.JoinAsync(user, id);
+            return result.Ok
+                ? Ok(new ActionResponse { Success = true, Message = result.Message })
+                : Problem(result);
+        }
+
+        /// <summary>Creator-only. Archives the group; see StudyGroupService.DeleteAsync.</summary>
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var user = await CurrentUserAsync();
+            if (user is null) return Unauthorized();
+
+            var result = await _service.DeleteAsync(user, id);
             return result.Ok
                 ? Ok(new ActionResponse { Success = true, Message = result.Message })
                 : Problem(result);
