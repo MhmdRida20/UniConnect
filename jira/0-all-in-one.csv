@@ -1,0 +1,183 @@
+Work item ID,Summary,Work type,Description,Parent,Status,Assignee,Labels,Story point estimate
+1,Platform Foundation & Multi-University Architecture,Epic,Solution setup multi-tenancy database and external API integration,,Done,,phase-1,
+2,Authentication Roles & Account Management,Epic,Identity roles registration and JWT issuance,,Done,,phase-1,
+3,Study Groups,Epic,Course study groups with membership and real-time chat,,Done,,phase-2,
+4,Ride Sharing,Epic,Student ride sharing with live tracking,,Done,,phase-2,
+5,Smart Attendance,Epic,QR based attendance with anti-proxy checks,,Done,,phase-2,
+6,Complaints & Ticketing,Epic,Student complaints and staff ticket workflow,,Done,,phase-2,
+7,Clubs & Organizations,Epic,Student clubs events and officer management,,Done,,phase-2,
+8,Internships & Career Matching,Epic,Internship postings and skills based matching,,Done,,phase-2,
+9,Notifications & Real-Time Infrastructure,Epic,Unified notifications and SignalR hubs,,Done,,phase-2,
+10,Administration Reporting & Audit,Epic,Admin tooling reporting and audit logging,,Done,,phase-3,
+11,UI/UX & Design System,Epic,Design tokens components and page layouts,,Done,,phase-4,
+12,Automated Testing,Epic,xUnit test suite and test infrastructure,,Done,,phase-5,
+13,Mobile Application,Epic,.NET MAUI student mobile client,,In Progress,,phase-6,
+14,Security Hardening & Defect Fixes,Epic,Security fixes and defect resolution,,In Progress,,phase-7,
+15,Set up ASP.NET Core 8 MVC solution with EF Core and SQL Server,Task,Project scaffolding dependency injection and database context — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mhr824@usal.edu.lb,phase-1;setup;pair,3
+16,Design and implement the relational domain model,Story,27 entities covering all feature areas — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mhr824@usal.edu.lb,phase-1;database;pair,8
+17,Configure EF Core mappings composite keys and delete behaviours,Task,OnModelCreating configuration for constraints and cascade rules — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mhr824@usal.edu.lb,phase-1;database;pair,5
+18,Build the multi-university adapter core for multi-tenancy,Story,Provider abstraction allowing each university its own API integration — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mhr824@usal.edu.lb,phase-1;architecture;pair,8
+19,Implement UniversityProviderResolver to select a provider per university,Task,Resolves the correct adapter from the university code — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mha206@usal.edu.lb,phase-1;architecture;pair,3
+20,Implement RealApiUniversityProvider for standard university APIs,Task,Adapter for the standard REST API shape — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mha206@usal.edu.lb,phase-1;integration;pair,5
+21,Implement UmsApiUniversityProvider for the alternative UMS API style,Task,Adapter for the alternative API shape — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mha206@usal.edu.lb,phase-1;integration;pair,5
+22,Build the simulated external university API for development and demos,Story,Local stand-in for a real university system — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mhr824@usal.edu.lb,phase-1;integration;pair,8
+23,Implement the service catalog so each university enables its own modules,Story,Per-university feature enablement — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mha206@usal.edu.lb,phase-1;architecture;pair,5
+24,Add RequireService filter to gate disabled modules per university,Task,Action filter blocking access to disabled services — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mha206@usal.edu.lb,phase-1;architecture;pair,3
+25,Build background university API sync for courses students staff and enrolments,Story,Scheduled synchronisation from the university API — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mhr824@usal.edu.lb,phase-1;background-job;pair,8
+26,Add enrolment revalidation background job,Task,Periodically revalidates student enrolments — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mha206@usal.edu.lb,phase-1;background-job;pair,5
+27,Implement database seeding with roles universities and demo accounts,Task,Seeds a working environment on first run — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mha206@usal.edu.lb,phase-1;setup;pair,5
+28,Write the project overview and technical reference document,Task,Architecture and module reference documentation — pair work by Mhmd Rida and Mohamad Sabbagh,1,Done,mhr824@usal.edu.lb,phase-1;docs;pair,3
+29,Integrate ASP.NET Core Identity with a custom ApplicationUser,Story,Identity with university scoped user fields — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mha206@usal.edu.lb,phase-1;auth;pair,5
+30,Define the six-role model,Task,Student Instructor Admin UniversityAdmin DepartmentStaff Company — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mha206@usal.edu.lb,phase-1;auth;pair,3
+31,Build student self-registration validated against the university record,Story,Registration verified against synced student records — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mhr824@usal.edu.lb,phase-1;auth;pair,5
+32,Build instructor registration with staff-record verification,Story,Registration verified against synced staff records — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mhr824@usal.edu.lb,phase-1;auth;pair,5
+33,Implement email confirmation with SMTP delivery,Task,Confirmation links delivered by email — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mha206@usal.edu.lb,phase-1;auth;pair,3
+34,Add account lockout and failed-login auditing,Task,Lockout after repeated failures with audit entries — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mha206@usal.edu.lb,phase-1;security;pair,3
+35,Implement user suspension with request-time enforcement middleware,Story,Suspended users blocked on every request — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mha206@usal.edu.lb,phase-1;security;pair,5
+36,Add session anomaly detection middleware,Task,Detects and handles suspicious session changes — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mha206@usal.edu.lb,phase-1;security;pair,5
+37,Build user profile management with picture upload,Story,Profile editing and avatar upload — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mhr824@usal.edu.lb,phase-1;auth;pair,5
+38,Issue JWTs for mobile clients,Story,Token issuance for the mobile application — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mhr824@usal.edu.lb,phase-1;auth;mobile;pair,5
+39,Accept JWT bearer auth alongside cookie auth scoped to /api,Task,Dual authentication schemes for web and mobile — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mha206@usal.edu.lb,phase-1;auth;mobile;pair,5
+40,Support SignalR querystring access_token for hub authentication,Task,Allows WebSocket clients to authenticate — pair work by Mhmd Rida and Mohamad Sabbagh,2,Done,mha206@usal.edu.lb,phase-1;auth;mobile;pair,3
+41,Design Study Group Member and Message entities with membership states,Story,Domain model for groups membership and chat,3,Done,mha206@usal.edu.lb,phase-2,5
+42,Build study group browse filtered to the student's enrolled courses,Story,FR-46 students only see groups for their courses,3,Done,mhr824@usal.edu.lb,phase-2,5
+43,Build study group creation with per-university member cap enforcement,Story,FR-11 respects the university member ceiling,3,Done,mha206@usal.edu.lb,phase-2,5
+44,Implement join requests with creator approval workflow,Story,FR-49 request approve and reject flow,3,Done,mha206@usal.edu.lb,phase-2,8
+45,Implement approve reject and remove member actions,Story,Creator controls over group membership,3,Done,mha206@usal.edu.lb,phase-2,5
+46,Implement leave group with automatic leadership transfer,Story,Leadership passes to the longest standing member,3,Done,mha206@usal.edu.lb,phase-2,5
+47,Implement explicit leadership transfer to a chosen member,Story,Creator hands leadership to a specific member,3,Done,mha206@usal.edu.lb,phase-2,3
+48,Build real-time group chat over SignalR,Story,FR-52 live group messaging,3,Done,mha206@usal.edu.lb,phase-2;realtime,8
+49,Add optimistic concurrency handling for simultaneous joins,Task,RowVersion prevents overfilling a group,3,Done,mha206@usal.edu.lb,phase-2,5
+50,Auto-archive study groups with no recent activity,Task,Background job retires dormant groups,3,Done,mha206@usal.edu.lb,phase-2;background-job,3
+51,Extract all study group rules into a shared StudyGroupService,Task,Single rule source shared by web and mobile,3,Done,mha206@usal.edu.lb,phase-2;refactor,8
+52,Add delete study group for the creator,Story,Archives the group and preserves chat history,3,Done,mha206@usal.edu.lb,phase-2,5
+53,Design Ride RideRequest and Vehicle entities,Story,Domain model for ride sharing,4,Done,mhr824@usal.edu.lb,phase-2,5
+54,Build driver registration and vehicle management,Story,Drivers register vehicles before offering rides,4,Done,mhr824@usal.edu.lb,phase-2,5
+55,Build ride creation search and booking flow,Story,Core ride sharing user journey,4,Done,mhr824@usal.edu.lb,phase-2,8
+56,Implement ride visibility rules by university and status,Story,Rides scoped to the correct audience,4,Done,mha206@usal.edu.lb,phase-2,5
+57,Integrate geocoding for pickup and drop-off locations,Story,Address to coordinate resolution,4,Done,mha206@usal.edu.lb,phase-2;integration,5
+58,Build live ride tracking with SignalR and map display,Story,Real-time driver position on a map,4,Done,mhr824@usal.edu.lb,phase-2;realtime,8
+59,Build My Rides management page for drivers and passengers,Story,Ride history and upcoming rides,4,Done,mhr824@usal.edu.lb,phase-2,5
+60,Design AttendanceSession and attendance record entities,Story,Domain model for attendance,5,Done,mha206@usal.edu.lb,phase-2,5
+61,Build instructor session creation with QR code generation,Story,Instructors open a session and display a QR code,5,Done,mhr824@usal.edu.lb,phase-2,8
+62,Build student attendance submission with device-identity checks,Story,Students mark attendance from their own device,5,Done,mha206@usal.edu.lb,phase-2,8
+63,Enforce one-device-per-student anti-proxy rule,Story,Prevents marking attendance for classmates,5,Done,mha206@usal.edu.lb,phase-2;security,5
+64,Build live attendance monitoring over SignalR,Story,Instructors watch check-ins arrive live,5,Done,mha206@usal.edu.lb,phase-2;realtime,5
+65,Auto-close expired attendance sessions in the background,Task,Sessions close automatically when they end,5,Done,mha206@usal.edu.lb,phase-2;background-job,3
+66,Build the instructor attendance dashboard with per-session breakdown,Story,Attendance overview per session and student,5,Done,mhr824@usal.edu.lb,phase-2,8
+67,Build attendance summary reporting per course and student,Story,Aggregated attendance statistics,5,Done,mhr824@usal.edu.lb,phase-2;reporting,5
+68,Add CSV export of attendance records,Story,Downloadable attendance data,5,Done,mha206@usal.edu.lb,phase-2;reporting,3
+69,Add QR full-screen download and share options,Task,Improves QR display during class,5,Done,mhr824@usal.edu.lb,phase-2;ux,3
+70,Design the Ticket entity with status and category workflow,Story,Domain model for complaints,6,Done,mha206@usal.edu.lb,phase-2,5
+71,Build student ticket submission with attachments,Story,Students raise complaints with evidence,6,Done,mhr824@usal.edu.lb,phase-2,5
+72,Build the department staff ticket queue and assignment,Story,Staff triage and resolve tickets,6,Done,mhr824@usal.edu.lb,phase-2,8
+73,Implement the ticket status workflow and transition rules,Story,Valid status transitions enforced,6,Done,mha206@usal.edu.lb,phase-2,5
+74,Add real-time ticket updates over SignalR,Story,Live ticket status changes,6,Done,mha206@usal.edu.lb,phase-2;realtime,5
+75,Flag stale tickets automatically in the background,Task,Highlights tickets left unattended,6,Done,mha206@usal.edu.lb,phase-2;background-job,3
+76,Design Club and ClubEvent entities with officer roles,Story,Domain model for clubs,7,Done,mha206@usal.edu.lb,phase-2,5
+77,Build club creation membership and officer management,Story,Club lifecycle and roles,7,Done,mhr824@usal.edu.lb,phase-2,8
+78,Implement officer departure and succession rules,Story,Club continues when an officer leaves,7,Done,mha206@usal.edu.lb,phase-2,5
+79,Build club event scheduling and the events calendar,Story,Events with a calendar view,7,Done,mhr824@usal.edu.lb,phase-2,5
+80,Add real-time club activity updates over SignalR,Task,Live club membership updates,7,Done,mha206@usal.edu.lb,phase-2;realtime,3
+81,Auto-flag inactive clubs in the background,Task,Highlights dormant clubs,7,Done,mha206@usal.edu.lb,phase-2;background-job,3
+82,Design Internship Company and CareerProfile entities,Story,Domain model for careers,8,Done,mha206@usal.edu.lb,phase-2,5
+83,Build the company portal for posting internships,Story,Companies manage their postings,8,Done,mhr824@usal.edu.lb,phase-2,8
+84,Build student career profile with skills management,Story,Students describe their skills and experience,8,Done,mhr824@usal.edu.lb,phase-2,8
+85,Build internship browse search and application flow,Story,Core internship user journey,8,Done,mhr824@usal.edu.lb,phase-2,8
+86,Implement the skills-based matching score algorithm,Story,Ranks internships against a student profile,8,Done,mha206@usal.edu.lb,phase-2;algorithm,8
+87,Implement text similarity matching for skills,Task,Fuzzy matching of skill names,8,Done,mha206@usal.edu.lb,phase-2;algorithm,5
+88,Enforce internship application eligibility rules,Story,Prevents ineligible or duplicate applications,8,Done,mha206@usal.edu.lb,phase-2,5
+89,Build the My Applications tracking page,Story,Students track application status,8,Done,mhr824@usal.edu.lb,phase-2,5
+90,Design a unified notification entity and delivery service,Story,One notification pipeline for all modules,9,Done,mha206@usal.edu.lb,phase-2,5
+91,Build the notification centre with read/unread state,Story,Notification list and read tracking,9,Done,mhr824@usal.edu.lb,phase-2,5
+92,Add live notification delivery over SignalR,Story,Notifications arrive without refreshing,9,Done,mha206@usal.edu.lb,phase-2;realtime,5
+93,Add the navbar notification badge with live count,Task,Unread count visible on every page,9,Done,mhr824@usal.edu.lb,phase-2;ux,3
+94,Send transactional emails for key events,Task,Email delivery for important events,9,Done,mha206@usal.edu.lb,phase-2,3
+95,Build university management with API configuration,Story,Admins onboard and configure universities,10,Done,mha206@usal.edu.lb,phase-3,8
+96,Build user administration with role assignment and suspension,Story,Admins manage accounts and roles,10,Done,mhr824@usal.edu.lb,phase-3,8
+97,Build the per-university service catalog toggle screen,Story,Admins enable modules per university,10,Done,mha206@usal.edu.lb,phase-3,5
+98,Build the audit log viewer with filtering,Story,Searchable audit trail,10,Done,mha206@usal.edu.lb,phase-3;security,5
+99,Implement centralised audit logging across all modules,Story,Consistent audit entries for sensitive actions,10,Done,mha206@usal.edu.lb,phase-3;security,8
+100,Add authorization-failure auditing middleware,Task,Records denied access attempts,10,Done,mha206@usal.edu.lb,phase-3;security,3
+101,Build the admin reporting dashboard,Story,Platform-wide usage reporting,10,Done,mhr824@usal.edu.lb,phase-3;reporting,8
+102,Add CSV export for admin reports,Story,Downloadable report data,10,Done,mha206@usal.edu.lb,phase-3;reporting,3
+103,Build the external API simulator admin screen for demos,Story,Lets demos run without a live university API,10,Done,mha206@usal.edu.lb,phase-3,5
+104,Add the reduced-functionality banner when a university sync fails,Task,FR-17 stale data is visibly flagged,10,Done,mha206@usal.edu.lb,phase-3;ux,3
+105,Build the shared design token system,Story,Colour radius shadow and motion tokens,11,Done,mha206@usal.edu.lb,phase-4;ux,8
+106,Integrate the Hugeicons SVG sprite icon system,Story,Single inline sprite for all icons,11,Done,mhr824@usal.edu.lb,phase-4;ux,5
+107,Design and build the two application layouts,Story,Main and minimal layouts,11,Done,mhr824@usal.edu.lb,phase-4;ux,5
+108,Redesign the home page with animations,Story,Landing page redesign,11,Done,mhr824@usal.edu.lb,phase-4;ux,5
+109,Redesign the authentication pages,Story,Login and registration redesign,11,Done,mha206@usal.edu.lb,phase-4;ux,5
+110,Build the reusable hero banner component with responsive bleed,Story,Consistent page banners across modules,11,Done,mhr824@usal.edu.lb,phase-4;ux,5
+111,Build the custom accessible dropdown component,Story,Keyboard accessible select replacement,11,Done,mhr824@usal.edu.lb,phase-4;ux;accessibility,5
+112,Build reusable card pill empty-state and form-page components,Story,Shared component library,11,Done,mhr824@usal.edu.lb,phase-4;ux,8
+113,Add page-level stylesheets for all feature areas,Task,Per-page styling for 20 modules,11,Done,mhr824@usal.edu.lb,phase-4;ux,8
+114,Redesign the notifications page UI,Task,Notification centre visual refresh,11,Done,mhr824@usal.edu.lb,phase-4;ux,3
+115,Enhance calendar layouts and attachment presentation,Task,Calendar and attachment visual improvements,11,Done,mhr824@usal.edu.lb,phase-4;ux,5
+116,Add progress-bar and stepper components to multi-step forms,Task,Progress indication on long forms,11,Done,mhr824@usal.edu.lb,phase-4;ux,3
+117,Set up the xUnit test project and folder structure,Task,Test project scaffolding,12,Done,mha206@usal.edu.lb,phase-5;testing,3
+118,Build test infrastructure with in-memory database harnesses and fakes,Story,Reusable test doubles and fixtures,12,Done,mha206@usal.edu.lb,phase-5;testing,8
+119,Write the test plan and coverage study,Task,Documents what is tested and why,12,Done,mha206@usal.edu.lb,phase-5;testing;docs,5
+120,Write attendance submission rule tests,Task,20 tests covering attendance rules,12,Done,mha206@usal.edu.lb,phase-5;testing,5
+121,Write study group membership rule tests,Task,19 tests covering membership rules,12,Done,mha206@usal.edu.lb,phase-5;testing,5
+122,Write internship application rule tests,Task,19 tests covering application rules,12,Done,mha206@usal.edu.lb,phase-5;testing,5
+123,Write ticket workflow rule tests,Task,18 tests covering ticket transitions,12,Done,mha206@usal.edu.lb,phase-5;testing,5
+124,Write ride visibility rule tests,Task,15 tests covering ride visibility,12,Done,mha206@usal.edu.lb,phase-5;testing,3
+125,Write club officer departure rule tests,Task,10 tests covering officer succession,12,Done,mha206@usal.edu.lb,phase-5;testing,3
+126,Write service catalog gating tests,Task,Tests for per-university module gating,12,Done,mha206@usal.edu.lb,phase-5;testing,3
+127,Write attendance summary service unit tests,Task,16 unit tests for attendance aggregation,12,Done,mha206@usal.edu.lb,phase-5;testing,3
+128,Write text similarity and matching score unit tests,Task,28 unit tests for the matching algorithm,12,Done,mha206@usal.edu.lb,phase-5;testing,5
+129,Write view model validation tests,Task,13 tests for form validation rules,12,Done,mha206@usal.edu.lb,phase-5;testing,3
+130,Write concurrency tests for simultaneous actions,Task,Tests for race conditions on shared resources,12,Done,mha206@usal.edu.lb,phase-5;testing,5
+131,Write background job unit tests,Task,Tests for sync and session closing jobs,12,Done,mha206@usal.edu.lb,phase-5;testing,3
+132,Write instructor roster and admin export tests,Task,Tests for roster and CSV export,12,Done,mha206@usal.edu.lb,phase-5;testing,3
+133,Research and plan the mobile app scope and architecture,Task,Technology choice and phased plan,13,Done,mha206@usal.edu.lb,phase-6;mobile;docs,5
+134,Write the Study Groups mobile implementation plan,Task,Detailed plan for the first mobile feature,13,Done,mha206@usal.edu.lb,phase-6;mobile;docs,3
+135,Create the .NET MAUI project targeting Android and Windows,Task,Mobile project scaffolding,13,Done,mhr824@usal.edu.lb,phase-6;mobile,3
+136,Add the mobile project to the solution and fix build isolation,Task,Prevents the web project compiling mobile sources,13,Done,mhr824@usal.edu.lb,phase-6;mobile,3
+137,Build the mobile authentication API,Story,Login and student registration endpoints,13,Done,mhr824@usal.edu.lb,phase-6;mobile;api,8
+138,Restrict mobile access to the Student role only,Task,Staff and admin accounts use the web portal,13,Done,mha206@usal.edu.lb,phase-6;mobile;security,2
+139,Build the Study Groups REST API with 12 endpoints,Story,Full study group functionality over REST,13,Done,mhr824@usal.edu.lb,phase-6;mobile;api,13
+140,Build the Attendance mobile API,Story,Attendance endpoints for the mobile client,13,Done,mhr824@usal.edu.lb,phase-6;mobile;api,8
+141,Build the Notifications mobile API,Story,Notification endpoints for the mobile client,13,Done,mhr824@usal.edu.lb,phase-6;mobile;api,5
+142,Build the Home dashboard mobile API,Story,Dashboard summary endpoint,13,Done,mhr824@usal.edu.lb,phase-6;mobile;api,3
+143,Implement per-platform API base URL resolution,Task,Correct host for emulator device and desktop,13,Done,mhr824@usal.edu.lb,phase-6;mobile,5
+144,Implement secure token storage with a desktop fallback,Task,Keystore on Android with a Windows fallback,13,Done,mha206@usal.edu.lb,phase-6;mobile;security,5
+145,Implement automatic bearer token attachment for all requests,Task,Delegating handler adds the token,13,Done,mha206@usal.edu.lb,phase-6;mobile;security,3
+146,Configure Android network security for development hosts,Task,Allows local development hosts only,13,Done,mha206@usal.edu.lb,phase-6;mobile,3
+147,Build the typed Study Groups API client with error translation,Story,Typed client surfacing server messages,13,Done,mhr824@usal.edu.lb,phase-6;mobile,8
+148,Build the mobile login screen,Story,Student sign-in UI,13,Done,mhr824@usal.edu.lb,phase-6;mobile;ux,5
+149,Build the study group browse screen with search and course filter,Story,Group list with filtering,13,Done,mhr824@usal.edu.lb,phase-6;mobile;ux,8
+150,Build the study group details screen with member management,Story,Group detail members and approvals,13,Done,mhr824@usal.edu.lb,phase-6;mobile;ux,8
+151,Build the create study group form with field validation,Story,Group creation on mobile,13,Done,mhr824@usal.edu.lb,phase-6;mobile;ux,5
+152,Build the mobile group chat screen,Story,Chat UI with message history and paging,13,Done,mhr824@usal.edu.lb,phase-6;mobile;ux,8
+153,Implement live chat and list updates over SignalR on mobile,Story,Real-time parity with the web client,13,Done,mha206@usal.edu.lb,phase-6;mobile;realtime,8
+154,Port the web design system to MAUI,Story,Shared tokens gradients and elevation,13,Done,mhr824@usal.edu.lb,phase-6;mobile;ux,8
+155,Generate MAUI icon assets from the web icon sprite,Task,Identical glyphs across both clients,13,Done,mhr824@usal.edu.lb,phase-6;mobile;ux,5
+156,Implement responsive layout for phone tablet and desktop widths,Story,Adaptive columns and content widths,13,Done,mhr824@usal.edu.lb,phase-6;mobile;ux,5
+157,Add delete study group to the mobile client,Story,Creator can delete from mobile,13,Done,mha206@usal.edu.lb,phase-6;mobile,3
+158,Write the Study Groups API parity test suite,Task,25 tests proving web and mobile share rules,13,Done,mhr824@usal.edu.lb,phase-6;mobile;testing,8
+159,Build the Internships mobile screens,Story,Browse and apply for internships on mobile,13,To Do,mhr824@usal.edu.lb,phase-6;mobile,13
+160,Build the Attendance mobile screens with QR scanning,Story,Scan a QR code to mark attendance,13,To Do,mhr824@usal.edu.lb,phase-6;mobile,13
+161,Build the mobile notifications screen,Story,Notification centre on mobile,13,To Do,mhr824@usal.edu.lb,phase-6;mobile,5
+162,Test the mobile app on a physical Android device,Task,Verify on real hardware over the LAN,13,To Do,mha206@usal.edu.lb,phase-6;mobile;testing,5
+163,Produce a signed Android release build,Task,Release configuration and signing,13,To Do,mhr824@usal.edu.lb,phase-6;mobile;release,5
+164,Add admin scoping so university admins only see their own tenant,Story,Prevents cross-tenant data access,14,Done,mha206@usal.edu.lb,phase-7;security,8
+165,Harden security across controllers and unify notifications,Story,Authorisation review across the application,14,Done,mha206@usal.edu.lb,phase-7;security,8
+166,Require membership before joining a study group's real-time chat,Bug,Non-members could subscribe to live chat messages,14,Done,mhr824@usal.edu.lb,phase-7;security,5
+167,Require authentication on the study group hub,Bug,The hub accepted anonymous connections,14,Done,mhr824@usal.edu.lb,phase-7;security,3
+168,Accept both cookie and bearer schemes on the study group hub,Bug,Mobile chat could not connect and showed Offline,14,Done,mha206@usal.edu.lb,phase-7;bug;mobile,3
+169,Add field validation to the study group create API,Bug,The API accepted a group with no name,14,Done,mha206@usal.edu.lb,phase-7;bug,5
+170,Stop the web create action saving a group when validation failed,Bug,An invalid submission created a group then showed an error,14,Done,mha206@usal.edu.lb,phase-7;bug,3
+171,Validate university API base URLs to prevent crashes,Bug,An invalid URL threw UriFormatException and returned 500,14,Done,mha206@usal.edu.lb,phase-7;bug,3
+172,Fix Arabic text corruption in CSV exports,Bug,Missing UTF-8 BOM made Arabic unreadable in Excel,14,Done,mha206@usal.edu.lb,phase-7;bug,3
+173,Fix timezone handling in attendance session expiry,Bug,Sessions closed at the wrong local time,14,Done,mha206@usal.edu.lb,phase-7;bug,3
+174,Fix keyboard navigation in the custom dropdown component,Bug,Arrow keys did not move between options,14,Done,mhr824@usal.edu.lb,phase-7;bug;accessibility,3
+175,Fix non-responsive hero banners on several pages,Bug,Headings and buttons clipped on small screens,14,Done,mhr824@usal.edu.lb,phase-7;bug;ux,3
+176,Fix the admin users role dropdown resetting to Student,Bug,Selected role was lost on save,14,Done,mhr824@usal.edu.lb,phase-7;bug,2
+177,Fix duplicate page titles in the mobile app,Bug,Shell and hero both rendered the page title,14,Done,mhr824@usal.edu.lb,phase-7;bug;mobile;ux,2
+178,Fix pickers showing their value twice on Windows,Bug,Picker title rendered as a header above the selection,14,Done,mhr824@usal.edu.lb,phase-7;bug;mobile;ux,2
+179,Fix mobile card grid breaking layout at narrow widths,Bug,Cards split into columns too early and clipped content,14,Done,mhr824@usal.edu.lb,phase-7;bug;mobile;ux,3
+180,Fix Shell navigation crash on app resume,Bug,Navigating during startup terminated the process,14,Done,mha206@usal.edu.lb,phase-7;bug;mobile,3
+181,Add exception logging for the Windows mobile build,Task,Startup crashes now write a diagnosable log,14,Done,mhr824@usal.edu.lb,phase-7;mobile,2
+182,Revoke the SMTP credential committed to git history,Task,Credential is in public history and must be revoked at the provider,14,To Do,mha206@usal.edu.lb,phase-7;security,3

@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Internships — browse.
+
+    Deliberately plain: this is the working version of the feature, with the
+    visual pass to follow. It reuses the tokens the rest of the app already has
+    rather than inventing anything new.
+
+    One scrolling surface, as on Study Groups, and a ScrollView rather than a
+    CollectionView for the same reason — see the note in GroupsPage.xaml.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:UniConnect.Mobile.Services"
+             x:Class="UniConnect.Mobile.Pages.InternshipsPage"
+             Title="Internships"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- ===== Top app bar ===== -->
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                <Label
+                    Grid.Column="0"
+                    Text="UniConnect"
+                    Style="{StaticResource UcAppBarTitle}"
+                    TextColor="{StaticResource UcGreen}"
+                    VerticalOptions="Center" />
+
+                <Button
+                    Grid.Column="1"
+                    Text="My applications"
+                    Style="{StaticResource UcBtnPill}"
+                    Clicked="OnMyApplicationsClicked" />
+
+                <Grid Grid.Column="2" WidthRequest="34" HeightRequest="30" VerticalOptions="Center">
+                    <ImageButton
+                        Source="ic_bell_green.png"
+                        BackgroundColor="Transparent"
+                        BorderWidth="0"
+                        HeightRequest="26" WidthRequest="26"
+                        Padding="0"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Center"
+                        Clicked="OnNotificationsClicked"
+                        SemanticProperties.Description="Notifications" />
+
+                    <Border
+                        x:Name="UnreadBadge"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcDanger}"
+                        StrokeThickness="0"
+                        Padding="5,1"
+                        MinimumWidthRequest="18"
+                        HorizontalOptions="End"
+                        VerticalOptions="Start"
+                        InputTransparent="True">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="999" />
+                        </Border.StrokeShape>
+                        <Label
+                            x:Name="UnreadBadgeLabel"
+                            FontSize="10"
+                            FontFamily="InterSemiBold"
+                            TextColor="White"
+                            HorizontalTextAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <RefreshView x:Name="Refresher" Grid.Row="1" Refreshing="OnRefreshing">
+            <ScrollView>
+                <VerticalStackLayout x:Name="HeaderColumn" Padding="20,24,20,16" Spacing="16">
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Internships" Style="{StaticResource UcH1}" FontSize="30" />
+                        <Label
+                            x:Name="SubtitleLabel"
+                            Text="Opportunities matched to your skills and courses."
+                            Style="{StaticResource UcBody}"
+                            FontSize="15" />
+                    </VerticalStackLayout>
+
+                    <!-- Search is local; the two filters below re-query the server. -->
+                    <Border x:Name="SearchFrame" Style="{StaticResource UcSearchField}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Image Grid.Column="0" Source="ic_search_muted.png" Style="{StaticResource UcIcon}" />
+                            <Entry
+                                Grid.Column="1"
+                                x:Name="SearchInput"
+                                Placeholder="Search title, employer, or skill…"
+                                ClearButtonVisibility="WhileEditing"
+                                Focused="OnSearchFocusChanged"
+                                Unfocused="OnSearchFocusChanged"
+                                TextChanged="OnSearchTextChanged" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Two equal chips. Their widths are set in code from the
+                         viewport so "Any duration" always fits rather than being
+                         truncated by whatever the Picker asks for. -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Border Grid.Column="0" x:Name="DurationChip" Style="{StaticResource UcFilterChip}" Padding="12,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                <Image Grid.Column="0" Source="ic_calendar_green.png" WidthRequest="14" HeightRequest="14" Aspect="AspectFit" VerticalOptions="Center" />
+
+                                <!-- The Picker is invisible and sits under the label:
+                                     it still owns the list and the selection, while
+                                     the label is what gets drawn, so the chip cannot
+                                     be truncated by the control's own chrome. -->
+                                <Label
+                                    Grid.Column="1"
+                                    x:Name="DurationLabel"
+                                    Style="{StaticResource UcFilterChipText}" />
+                                <Picker
+                                    Grid.Column="1"
+                                    x:Name="DurationPicker"
+                                    Opacity="0"
+                                    BackgroundColor="Transparent"
+                                    SelectedIndexChanged="OnDurationChanged" />
+
+                                <Image
+                                    Grid.Column="2"
+                                    Source="ic_arrow_right_muted.png"
+                                    WidthRequest="11" HeightRequest="11"
+                                    Aspect="AspectFit"
+                                    Rotation="90"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- An image rather than a CheckBox: CheckBox renders at a
+                             different size on every platform and cannot be made to
+                             match the chip beside it. -->
+                        <Border Grid.Column="1" x:Name="MajorChip" Style="{StaticResource UcFilterChip}" Padding="12,0">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                <Image
+                                    Grid.Column="0"
+                                    x:Name="MajorCheckIcon"
+                                    Source="ic_check_badge_muted.png"
+                                    Style="{StaticResource UcIconSm}" />
+                                <Label
+                                    Grid.Column="1"
+                                    x:Name="MajorLabel"
+                                    Text="My major"
+                                    Style="{StaticResource UcFilterChipText}" />
+                            </Grid>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnMyMajorTapped" />
+                            </Border.GestureRecognizers>
+                        </Border>
+                    </Grid>
+
+                    <Label x:Name="ResultsLabel" Style="{StaticResource UcTiny}" Margin="2,0,0,0" />
+
+                    <!-- Shown when nothing scores well and the student's career
+                         profile is thin, which is the case where "add your skills"
+                         is more use than "no results". -->
+                    <Border
+                        x:Name="ProfileHint"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcPillAmberBg}"
+                        StrokeThickness="0"
+                        Padding="14,12">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Label
+                            Text="Nothing here matches you strongly yet. Adding your skills and CV on the web portal improves these matches."
+                            FontSize="13"
+                            TextColor="{StaticResource UcPillAmberFg}"
+                            LineBreakMode="WordWrap" />
+                    </Border>
+
+                    <Border
+                        x:Name="ErrorBox"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcPillRedBg}"
+                        StrokeThickness="0"
+                        Padding="14,12">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Label
+                            x:Name="ErrorLabel"
+                            FontSize="13"
+                            TextColor="{StaticResource UcPillRedFg}"
+                            LineBreakMode="WordWrap" />
+                    </Border>
+
+                    <VerticalStackLayout
+                        x:Name="EmptyState"
+                        IsVisible="False"
+                        Padding="10,26,10,10"
+                        Spacing="8">
+                        <Label
+                            x:Name="EmptyTitle"
+                            Text="No internships listed"
+                            Style="{StaticResource UcH2}"
+                            HorizontalTextAlignment="Center" />
+                        <Label
+                            x:Name="EmptyBody"
+                            Text="There are no open internships for your university right now."
+                            Style="{StaticResource UcMutedText}"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                    <!-- ===== Cards ===== -->
+                    <VerticalStackLayout x:Name="CardsHost" Spacing="16">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:InternshipSummary">
+                                <Grid HorizontalOptions="Fill">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnCardTapped" />
+                                    </Grid.GestureRecognizers>
+
+                                    <Border Style="{StaticResource UcCardSoft}">
+                                        <!-- A Grid, not a stack: a stack measures children
+                                             against unbounded width, so wrapping text never
+                                             sees an edge to wrap at. -->
+                                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+
+                                            <!-- The pill's column is Auto and the title's is
+                                                 star, so the pill reserves its own width and a
+                                                 two-line title wraps against it instead of
+                                                 running underneath it. -->
+                                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                                <Label
+                                                    Grid.Column="0"
+                                                    Text="{Binding Title}"
+                                                    Style="{StaticResource UcH2}"
+                                                    FontSize="17"
+                                                    MaxLines="2"
+                                                    LineBreakMode="WordWrap"
+                                                    VerticalOptions="Start" />
+
+                                                <Border Grid.Column="1" Style="{StaticResource UcTag}" BackgroundColor="{StaticResource UcMint}" Padding="9,0" VerticalOptions="Start">
+                                                    <Label
+                                                        Text="{Binding MatchLabel}"
+                                                        Style="{StaticResource UcTagText}"
+                                                        FontSize="11.5"
+                                                        TextColor="{StaticResource UcGreen}" />
+                                                </Border>
+                                            </Grid>
+
+                                            <Label
+                                                Grid.Row="1"
+                                                Text="{Binding CompanyName}"
+                                                FontSize="14"
+                                                FontFamily="InterSemiBold"
+                                                TextColor="{StaticResource UcGreen}" />
+
+                                            <Grid Grid.Row="2" ColumnDefinitions="Auto,*" ColumnSpacing="7">
+                                                <Image Grid.Column="0" Source="ic_location_muted.png" WidthRequest="14" HeightRequest="14" Aspect="AspectFit" VerticalOptions="Center" />
+                                                <Label
+                                                    Grid.Column="1"
+                                                    FontSize="13"
+                                                    TextColor="{StaticResource UcMuted}"
+                                                    VerticalOptions="Center"
+                                                    LineBreakMode="TailTruncation">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="{Binding Location}" />
+                                                            <Span Text=" · " />
+                                                            <Span Text="{Binding DurationLabel}" />
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                </Label>
+                                            </Grid>
+
+                                            <Label
+                                                Grid.Row="3"
+                                                Text="{Binding DeadlineLabel}"
+                                                FontSize="13"
+                                                TextColor="{StaticResource UcMuted}" />
+
+                                            <!-- Status strip: applied / closing soon / external.
+                                                 One pill height and one gap for the whole row. -->
+                                            <HorizontalStackLayout Grid.Row="4" Spacing="8" Margin="0,4,0,0">
+                                                <Border Style="{StaticResource UcTag}" BackgroundColor="{StaticResource UcMint}" IsVisible="{Binding HaveApplied}">
+                                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                                                        <Image Grid.Column="0" Source="ic_check_circle_green.png" WidthRequest="13" HeightRequest="13" Aspect="AspectFit" VerticalOptions="Center" />
+                                                        <Label Grid.Column="1" Text="{Binding MyApplicationStatus}" Style="{StaticResource UcTagText}" TextColor="{StaticResource UcGreen}" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <Border Style="{StaticResource UcTag}" BackgroundColor="{StaticResource UcPillAmberBg}" IsVisible="{Binding ClosingSoon}">
+                                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                                                        <Image Grid.Column="0" Source="ic_clock_amber.png" WidthRequest="13" HeightRequest="13" Aspect="AspectFit" VerticalOptions="Center" />
+                                                        <Label Grid.Column="1" Text="{Binding ClosingSoonLabel}" Style="{StaticResource UcTagText}" TextColor="{StaticResource UcPillAmberFg}" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <Border Style="{StaticResource UcTag}" BackgroundColor="{StaticResource UcPillGreyBg}" IsVisible="{Binding IsExternal}">
+                                                    <Label Text="External" Style="{StaticResource UcTagText}" TextColor="{StaticResource UcPillGreyFg}" />
+                                                </Border>
+                                            </HorizontalStackLayout>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="80" Color="Transparent" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- ===== Bottom navigation ===== -->
+        <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
+            <Grid ColumnDefinitions="*,*,*,*">
+
+                <VerticalStackLayout Grid.Column="0" Spacing="3" Opacity="0.45">
+                    <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_home_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Home" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnComingSoonTapped" CommandParameter="Home" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="3" Opacity="0.45">
+                    <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_users_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Groups" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnGroupsTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2" Spacing="3">
+                    <Border Style="{StaticResource UcTabPill}">
+                        <Image Source="ic_briefcase_green.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Internships" Style="{StaticResource UcTabLabelActive}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="3" Spacing="3" Opacity="0.45">
+                    <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_user_circle_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Profile" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnComingSoonTapped" CommandParameter="Profile" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+
+</ContentPage>

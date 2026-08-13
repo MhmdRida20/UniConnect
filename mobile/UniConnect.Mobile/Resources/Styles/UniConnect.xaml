@@ -13,7 +13,29 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- ===== Brand greens ===== -->
+    <!-- ===== Brand greens =====
+         UcBrandStart/End are the "Academic Vitality" pair the app's headers and
+         primary buttons are built from. The UcPrimary* scale below stays as the
+         wider palette (pills, icons, borders, hover states) so the two clients
+         keep the same supporting colours. -->
+    <Color x:Key="UcBrandStart">#108548</Color>
+    <Color x:Key="UcBrandEnd">#0a5d32</Color>
+
+    <!-- Academic Vitality. The green stays the brand identifier; the deep teal
+         adds the "executive" layer the palette calls for, and soft mint carries
+         chips and badges without competing with either. -->
+    <!-- The green used for ink: wordmarks, employer names, icons, active tabs.
+         Kept separate from UcBrandStart/End, which are the gradient pair the
+         login screen and primary buttons are built from — those two were
+         specified as a pair and should not drift with this one. -->
+    <Color x:Key="UcGreen">#0f7a46</Color>
+
+    <Color x:Key="UcTealDeep">#0d4f4f</Color>
+    <Color x:Key="UcTealMid">#2d6767</Color>
+    <Color x:Key="UcMint">#dcf5ea</Color>
+    <Color x:Key="UcMintStrong">#b0eaea</Color>
+    <Color x:Key="UcPrimaryCore">#006a37</Color>
+
     <Color x:Key="UcPrimary">#16a34a</Color>
     <Color x:Key="UcPrimaryDark">#15803d</Color>
     <Color x:Key="UcPrimaryDarker">#166534</Color>
@@ -31,7 +53,9 @@
     <Color x:Key="UcMuted">#64748b</Color>
     <Color x:Key="UcBorder">#e2e8f0</Color>
     <Color x:Key="UcBorderSoft">#eef2f6</Color>
-    <Color x:Key="UcBg">#f6f9f7</Color>
+    <!-- A cool off-white rather than pure white, which is what gives the page
+         its "airy" base and lets a white card read as raised above it. -->
+    <Color x:Key="UcBg">#f8fafb</Color>
     <Color x:Key="UcSurface">#ffffff</Color>
     <Color x:Key="UcSurfaceAlt">#f1f5f9</Color>
 
@@ -48,12 +72,28 @@
     <Color x:Key="UcPillRedFg">#991b1b</Color>
 
     <!-- ===== Gradients =====
-         .uc-hero uses linear-gradient(135deg, deep 0%, darker 45%, primary 100%).
-         135deg in CSS runs top-left to bottom-right, which is 0,0 -> 1,1 here. -->
+         The brand gradient: #108548 -> #0a5d32, running top-left to bottom-right
+         (CSS 135deg, which is 0,0 -> 1,1 here). Used for page headers and for
+         primary action buttons, so the two read as the same surface. -->
+    <LinearGradientBrush x:Key="UcBrandBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource UcBrandStart}" Offset="0.0" />
+        <GradientStop Color="{StaticResource UcBrandEnd}" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- The primary button's gradient.
+         Left-to-right because a button is wide and short, so a diagonal sweep
+         barely reads across it. It ends on teal rather than on UcBrandEnd: the
+         design this is built from shows the button fading green into teal,
+         while #0a5d32 is a dark green that reads as a flat slab at this size. -->
+    <LinearGradientBrush x:Key="UcBrandBrushH" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="{StaticResource UcBrandStart}" Offset="0.0" />
+        <GradientStop Color="{StaticResource UcAccentDeep}" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Kept as the alias the pages already reference. -->
     <LinearGradientBrush x:Key="UcHeroBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="{StaticResource UcPrimaryDeep}" Offset="0.0" />
-        <GradientStop Color="{StaticResource UcPrimaryDarker}" Offset="0.45" />
-        <GradientStop Color="{StaticResource UcPrimary}" Offset="1.0" />
+        <GradientStop Color="{StaticResource UcBrandStart}" Offset="0.0" />
+        <GradientStop Color="{StaticResource UcBrandEnd}" Offset="1.0" />
     </LinearGradientBrush>
 
     <!-- .sgd-msg.is-mine .sgd-avatar -->
@@ -83,33 +123,39 @@
         <Setter Property="Shell.NavBarHasShadow" Value="True" />
     </Style>
 
-    <!-- ===== Type scale ===== -->
+    <!-- ===== Type scale =====
+         Two families, split by job: Montserrat carries every title and heading,
+         Open Sans every run of body text. The sizes step 28 / 22 / 16 / 14.5
+         for headings against 14 / 13 / 11.5 for body, so a title never sits at
+         the same weight-and-size as the text under it. -->
     <Style TargetType="Label">
         <Setter Property="TextColor" Value="{StaticResource UcText}" />
-        <Setter Property="FontFamily" Value="OpenSansRegular" />
+        <Setter Property="FontFamily" Value="InterRegular" />
     </Style>
 
+    <!-- Hero wordmark -->
     <Style x:Key="UcDisplay" TargetType="Label">
-        <Setter Property="FontSize" Value="27" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontFamily" Value="MontserratBold" />
         <Setter Property="TextColor" Value="White" />
     </Style>
 
+    <!-- Card and section titles -->
     <Style x:Key="UcH1" TargetType="Label">
         <Setter Property="FontSize" Value="22" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratBold" />
         <Setter Property="TextColor" Value="{StaticResource UcText}" />
     </Style>
 
     <Style x:Key="UcH2" TargetType="Label">
         <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="TextColor" Value="{StaticResource UcText}" />
     </Style>
 
     <Style x:Key="UcH3" TargetType="Label">
         <Setter Property="FontSize" Value="14.5" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="TextColor" Value="{StaticResource UcText}" />
     </Style>
 
@@ -132,14 +178,21 @@
     <!-- .uc-eyebrow — the small tracked label above a hero title -->
     <Style x:Key="UcEyebrow" TargetType="Label">
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="CharacterSpacing" Value="1.6" />
         <Setter Property="TextColor" Value="{StaticResource UcPrimarySoft}" />
     </Style>
 
     <Style x:Key="UcHeroSub" TargetType="Label">
-        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="TextColor" Value="#d1fae5" />
+    </Style>
+
+    <!-- An inline text action — "Forgot Password?" and similar. -->
+    <Style x:Key="UcLink" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
+        <Setter Property="TextColor" Value="{StaticResource UcBrandStart}" />
     </Style>
 
     <Style x:Key="UcDangerText" TargetType="Label">
@@ -173,12 +226,26 @@
         <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
         <Setter Property="Stroke" Value="{StaticResource UcBorder}" />
         <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Padding" Value="16" />
+        <Setter Property="Padding" Value="20" />
         <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="14" />
+            <RoundRectangle CornerRadius="16" />
         </Setter>
+        <!-- Ambient and tinted with the brand green rather than neutral grey:
+             a grey shadow over a cool off-white page reads as dirt. -->
         <Setter Property="Shadow">
-            <Shadow Brush="#0f172a" Offset="0,2" Radius="10" Opacity="0.07" />
+            <Shadow Brush="#006d37" Offset="0,4" Radius="20" Opacity="0.16" />
+        </Setter>
+    </Style>
+
+    <!-- The elevated card a screen is built around — the sign-in panel, a form
+         section. Same surface as UcCard with a deeper lift and more breathing
+         room, so it reads as sitting above the page rather than on it. -->
+    <Style x:Key="UcCardRaised" TargetType="Border" BasedOn="{StaticResource UcCard}">
+        <Setter Property="Padding" Value="22,24" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Shadow">
+            <Shadow Brush="#0f172a" Offset="0,8" Radius="24" Opacity="0.12" />
         </Setter>
     </Style>
 
@@ -223,7 +290,7 @@
 
     <Style x:Key="UcAvatarText" TargetType="Label">
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="TextColor" Value="White" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="VerticalOptions" Value="Center" />
@@ -264,7 +331,7 @@
     <!-- .uc-pill text: small, bold, tracked -->
     <Style x:Key="UcPillText" TargetType="Label">
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="CharacterSpacing" Value="0.6" />
         <Setter Property="TextColor" Value="{StaticResource UcPrimaryDarker}" />
     </Style>
@@ -285,33 +352,37 @@
         <Setter Property="TextColor" Value="White" />
     </Style>
 
-    <!-- ===== Buttons ===== -->
+    <!-- ===== Buttons =====
+         The default button is the primary action, so it carries the brand
+         gradient. Background (a Brush) rather than BackgroundColor is what lets
+         it; the visual states below still switch BackgroundColor, which paints
+         over the brush for the duration of the state and reverts on Normal. -->
     <Style TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource UcPrimary}" />
+        <Setter Property="Background" Value="{StaticResource UcBrandBrushH}" />
         <Setter Property="TextColor" Value="White" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="FontSize" Value="15" />
-        <Setter Property="CornerRadius" Value="11" />
-        <Setter Property="Padding" Value="18,12" />
-        <Setter Property="MinimumHeightRequest" Value="46" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="18,14" />
+        <Setter Property="MinimumHeightRequest" Value="50" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal" />
                     <VisualState x:Name="PointerOver">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource UcPrimaryDark}" />
+                            <Setter Property="Opacity" Value="0.92" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Pressed">
                         <VisualState.Setters>
                             <Setter Property="Scale" Value="0.97" />
-                            <Setter Property="BackgroundColor" Value="{StaticResource UcPrimaryDarker}" />
+                            <Setter Property="Opacity" Value="0.88" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource UcBorder}" />
+                            <Setter Property="Background" Value="{StaticResource UcBorder}" />
                             <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
                         </VisualState.Setters>
                     </VisualState>
@@ -324,7 +395,7 @@
     <Style x:Key="UcBtnOnHero" TargetType="Button">
         <Setter Property="BackgroundColor" Value="White" />
         <Setter Property="TextColor" Value="{StaticResource UcPrimaryDarker}" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="FontSize" Value="15" />
         <Setter Property="CornerRadius" Value="11" />
         <Setter Property="Padding" Value="18,12" />
@@ -353,7 +424,7 @@
         <Setter Property="TextColor" Value="{StaticResource UcPrimaryDark}" />
         <Setter Property="BorderColor" Value="{StaticResource UcPrimary}" />
         <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="CornerRadius" Value="11" />
         <Setter Property="Padding" Value="16,10" />
@@ -390,7 +461,7 @@
     <!-- Compact approve/reject/remove actions in member rows -->
     <Style x:Key="UcBtnTiny" TargetType="Button">
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="CornerRadius" Value="9" />
         <Setter Property="Padding" Value="11,6" />
         <Setter Property="MinimumHeightRequest" Value="34" />
@@ -492,22 +563,406 @@
         <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
         <Setter Property="Stroke" Value="{StaticResource UcBorder}" />
         <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Padding" Value="12,2" />
+        <Setter Property="Padding" Value="14,4" />
         <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="11" />
+            <RoundRectangle CornerRadius="12" />
+        </Setter>
+    </Style>
+
+    <!-- A labelled field: label, then the framed input, as one unit. Every form
+         on every screen stacks these, which is what keeps the spacing even. -->
+    <Style x:Key="UcField" TargetType="VerticalStackLayout">
+        <Setter Property="Spacing" Value="6" />
+    </Style>
+
+    <!-- An affordance living inside an input frame — the password reveal toggle.
+         Borderless so it reads as part of the field, not a button on top of it. -->
+    <Style x:Key="UcInputIconBtn" TargetType="ImageButton">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="HeightRequest" Value="22" />
+        <Setter Property="WidthRequest" Value="22" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.5" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- A form field standing on the page rather than inside a card: taller and
+         softer than UcInputFrame, with the same ambient tinted lift the cards
+         use so the two read as the same family of surface. -->
+    <Style x:Key="UcFieldBox" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="Stroke" Value="{StaticResource UcBorder}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="16,6" />
+        <Setter Property="MinimumHeightRequest" Value="56" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="12" />
+        </Setter>
+        <Setter Property="Shadow">
+            <Shadow Brush="#006d37" Offset="0,3" Radius="14" Opacity="0.10" />
+        </Setter>
+    </Style>
+
+    <!-- The − / + squares either side of a stepper's value. -->
+    <Style x:Key="UcStepperBtn" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurfaceAlt}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="HeightRequest" Value="38" />
+        <Setter Property="WidthRequest" Value="38" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="10" />
+        </Setter>
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource UcMint}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcStepperGlyph" TargetType="Label">
+        <Setter Property="FontSize" Value="19" />
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+        <Setter Property="TextColor" Value="{StaticResource UcTealDeep}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- The bar a screen's primary action is pinned to. Sits above the page, so
+         it carries a top hairline and a shadow that throws upward. -->
+    <Style x:Key="UcActionBar" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="Stroke" Value="{StaticResource UcBorderSoft}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="24,14,24,20" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="20,20,0,0" />
+        </Setter>
+        <Setter Property="Shadow">
+            <Shadow Brush="#006d37" Offset="0,-4" Radius="18" Opacity="0.10" />
+        </Setter>
+    </Style>
+
+    <!-- A tall primary action: the brand gradient, as the design system asks for
+         on a screen's main call to action. -->
+    <Style x:Key="UcBtnPrimaryLarge" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource UcBrandBrushH}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="18,15" />
+        <Setter Property="MinimumHeightRequest" Value="56" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.98" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.5" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
         </Setter>
     </Style>
 
     <!-- Form field label (.form-label) -->
     <Style x:Key="UcFieldLabel" TargetType="Label">
         <Setter Property="FontSize" Value="13.5" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="TextColor" Value="{StaticResource UcTextSoft}" />
     </Style>
 
     <Style x:Key="UcFieldHint" TargetType="Label">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
+    </Style>
+
+    <!-- ===== App chrome =====
+         A light top bar carrying the product name, and a bottom bar carrying
+         the sections. Both are fixed; only what sits between them scrolls. -->
+    <Style x:Key="UcAppBar" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="0" />
+        </Setter>
+        <Setter Property="Shadow">
+            <Shadow Brush="#0f172a" Offset="0,1" Radius="8" Opacity="0.06" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcAppBarTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="19" />
+        <Setter Property="FontFamily" Value="MontserratBold" />
+        <Setter Property="TextColor" Value="{StaticResource UcBrandStart}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="UcBottomBar" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="8,8,8,10" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="0" />
+        </Setter>
+        <Setter Property="Shadow">
+            <Shadow Brush="#0f172a" Offset="0,-2" Radius="12" Opacity="0.07" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcTabLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
+        <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="UcTabLabelActive" TargetType="Label" BasedOn="{StaticResource UcTabLabel}">
+        <Setter Property="TextColor" Value="{StaticResource UcGreen}" />
+    </Style>
+
+    <!-- The pill behind the selected tab's icon. -->
+    <Style x:Key="UcTabPill" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcMint}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="20,7" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="999" />
+        </Setter>
+    </Style>
+
+    <!-- ===== Refined list-screen components =====
+         A shadow instead of a border: on a near-white page a 1px grey outline
+         reads as a seam, while a soft ambient shadow separates the card from
+         the background without drawing a line. -->
+    <Style x:Key="UcCardSoft" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="20" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="16" />
+        </Setter>
+        <Setter Property="Shadow">
+            <Shadow Brush="#0f7a46" Offset="0,4" Radius="18" Opacity="0.13" />
+        </Setter>
+    </Style>
+
+    <!-- 48pt tall, which is both the spec height and a comfortable touch target. -->
+    <Style x:Key="UcSearchField" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="Stroke" Value="{StaticResource UcBorder}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="12" />
+        </Setter>
+    </Style>
+
+    <!-- Filter chips: 44pt so both the row and every touch target match. -->
+    <Style x:Key="UcFilterChip" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="Stroke" Value="{StaticResource UcBorder}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="12" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcFilterChipText" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+        <Setter Property="TextColor" Value="{StaticResource UcText}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="LineBreakMode" Value="NoWrap" />
+    </Style>
+
+    <!-- Tag pills under a card. One height for all of them, so the row reads as
+         a row rather than as three differently-sized blobs. -->
+    <Style x:Key="UcTag" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="HeightRequest" Value="28" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="999" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcTagText" TargetType="Label">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- Filled green pill for a top-bar action. -->
+    <Style x:Key="UcBtnPill" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcGreen}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="HeightRequest" Value="40" />
+        <Setter Property="MinimumWidthRequest" Value="0" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.97" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- Avatar in a stacked row: white ring so overlapping circles stay
+         separable against each other and against the card. -->
+    <Style x:Key="UcAvatarStacked" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource UcAvatarBrush}" />
+        <Setter Property="Stroke" Value="{StaticResource UcSurface}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="HeightRequest" Value="32" />
+        <Setter Property="WidthRequest" Value="32" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="16" />
+        </Setter>
+    </Style>
+
+    <!-- ===== Filter chips =====
+         A horizontally scrolling row of course filters. Reads better on a phone
+         than a dropdown: the options are visible instead of hidden behind a tap. -->
+    <Style x:Key="UcChip" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="Stroke" Value="{StaticResource UcBorder}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="16,9" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="999" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcChipActive" TargetType="Border" BasedOn="{StaticResource UcChip}">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcMintStrong}" />
+        <Setter Property="Stroke" Value="{StaticResource UcMintStrong}" />
+    </Style>
+
+    <Style x:Key="UcChipText" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+        <Setter Property="TextColor" Value="{StaticResource UcTextSoft}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="UcChipTextActive" TargetType="Label" BasedOn="{StaticResource UcChipText}">
+        <Setter Property="TextColor" Value="{StaticResource UcTealDeep}" />
+    </Style>
+
+    <!-- Soft-mint badge with deep teal text: the "high-end, legible contrast"
+         pairing the palette specifies for status. -->
+    <Style x:Key="UcPillMint" TargetType="Border" BasedOn="{StaticResource UcPill}">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcMint}" />
+    </Style>
+
+    <Style x:Key="UcPillTextMint" TargetType="Label" BasedOn="{StaticResource UcPillText}">
+        <Setter Property="TextColor" Value="{StaticResource UcTealDeep}" />
+    </Style>
+
+    <!-- ===== Seats bar =====
+         Track and fill; the fill's width comes from a star-weighted Grid column
+         (see StarLengthConverter) rather than from a ProgressBar. -->
+    <Style x:Key="UcBarTrack" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcBorder}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="HeightRequest" Value="7" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="4" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcBarFill" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource UcBrandBrushH}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="4" />
+        </Setter>
+    </Style>
+
+    <!-- ===== Floating action button ===== -->
+    <Style x:Key="UcFab" TargetType="ImageButton">
+        <Setter Property="Background" Value="{StaticResource UcBrandBrush}" />
+        <Setter Property="CornerRadius" Value="28" />
+        <Setter Property="HeightRequest" Value="56" />
+        <Setter Property="WidthRequest" Value="56" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="Shadow">
+            <Shadow Brush="#0a5d32" Offset="0,6" Radius="14" Opacity="0.45" />
+        </Setter>
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.9" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- The course code badge on a card. Neutral so it reads as a label, not a
+         status — the coloured pill on the right is the one carrying meaning. -->
+    <Style x:Key="UcCodeBadge" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurfaceAlt}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="8" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcCodeBadgeText" TargetType="Label">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
+        <Setter Property="TextColor" Value="{StaticResource UcTextSoft}" />
     </Style>
 
     <Style TargetType="ActivityIndicator">

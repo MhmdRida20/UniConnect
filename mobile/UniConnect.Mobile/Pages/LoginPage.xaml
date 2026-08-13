@@ -1,41 +1,92 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Sign in.
+
+    The gradient is a backdrop rather than a container: it is sized to roughly
+    half the viewport and sits behind the scrolling column, so the card floats
+    across the boundary between green and page. Building it the other way round
+    — card nested in the band, pulled up by a negative margin — ties the two
+    together, and the overlap then changes with the band's content instead of
+    with the screen.
+
+    Band height and card width are set in code (OnSizeAllocated) because both
+    are fractions of the viewport, which XAML cannot express.
+-->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="UniConnect.Mobile.Pages.LoginPage"
              Title="Sign in"
              Shell.NavBarIsVisible="False">
 
-    <ScrollView>
-        <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="*,Auto">
 
-            <!-- ===== Brand band (.uc-hero) ===== -->
-            <Border
-                Grid.Row="0"
-                Background="{StaticResource UcHeroBrush}"
-                StrokeThickness="0"
-                Padding="24,44,24,40">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="0,0,28,28" />
-                </Border.StrokeShape>
+        <!-- ===== Gradient backdrop =====
+             The shapes inside are decoration only: soft white discs at 5-10%
+             over the gradient, half of them hanging past an edge so the band
+             reads as a window onto something larger rather than a slab. They
+             drift continuously (see StartAmbientDrift), which is what stops a
+             mostly-empty half-screen from feeling dead. The Border clips them
+             to its rounded shape, so the ones placed off-edge are cut cleanly. -->
+        <Border
+            x:Name="Band"
+            Grid.Row="0"
+            VerticalOptions="Start"
+            Background="{StaticResource UcBrandBrush}"
+            StrokeThickness="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="0,0,34,34" />
+            </Border.StrokeShape>
 
-                <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
-                    <Border
-                        BackgroundColor="#33ffffff"
-                        StrokeThickness="0"
-                        HeightRequest="64"
-                        WidthRequest="64"
-                        HorizontalOptions="Center">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="20" />
-                        </Border.StrokeShape>
-                        <Image
-                            Source="ic_users_white.png"
-                            WidthRequest="32"
-                            HeightRequest="32"
-                            Aspect="AspectFit"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
-                    </Border>
+            <Grid>
+                <Ellipse
+                    x:Name="Disc1"
+                    Fill="#1cffffff"
+                    WidthRequest="300" HeightRequest="300"
+                    HorizontalOptions="Start" VerticalOptions="Start"
+                    Margin="-110,-120,0,0" />
+
+                <Ellipse
+                    x:Name="Disc2"
+                    Fill="#14ffffff"
+                    WidthRequest="220" HeightRequest="220"
+                    HorizontalOptions="End" VerticalOptions="Start"
+                    Margin="0,40,-80,0" />
+
+                <Ellipse
+                    x:Name="Disc3"
+                    Fill="#10ffffff"
+                    WidthRequest="170" HeightRequest="170"
+                    HorizontalOptions="Start" VerticalOptions="End"
+                    Margin="30,0,0,-60" />
+
+                <Ellipse
+                    x:Name="Ring1"
+                    Stroke="#26ffffff" StrokeThickness="1.5" Fill="Transparent"
+                    WidthRequest="150" HeightRequest="150"
+                    HorizontalOptions="End" VerticalOptions="End"
+                    Margin="0,0,40,10" />
+
+                <Ellipse
+                    x:Name="Ring2"
+                    Stroke="#1affffff" StrokeThickness="1" Fill="Transparent"
+                    WidthRequest="90" HeightRequest="90"
+                    HorizontalOptions="Center" VerticalOptions="Start"
+                    Margin="90,20,0,0" />
+            </Grid>
+        </Border>
+
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout x:Name="Column" HorizontalOptions="Center">
+
+                <!-- ===== Brand =====
+                     No logo mark: the wordmark is the only thing here, so it
+                     carries the section on its own. The padding is what places
+                     the card's top edge across the band, so it is generous. -->
+                <VerticalStackLayout
+                    x:Name="Wordmark"
+                    Spacing="10"
+                    Padding="0,112,0,58"
+                    HorizontalOptions="Center">
 
                     <Label
                         Text="UniConnect"
@@ -43,32 +94,30 @@
                         HorizontalOptions="Center" />
 
                     <Label
-                        Text="Sign in with your university account"
+                        Text="Your campus life, connected."
                         Style="{StaticResource UcHeroSub}"
                         HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
-            </Border>
 
-            <!-- ===== Form ===== -->
-            <VerticalStackLayout
-                x:Name="FormColumn"
-                Grid.Row="1"
-                Padding="20,-22,20,28"
-                Spacing="14"
-                HorizontalOptions="Center">
+                <!-- ===== Sign-in card ===== -->
+                <Border Style="{StaticResource UcCardRaised}" Padding="22,26">
+                    <VerticalStackLayout Spacing="20">
 
-                <Border Style="{StaticResource UcCard}" Padding="20">
-                    <VerticalStackLayout Spacing="14">
+                        <Label
+                            Text="Welcome Back"
+                            Style="{StaticResource UcH1}"
+                            HorizontalOptions="Center"
+                            Margin="0,0,0,2" />
 
-                        <VerticalStackLayout Spacing="5">
-                            <Label Text="Email" Style="{StaticResource UcFieldLabel}" />
+                        <VerticalStackLayout Style="{StaticResource UcField}">
+                            <Label Text="University Email" Style="{StaticResource UcFieldLabel}" />
                             <Border Style="{StaticResource UcInputFrame}">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                     <Image Grid.Column="0" Source="ic_mail_muted.png" Style="{StaticResource UcIcon}" />
                                     <Entry
                                         Grid.Column="1"
                                         x:Name="EmailEntry"
-                                        Placeholder="you@university.edu"
+                                        Placeholder="student@university.edu"
                                         Keyboard="Email"
                                         ReturnType="Next"
                                         SemanticProperties.Description="University email address" />
@@ -76,10 +125,10 @@
                             </Border>
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Spacing="5">
+                        <VerticalStackLayout Style="{StaticResource UcField}">
                             <Label Text="Password" Style="{StaticResource UcFieldLabel}" />
                             <Border Style="{StaticResource UcInputFrame}">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                                     <Image Grid.Column="0" Source="ic_lock_muted.png" Style="{StaticResource UcIcon}" />
                                     <Entry
                                         Grid.Column="1"
@@ -89,14 +138,32 @@
                                         ReturnType="Go"
                                         Completed="OnSignInClicked"
                                         SemanticProperties.Description="Password" />
+                                    <ImageButton
+                                        Grid.Column="2"
+                                        x:Name="PasswordToggle"
+                                        Style="{StaticResource UcInputIconBtn}"
+                                        Source="ic_eye_off_muted.png"
+                                        Clicked="OnTogglePasswordClicked"
+                                        SemanticProperties.Description="Show password" />
                                 </Grid>
                             </Border>
+
+                            <Label
+                                Text="Forgot Password?"
+                                Style="{StaticResource UcLink}"
+                                HorizontalOptions="End"
+                                Margin="0,6,2,0">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnForgotPasswordTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
                         </VerticalStackLayout>
 
                         <Button
                             x:Name="SignInBtn"
-                            Text="Sign in"
+                            Text="Sign In"
                             Clicked="OnSignInClicked"
+                            HeightRequest="54"
                             Margin="0,4,0,0"
                             HorizontalOptions="Fill" />
 
@@ -113,7 +180,7 @@
                             StrokeThickness="0"
                             Padding="12,10">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="10" />
+                                <RoundRectangle CornerRadius="12" />
                             </Border.StrokeShape>
                             <Label
                                 x:Name="ErrorLabel"
@@ -124,24 +191,42 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Style="{StaticResource UcInset}">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Source="ic_lock_green.png" Style="{StaticResource UcIcon}" VerticalOptions="Start" />
-                        <Label
-                            Grid.Column="1"
-                            Text="The mobile app is for students. Instructor, staff and admin accounts use the web portal."
-                            Style="{StaticResource UcTiny}"
-                            LineBreakMode="WordWrap" />
-                    </Grid>
-                </Border>
-
-                <Label
-                    x:Name="TargetLabel"
-                    Style="{StaticResource UcTiny}"
-                    Opacity="0.6"
-                    HorizontalTextAlignment="Center" />
+                <!-- Keeps the card clear of the footer when the column scrolls. -->
+                <BoxView HeightRequest="24" Color="Transparent" />
             </VerticalStackLayout>
-        </Grid>
-    </ScrollView>
+        </ScrollView>
+
+        <!-- ===== Footer, pinned to the bottom of the screen ===== -->
+        <VerticalStackLayout Grid.Row="1" Spacing="5" Padding="20,0,20,18">
+            <!-- Grid rather than a stack: a HorizontalStackLayout sizes the icon
+                 against the row, not against the text, which left the shield
+                 sitting high of the sentence it belongs to. -->
+            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6" HorizontalOptions="Center">
+                <Image
+                    Grid.Column="0"
+                    Source="ic_shield_green.png"
+                    WidthRequest="14" HeightRequest="14"
+                    Aspect="AspectFit"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="1"
+                    Text="Exclusive access for verified students."
+                    Style="{StaticResource UcTiny}"
+                    VerticalOptions="Center" />
+            </Grid>
+
+            <Label
+                Text="Instructor, staff and admin accounts use the web portal."
+                Style="{StaticResource UcTiny}"
+                HorizontalTextAlignment="Center"
+                LineBreakMode="WordWrap" />
+
+            <Label
+                x:Name="TargetLabel"
+                Style="{StaticResource UcTiny}"
+                Opacity="0.55"
+                HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+    </Grid>
 
 </ContentPage>

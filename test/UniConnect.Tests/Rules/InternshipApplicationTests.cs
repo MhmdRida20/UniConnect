@@ -37,17 +37,24 @@ public class InternshipApplicationTests : IDisposable
 
     public void Dispose() => _test.Dispose();
 
+    /// <summary>
+    /// The rules moved into InternshipService when the mobile app needed them
+    /// too; the controller now only chooses views and messages. These tests
+    /// still drive it through the controller, because what they are pinning is
+    /// the behaviour a student sees, not the shape of the internals.
+    /// </summary>
+    private InternshipService Service() =>
+        new(_test.Db,
+            new MatchingScoreService(_test.Db, _provider, NullLogger<MatchingScoreService>.Instance),
+            ServiceHarness.Notifications(_test.Db),
+            ServiceHarness.AuditLog(_test.Db),
+            _provider,
+            NullLogger<InternshipService>.Instance);
+
     private InternshipsController Controller(ApplicationUser? asUser = null)
     {
         var user = asUser ?? _student;
-        return new InternshipsController(
-                _test.Db,
-                IdentityHarness.CreateUserManager(_test.Db),
-                new MatchingScoreService(_test.Db, _provider, NullLogger<MatchingScoreService>.Instance),
-                ServiceHarness.Notifications(_test.Db),
-                ServiceHarness.AuditLog(_test.Db),
-                _provider,
-                NullLogger<InternshipsController>.Instance)
+        return new InternshipsController(Service(), IdentityHarness.CreateUserManager(_test.Db))
             .SignedInAs(user, "Student");
     }
 

@@ -5,11 +5,10 @@ namespace UniConnect.Mobile.Pages;
 
 public partial class GroupsPage : ContentPage
 {
-	private const string AllCourses = "All my courses";
-
 	private readonly StudyGroupsApi _api;
 	private readonly SessionStore _session;
 	private readonly StudyGroupHubClient _hub;
+	private readonly NotificationsApi _notifications;
 
 	/// <summary>What the list shows: the loaded groups after the search filter.</summary>
 	private readonly ObservableCollection<GroupSummary> _visible = new();
@@ -20,7 +19,17 @@ public partial class GroupsPage : ContentPage
 	private List<CourseDto> _courses = new();
 	private bool _coursesLoaded;
 	private bool _subscribed;
-	private int _columns = 1;
+
+	private const string AllCourses = "All my courses";
+
+	/// <summary>
+	/// What the chip row filters on. The course dropdown decides which groups
+	/// the server returns; this then narrows what is shown of them, so the two
+	/// controls do different jobs rather than duplicating one.
+	/// </summary>
+	private enum Scope { All, Open, Joined, Full }
+
+	private Scope _scope = Scope.All;
 
 	public GroupsPage()
 	{
@@ -29,51 +38,109 @@ public partial class GroupsPage : ContentPage
 		_api = ServiceHelper.Get<StudyGroupsApi>();
 		_session = ServiceHelper.Get<SessionStore>();
 		_hub = ServiceHelper.Get<StudyGroupHubClient>();
+		_notifications = ServiceHelper.Get<NotificationsApi>();
 
-		GroupsView.ItemsSource = _visible;
+		BindableLayout.SetItemsSource(CardsHost, _visible);
+		BuildChips();
 
 		SizeChanged += OnPageSizeChanged;
+	}
+
+	/// <summary>
+	/// Fills the account avatar. Done here rather than in the constructor
+	/// because reading the session is async, and the initials should refresh if
+	/// a different student signs in without the process restarting.
+	/// </summary>
+	private async Task LoadProfileAsync()
+	{
+		var session = await _session.GetAsync();
+		ProfileInitials.Text = Avatar.Initials(session?.FullName);
 	}
 
 	// ---- responsive layout -------------------------------------------------
 
 	/// <summary>
-	/// Reflows the card grid at the same widths the web does, so a desktop
-	/// window shows two or three columns instead of one tall ribbon.
+	/// Keeps the scrolling column bound to the viewport. Several children would
+	/// otherwise measure wider than the screen and drag the whole column with
+	/// them — see the notes on each below.
 	/// </summary>
 	private void OnPageSizeChanged(object? sender, EventArgs e)
 	{
 		if (Width <= 0) return;
 
-		var columns = Responsive.CardColumns(Width);
-		if (columns != _columns)
-		{
-			_columns = columns;
-			GroupsView.ItemsLayout = new GridItemsLayout(columns, ItemsLayoutOrientation.Vertical);
-		}
+		// Capped so the column does not sprawl across a desktop monitor.
+		var contentWidth = Math.Min(Width, Responsive.ContentMaxWidth);
+		HeaderColumn.WidthRequest = contentWidth;
 
-		// Stop the controls row and hero from sprawling on a wide monitor.
-		ControlsColumn.MaximumWidthRequest = Responsive.ContentMaxWidth;
-		GroupsView.MaximumWidthRequest = Responsive.ContentMaxWidth;
+		var innerWidth = contentWidth - (PageGutter * 2);
 
-		// The hero's action button drops under the title when there is no room
-		// for it beside one, and the course filter drops under the search box
-		// rather than squeezing it to a few characters.
-		var narrow = Width < Responsive.Sm;
+		CoursePicker.WidthRequest = innerWidth - (InputPadding * 2);
 
-		HeroGrid.ColumnDefinitions[1].Width = narrow ? 0 : GridLength.Auto;
-		CreateBtn.IsVisible = !narrow;
-		NarrowCreateBtn.IsVisible = narrow;
-
-		Grid.SetRow(FilterFrame, narrow ? 1 : 0);
-		Grid.SetColumn(FilterFrame, narrow ? 0 : 1);
-		Grid.SetColumnSpan(FilterFrame, narrow ? 2 : 1);
-		CoursePicker.WidthRequest = narrow ? -1 : 165;
+		// Same reason as the Picker: a horizontal ScrollView reports its whole
+		// content as its desired width, so the chip row would widen the header
+		// past the viewport and take every card with it.
+		ChipScroller.WidthRequest = innerWidth;
 	}
+
+	/// <summary>Side margin on the page, per the design system's 24px rhythm.</summary>
+	private const double PageGutter = 24;
+
+	/// <summary>Horizontal padding inside an input frame.</summary>
+	private const double InputPadding = 16;
+
+	// ---- scope chips -------------------------------------------------------
+
+	private void BuildChips()
+	{
+		ChipRow.Clear();
+
+		ChipRow.Add(Chip("All Groups", Scope.All));
+		ChipRow.Add(Chip("Open", Scope.Open));
+		ChipRow.Add(Chip("Joined", Scope.Joined));
+		ChipRow.Add(Chip("Full", Scope.Full));
+	}
+
+	private Border Chip(string text, Scope scope)
+	{
+		var active = _scope == scope;
+
+		var label = new Label { Text = text, Style = Theme(active ? "UcChipTextActive" : "UcChipText") };
+		var chip = new Border { Content = label, Style = Theme(active ? "UcChipActive" : "UcChip") };
+
+		var tap = new TapGestureRecognizer();
+		tap.Tapped += (_, _) => SelectScope(scope);
+		chip.GestureRecognizers.Add(tap);
+
+		return chip;
+	}
+
+	/// <summary>
+	/// Local, so switching scope is instant. Nothing here changes which groups
+	/// exist for the student — only which of the loaded ones are listed.
+	/// </summary>
+	private void SelectScope(Scope scope)
+	{
+		if (_scope == scope) return;
+
+		_scope = scope;
+		BuildChips();
+		ApplyFilters();
+	}
+
+	/// <summary>
+	/// Looks a style up in the app-level dictionary. A page's own Resources do
+	/// not cascade upwards, so indexing this.Resources would miss everything in
+	/// UniConnect.xaml.
+	/// </summary>
+	private static Style Theme(string key) =>
+		(Style)Application.Current!.Resources[key];
 
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
+
+		await LoadProfileAsync();
+		await RefreshUnreadBadgeAsync();
 
 		// The course list rarely changes, so it is fetched once; the groups are
 		// re-read every time because joining one on the details page changes
@@ -147,7 +214,7 @@ public partial class GroupsPage : ContentPage
 		try
 		{
 			_all = await _api.GetGroupsAsync(SelectedCourseCode());
-			ApplySearch();
+			ApplyFilters();
 			UpdateCounts();
 			UpdateBanner.IsVisible = false;
 		}
@@ -164,57 +231,117 @@ public partial class GroupsPage : ContentPage
 		}
 	}
 
-	private string? SelectedCourseCode() =>
-		CoursePicker.SelectedIndex <= 0 || CoursePicker.SelectedIndex > _courses.Count
-			? null
-			: _courses[CoursePicker.SelectedIndex - 1].CourseCode;
-
 	// ---- filtering --------------------------------------------------------
 
 	/// <summary>
-	/// Local, like the web's search box: the course filter is a server query
-	/// because it decides which groups exist for you, but typing just narrows
-	/// what has already been fetched.
+	/// Search and scope, both local: the course dropdown is a server query
+	/// because it decides which groups exist for you, but typing and switching
+	/// scope only narrow what has already been fetched.
 	/// </summary>
-	private void ApplySearch()
+	private void ApplyFilters()
 	{
 		var term = SearchInput.Text?.Trim().ToLowerInvariant() ?? string.Empty;
 
-		var matches = term.Length == 0
-			? _all
-			: _all.Where(g => g.SearchKey.Contains(term)).ToList();
+		var matches = _all.Where(g => _scope switch
+		{
+			Scope.Open => !g.IsFull && !g.AmMember,
+			Scope.Joined => g.AmMember,
+			Scope.Full => g.IsFull,
+			_ => true
+		});
+
+		if (term.Length > 0)
+			matches = matches.Where(g => g.SearchKey.Contains(term));
 
 		_visible.Clear();
 		foreach (var group in matches)
 			_visible.Add(group);
 
-		var searching = term.Length > 0;
-		EmptyTitle.Text = searching ? "No matches" : "No study groups yet";
-		EmptyBody.Text = searching
-			? "No groups match your search. Try a different keyword."
+		var narrowed = term.Length > 0 || _scope != Scope.All;
+		EmptyTitle.Text = narrowed ? "No matches" : "No study groups yet";
+		EmptyBody.Text = narrowed
+			? "No groups match this filter. Try a different keyword or scope."
 			: "There are no groups for your courses right now. Be the first to start one!";
+
+		EmptyState.IsVisible = _visible.Count == 0;
 
 		ResultsLabel.Text = _all.Count == 0
 			? string.Empty
 			: $"Showing {_visible.Count} of {_all.Count} group{(_all.Count == 1 ? "" : "s")}";
 	}
 
+	/// <summary>
+	/// The subtitle carries the numbers the hero used to: how many groups are
+	/// on offer, how many still have room, and how many you are already in.
+	/// </summary>
 	private void UpdateCounts()
 	{
-		// Mirrors the web hero: total · open · yours.
+		if (_all.Count == 0)
+		{
+			SubtitleLabel.Text = "Find a group or create your own.";
+			return;
+		}
+
 		var open = _all.Count(g => !g.IsFull);
 		var mine = _all.Count(g => g.AmMember);
 
-		HeroSubLabel.Text =
-			$"{_all.Count} group{(_all.Count == 1 ? "" : "s")} for your courses · {open} open · {mine} you're in";
+		SubtitleLabel.Text =
+			$"{_all.Count} group{(_all.Count == 1 ? "" : "s")} · {open} open · {mine} you're in";
 	}
 
-	private void OnSearchTextChanged(object? sender, TextChangedEventArgs e) => ApplySearch();
+	private void OnSearchTextChanged(object? sender, TextChangedEventArgs e) => ApplyFilters();
+
+	private string? SelectedCourseCode() =>
+		CoursePicker.SelectedIndex <= 0 || CoursePicker.SelectedIndex > _courses.Count
+			? null
+			: _courses[CoursePicker.SelectedIndex - 1].CourseCode;
 
 	private async void OnCourseFilterChanged(object? sender, EventArgs e)
 	{
 		if (!_coursesLoaded) return;
 		await LoadGroupsAsync();
+	}
+
+	/// <summary>
+	/// The avatar is the account menu. Sign out lives here rather than as its
+	/// own button, which is what leaves the top bar with room for the brand.
+	/// </summary>
+	private async void OnProfileTapped(object? sender, TappedEventArgs e)
+	{
+		var session = await _session.GetAsync();
+		var name = session?.FullName ?? "Your account";
+
+		var choice = await DisplayActionSheet(name, "Cancel", null, "Sign out");
+		if (choice == "Sign out") await SignOutAsync();
+	}
+
+	private async void OnNotificationsClicked(object? sender, EventArgs e) =>
+		await Shell.Current.GoToAsync(nameof(NotificationsPage));
+
+	/// <summary>
+	/// Refreshes the bell's badge. Uses the count endpoint, which does not mark
+	/// anything read — fetching the list itself would, so checking the badge
+	/// would clear the very thing it reports.
+	/// </summary>
+	private async Task RefreshUnreadBadgeAsync()
+	{
+		var count = await _notifications.GetUnreadCountAsync();
+
+		UnreadBadge.IsVisible = count > 0;
+		UnreadBadgeLabel.Text = count > 99 ? "99+" : count.ToString();
+	}
+
+	/// <summary>
+	/// The tab bar shows the app's planned shape, but Study Groups is the only
+	/// section built. Saying so beats opening an empty screen.
+	/// </summary>
+	private async void OnInternshipsTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync("//internships");
+
+	private async void OnComingSoonTapped(object? sender, TappedEventArgs e)
+	{
+		var section = e.Parameter as string ?? "This section";
+		await DisplayAlert(section, $"{section} is not part of the mobile app yet. Use the web portal for now.", "OK");
 	}
 
 	// ---- navigation -------------------------------------------------------
@@ -224,18 +351,14 @@ public partial class GroupsPage : ContentPage
 	private async void OnCreateClicked(object? sender, EventArgs e) =>
 		await Shell.Current.GoToAsync(nameof(CreateGroupPage));
 
-	private async void OnGroupSelected(object? sender, SelectionChangedEventArgs e)
+	private async void OnCardTapped(object? sender, TappedEventArgs e)
 	{
-		if (e.CurrentSelection.FirstOrDefault() is not GroupSummary group) return;
-
-		// Clear immediately, otherwise the row stays highlighted and tapping it
-		// again after coming back raises nothing.
-		GroupsView.SelectedItem = null;
+		if (sender is not Element element || element.BindingContext is not GroupSummary group) return;
 
 		await Shell.Current.GoToAsync($"{nameof(GroupDetailsPage)}?id={group.Id}");
 	}
 
-	private async void OnSignOutClicked(object? sender, EventArgs e)
+	private async Task SignOutAsync()
 	{
 		// Drop the hub connection too — it is authenticated as the outgoing
 		// student and would otherwise keep receiving their groups' traffic.

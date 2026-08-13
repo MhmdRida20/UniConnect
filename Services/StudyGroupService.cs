@@ -94,7 +94,9 @@ namespace UniConnect.Services
             var query = _db.StudyGroups
                 .Include(g => g.Course)
                 .Include(g => g.Creator)
-                .Include(g => g.Members)
+                // Members' users are needed for the browse cards' avatar row,
+                // which draws initials from each member's name.
+                .Include(g => g.Members).ThenInclude(m => m.User)
                 .Where(g => g.UniversityCode == user.UniversityCode
                             && myCourseCodes.Contains(g.CourseCode)
                             && g.Status != StudyGroupStatus.Archived);

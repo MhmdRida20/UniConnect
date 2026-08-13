@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    My applications — track and withdraw.
+
+    Whether a row offers Withdraw is the server's call, carried as CanWithdraw:
+    Accepted and Rejected are the employer's decision and Withdrawn is already
+    done, so those three are terminal.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:UniConnect.Mobile.Services"
+             x:Class="UniConnect.Mobile.Pages.MyApplicationsPage"
+             Title="My applications"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="21" />
+                    </Border.StrokeShape>
+                    <Image
+                        Source="ic_arrow_left_green.png"
+                        WidthRequest="20" HeightRequest="20"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label
+                    Grid.Column="1"
+                    Text="My applications"
+                    Style="{StaticResource UcH1}"
+                    FontSize="21"
+                    TextColor="{StaticResource UcBrandEnd}"
+                    VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <RefreshView x:Name="Refresher" Grid.Row="1" Refreshing="OnRefreshing">
+            <ScrollView>
+                <VerticalStackLayout x:Name="Column" Padding="24,20,24,32" Spacing="14">
+
+                    <Border
+                        x:Name="ErrorBox"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcPillRedBg}"
+                        StrokeThickness="0"
+                        Padding="14,12">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Label x:Name="ErrorLabel" FontSize="13" TextColor="{StaticResource UcPillRedFg}" LineBreakMode="WordWrap" />
+                    </Border>
+
+                    <VerticalStackLayout x:Name="EmptyState" IsVisible="False" Padding="10,30,10,10" Spacing="8">
+                        <Label Text="No applications yet" Style="{StaticResource UcH2}" HorizontalTextAlignment="Center" />
+                        <Label
+                            Text="Internships you apply to will appear here so you can track their progress."
+                            Style="{StaticResource UcMutedText}"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout x:Name="CardsHost" Spacing="14">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:ApplicationSummary">
+                                <Border Style="{StaticResource UcCard}">
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="9">
+
+                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                            <Label
+                                                Grid.Column="0"
+                                                Text="{Binding InternshipTitle}"
+                                                Style="{StaticResource UcH2}"
+                                                MaxLines="2"
+                                                LineBreakMode="WordWrap" />
+
+                                            <!-- Exactly one of these shows. -->
+                                            <Border Grid.Column="1" Style="{StaticResource UcPillGreen}" IsVisible="{Binding IsAccepted}" VerticalOptions="Start">
+                                                <Label Text="Accepted" Style="{StaticResource UcPillText}" />
+                                            </Border>
+                                            <Border Grid.Column="1" Style="{StaticResource UcPillRed}" IsVisible="{Binding IsRejected}" VerticalOptions="Start">
+                                                <Label Text="Rejected" Style="{StaticResource UcPillTextRed}" />
+                                            </Border>
+                                            <Border Grid.Column="1" Style="{StaticResource UcPillGrey}" IsVisible="{Binding IsWithdrawn}" VerticalOptions="Start">
+                                                <Label Text="Withdrawn" Style="{StaticResource UcPillTextGrey}" />
+                                            </Border>
+                                            <Border Grid.Column="1" Style="{StaticResource UcPillAmber}" IsVisible="{Binding IsInProgress}" VerticalOptions="Start">
+                                                <Label Text="{Binding Status}" Style="{StaticResource UcPillTextAmber}" />
+                                            </Border>
+                                        </Grid>
+
+                                        <Label
+                                            Grid.Row="1"
+                                            Text="{Binding CompanyName}"
+                                            Style="{StaticResource UcMutedText}"
+                                            TextColor="{StaticResource UcBrandStart}" />
+
+                                        <Label Grid.Row="2" Style="{StaticResource UcTiny}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding AppliedLabel}" />
+                                                    <Span Text="  ·  " />
+                                                    <Span Text="{Binding ScoreLabel}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+
+                                        <Border Grid.Row="3" Style="{StaticResource UcInset}" IsVisible="{Binding HasCoverMessage}">
+                                            <Label Text="{Binding CoverMessage}" Style="{StaticResource UcMutedText}" LineBreakMode="WordWrap" />
+                                        </Border>
+
+                                        <Button
+                                            Grid.Row="4"
+                                            Text="Withdraw"
+                                            Style="{StaticResource UcBtnTinyDanger}"
+                                            HorizontalOptions="Start"
+                                            IsVisible="{Binding CanWithdraw}"
+                                            Clicked="OnWithdrawClicked" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>

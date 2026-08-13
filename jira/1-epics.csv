@@ -1,0 +1,15 @@
+Summary,Work type,Description,Status,Labels
+Platform Foundation & Multi-University Architecture,Epic,Solution setup multi-tenancy database and external API integration,Done,phase-1
+Authentication Roles & Account Management,Epic,Identity roles registration and JWT issuance,Done,phase-1
+Study Groups,Epic,Course study groups with membership and real-time chat,Done,phase-2
+Ride Sharing,Epic,Student ride sharing with live tracking,Done,phase-2
+Smart Attendance,Epic,QR based attendance with anti-proxy checks,Done,phase-2
+Complaints & Ticketing,Epic,Student complaints and staff ticket workflow,Done,phase-2
+Clubs & Organizations,Epic,Student clubs events and officer management,Done,phase-2
+Internships & Career Matching,Epic,Internship postings and skills based matching,Done,phase-2
+Notifications & Real-Time Infrastructure,Epic,Unified notifications and SignalR hubs,Done,phase-2
+Administration Reporting & Audit,Epic,Admin tooling reporting and audit logging,Done,phase-3
+UI/UX & Design System,Epic,Design tokens components and page layouts,Done,phase-4
+Automated Testing,Epic,xUnit test suite and test infrastructure,Done,phase-5
+Mobile Application,Epic,.NET MAUI student mobile client,In Progress,phase-6
+Security Hardening & Defect Fixes,Epic,Security fixes and defect resolution,In Progress,phase-7

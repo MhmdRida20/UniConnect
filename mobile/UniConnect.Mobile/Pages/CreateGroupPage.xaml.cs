@@ -4,7 +4,25 @@ namespace UniConnect.Mobile.Pages;
 
 public partial class CreateGroupPage : ContentPage
 {
-	private const string SelectPrompt = "Select a course";
+	private const string SelectPrompt = "Choose a registered course";
+
+	// Capacity bounds. The university's own cap is enforced server-side and can
+	// be lower than MaxCapacity — the stepper only keeps the value sane locally.
+	private const int MinCapacity = 2;
+	private const int MaxCapacity = 50;
+	private const int DefaultCapacity = 6;
+
+	/// <summary>
+	/// The floor on members, which this form does not ask for.
+	///
+	/// The API needs a MinMembers and the web form exposes it, but the design
+	/// for this screen has a single "Capacity" and adding a second stepper for a
+	/// number most students would leave alone is not worth the space. It is sent
+	/// as 2, clamped so it can never exceed the chosen capacity.
+	/// </summary>
+	private const int DefaultMinMembers = 2;
+
+	private int _capacity = DefaultCapacity;
 
 	private readonly StudyGroupsApi _api;
 	private readonly SessionStore _session;
@@ -19,10 +37,12 @@ public partial class CreateGroupPage : ContentPage
 		_session = ServiceHelper.Get<SessionStore>();
 
 		UpdateDescriptionCount();
+		UpdateCapacity();
 
 		// Inputs stretched the full width of a desktop window are hard to scan,
 		// so the form keeps a readable measure however wide the window gets.
 		FormColumn.MaximumWidthRequest = Responsive.FormMaxWidth;
+		ActionColumn.MaximumWidthRequest = Responsive.FormMaxWidth;
 	}
 
 	protected override async void OnAppearing()
@@ -54,6 +74,31 @@ public partial class CreateGroupPage : ContentPage
 		}
 	}
 
+	// ---- capacity stepper -------------------------------------------------
+
+	private void OnCapacityDown(object? sender, TappedEventArgs e) => StepCapacity(-1);
+
+	private void OnCapacityUp(object? sender, TappedEventArgs e) => StepCapacity(1);
+
+	private void StepCapacity(int delta)
+	{
+		var next = Math.Clamp(_capacity + delta, MinCapacity, MaxCapacity);
+		if (next == _capacity) return;
+
+		_capacity = next;
+		UpdateCapacity();
+	}
+
+	private void UpdateCapacity()
+	{
+		CapacityLabel.Text = _capacity.ToString();
+
+		// Dimmed rather than hidden, so the stepper keeps its shape at the ends
+		// of the range instead of the row shifting under the student's thumb.
+		CapacityDown.Opacity = _capacity > MinCapacity ? 1 : 0.4;
+		CapacityUp.Opacity = _capacity < MaxCapacity ? 1 : 0.4;
+	}
+
 	private void OnDescriptionChanged(object? sender, TextChangedEventArgs e) => UpdateDescriptionCount();
 
 	private void UpdateDescriptionCount() =>
@@ -80,26 +125,14 @@ public partial class CreateGroupPage : ContentPage
 			return;
 		}
 
-		if (!int.TryParse(MinEntry.Text, out var min))
-		{
-			ShowField(MinError, "Enter a number.");
-			return;
-		}
-
-		if (!int.TryParse(MaxEntry.Text, out var max))
-		{
-			ShowField(MaxError, "Enter a number.");
-			return;
-		}
-
 		var request = new CreateGroupRequest
 		{
 			GroupName = NameEntry.Text.Trim(),
 			CourseCode = _courses[CoursePicker.SelectedIndex - 1].CourseCode,
 			Description = DescriptionEditor.Text?.Trim(),
 			MeetingLocation = LocationEntry.Text?.Trim(),
-			MinMembers = min,
-			MaxMembers = max
+			MinMembers = Math.Min(DefaultMinMembers, _capacity),
+			MaxMembers = _capacity
 		};
 
 		SetBusy(true);
@@ -119,8 +152,10 @@ public partial class CreateGroupPage : ContentPage
 			ShowField(CourseError, ex.For(nameof(CreateGroupRequest.CourseCode)));
 			ShowField(DescriptionError, ex.For(nameof(CreateGroupRequest.Description)));
 			ShowField(LocationError, ex.For(nameof(CreateGroupRequest.MeetingLocation)));
-			ShowField(MinError, ex.For(nameof(CreateGroupRequest.MinMembers)));
-			ShowField(MaxError, ex.For(nameof(CreateGroupRequest.MaxMembers)));
+			// Both bounds are set by the one stepper, so either complaint belongs
+			// under it.
+			ShowField(CapacityError, ex.For(nameof(CreateGroupRequest.MaxMembers))
+				?? ex.For(nameof(CreateGroupRequest.MinMembers)));
 
 			// Anything the server flagged against a field this form doesn't
 			// show would otherwise vanish silently.
@@ -137,7 +172,7 @@ public partial class CreateGroupPage : ContentPage
 		}
 	}
 
-	private async void OnCancelClicked(object? sender, EventArgs e) => await Shell.Current.GoToAsync("..");
+	private async void OnCancelTapped(object? sender, TappedEventArgs e) => await Shell.Current.GoToAsync("..");
 
 	// ---- error display ----------------------------------------------------
 
@@ -153,8 +188,7 @@ public partial class CreateGroupPage : ContentPage
 		yield return CourseError;
 		yield return DescriptionError;
 		yield return LocationError;
-		yield return MinError;
-		yield return MaxError;
+		yield return CapacityError;
 	}
 
 	private bool AnyFieldErrorVisible() => ErrorLabels().Any(l => l.IsVisible);

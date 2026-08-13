@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Internship details and the apply form.
+
+    Whether the form appears at all is the server's decision, carried on the
+    detail as CanApply — it mirrors exactly what the apply endpoint will accept,
+    so the screen never offers a button that is certain to be refused. When it is
+    false, CannotApplyReason says why.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.InternshipDetailsPage"
+             Title="Internship"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ===== App bar ===== -->
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="21" />
+                    </Border.StrokeShape>
+                    <Image
+                        Source="ic_arrow_left_green.png"
+                        WidthRequest="20" HeightRequest="20"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label
+                    Grid.Column="1"
+                    Text="Internship"
+                    Style="{StaticResource UcH1}"
+                    FontSize="21"
+                    TextColor="{StaticResource UcBrandEnd}"
+                    VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout x:Name="Column" Padding="24,20,24,32" Spacing="16">
+
+                <ActivityIndicator x:Name="Busy" IsRunning="True" IsVisible="True" HorizontalOptions="Center" />
+
+                <Border
+                    x:Name="ErrorBox"
+                    IsVisible="False"
+                    BackgroundColor="{StaticResource UcPillRedBg}"
+                    StrokeThickness="0"
+                    Padding="14,12">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12" />
+                    </Border.StrokeShape>
+                    <Label x:Name="ErrorLabel" FontSize="13" TextColor="{StaticResource UcPillRedFg}" LineBreakMode="WordWrap" />
+                </Border>
+
+                <VerticalStackLayout x:Name="Body" IsVisible="False" Spacing="16">
+
+                    <!-- Headline -->
+                    <Border Style="{StaticResource UcCard}">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                            <Label Grid.Row="0" x:Name="TitleLabel" Style="{StaticResource UcH1}" FontSize="22" LineBreakMode="WordWrap" />
+                            <Label Grid.Row="1" x:Name="CompanyLabel" Style="{StaticResource UcH3}" TextColor="{StaticResource UcBrandStart}" />
+
+                            <HorizontalStackLayout Grid.Row="2" Spacing="8">
+                                <Border Style="{StaticResource UcPillMint}">
+                                    <Label x:Name="MatchPill" Style="{StaticResource UcPillTextMint}" />
+                                </Border>
+                                <Border x:Name="ExternalPill" Style="{StaticResource UcPillGrey}" IsVisible="False">
+                                    <Label Text="External employer" Style="{StaticResource UcPillTextGrey}" />
+                                </Border>
+                            </HorizontalStackLayout>
+
+                            <Label
+                                Grid.Row="3"
+                                x:Name="PartialScoreNote"
+                                IsVisible="False"
+                                Text="Your course history could not be read, so this match is based on skills alone."
+                                Style="{StaticResource UcTiny}"
+                                LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Facts -->
+                    <Border Style="{StaticResource UcCard}">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Image Grid.Column="0" Source="ic_location_muted.png" Style="{StaticResource UcIconSm}" />
+                                <Label Grid.Column="1" x:Name="LocationLabel" Style="{StaticResource UcBody}" />
+                            </Grid>
+                            <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Image Grid.Column="0" Source="ic_clock_amber.png" Style="{StaticResource UcIconSm}" />
+                                <Label Grid.Column="1" x:Name="DurationLabel" Style="{StaticResource UcBody}" />
+                            </Grid>
+                            <Grid Grid.Row="2" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Image Grid.Column="0" Source="ic_calendar_muted.png" Style="{StaticResource UcIconSm}" />
+                                <Label Grid.Column="1" x:Name="DeadlineLabel" Style="{StaticResource UcBody}" />
+                            </Grid>
+                            <Grid Grid.Row="3" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Image Grid.Column="0" Source="ic_users_muted.png" Style="{StaticResource UcIconSm}" />
+                                <Label Grid.Column="1" x:Name="PositionsLabel" Style="{StaticResource UcBody}" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Description -->
+                    <Border x:Name="DescriptionCard" Style="{StaticResource UcCard}" IsVisible="False">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                            <Label Grid.Row="0" Text="About this internship" Style="{StaticResource UcH2}" />
+                            <Label Grid.Row="1" x:Name="DescriptionLabel" Style="{StaticResource UcBody}" LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Skills -->
+                    <Border x:Name="SkillsCard" Style="{StaticResource UcCard}" IsVisible="False">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                            <Label Grid.Row="0" Text="Required skills" Style="{StaticResource UcH2}" />
+                            <FlexLayout
+                                Grid.Row="1"
+                                x:Name="SkillsHost"
+                                Wrap="Wrap"
+                                JustifyContent="Start"
+                                AlignItems="Start" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Recommended courses -->
+                    <Border x:Name="CoursesCard" Style="{StaticResource UcCard}" IsVisible="False">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                            <Label Grid.Row="0" Text="Recommended courses" Style="{StaticResource UcH2}" />
+                            <Label Grid.Row="1" x:Name="CoursesLabel" Style="{StaticResource UcBody}" LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
+
+                    <!-- ===== Apply ===== -->
+                    <Border x:Name="ApplyCard" Style="{StaticResource UcCard}" IsVisible="False">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                            <Label Grid.Row="0" Text="Apply" Style="{StaticResource UcH2}" />
+
+                            <Label
+                                Grid.Row="1"
+                                Text="Add a short message for the employer (optional)."
+                                Style="{StaticResource UcMutedText}"
+                                LineBreakMode="WordWrap" />
+
+                            <Border Grid.Row="2" Style="{StaticResource UcInputFrame}" Padding="14,8">
+                                <Editor
+                                    x:Name="CoverEditor"
+                                    Placeholder="Why are you a good fit for this role?"
+                                    MaxLength="1000"
+                                    HeightRequest="110" />
+                            </Border>
+
+                            <!-- A nudge, not a blocker: the server accepts the
+                                 application either way, but the CV is what gets
+                                 forwarded if the employer shortlists you. -->
+                            <Border
+                                Grid.Row="3"
+                                x:Name="CvHint"
+                                IsVisible="False"
+                                BackgroundColor="{StaticResource UcPillAmberBg}"
+                                StrokeThickness="0"
+                                Padding="12,10">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
+                                <Label
+                                    Text="You have no CV on file. You can still apply, but employers see your CV when they shortlist you — upload one on the web portal."
+                                    FontSize="12.5"
+                                    TextColor="{StaticResource UcPillAmberFg}"
+                                    LineBreakMode="WordWrap" />
+                            </Border>
+
+                            <Button
+                                Grid.Row="4"
+                                x:Name="ApplyBtn"
+                                Text="Submit application"
+                                Style="{StaticResource UcBtnPrimaryLarge}"
+                                Clicked="OnApplyClicked"
+                                HorizontalOptions="Fill" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Shown instead of the form when applying is not on offer. -->
+                    <Border x:Name="CannotApplyCard" Style="{StaticResource UcInset}" IsVisible="False" Padding="16">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                            <Label Grid.Row="0" x:Name="CannotApplyLabel" Style="{StaticResource UcBody}" LineBreakMode="WordWrap" />
+
+                            <!-- External listings still need a way through, so the
+                                 employer's own link or inbox is offered here. -->
+                            <Button
+                                Grid.Row="1"
+                                x:Name="ExternalApplyBtn"
+                                IsVisible="False"
+                                Text="Open employer's application page"
+                                Style="{StaticResource UcBtnOutline}"
+                                Clicked="OnExternalApplyClicked"
+                                HorizontalOptions="Fill" />
+                        </Grid>
+                    </Border>
+
+                    <Button
+                        x:Name="MyApplicationsBtn"
+                        Text="View my applications"
+                        Style="{StaticResource UcBtnGhost}"
+                        Clicked="OnMyApplicationsClicked"
+                        HorizontalOptions="Fill" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>

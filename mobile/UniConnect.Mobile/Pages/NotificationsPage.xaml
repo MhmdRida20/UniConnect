@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Notifications.
+
+    Plain on purpose — the visual pass comes later. Opening this screen is what
+    marks everything read, which is the server's behaviour and matches the web
+    exactly; there is no separate "mark all read" because arriving here already
+    is that action.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:UniConnect.Mobile.Services"
+             x:Class="UniConnect.Mobile.Pages.NotificationsPage"
+             Title="Notifications"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="21" />
+                    </Border.StrokeShape>
+                    <Image
+                        Source="ic_arrow_left_green.png"
+                        WidthRequest="20" HeightRequest="20"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label
+                    Grid.Column="1"
+                    Text="Notifications"
+                    Style="{StaticResource UcH1}"
+                    FontSize="21"
+                    TextColor="{StaticResource UcBrandEnd}"
+                    VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <RefreshView x:Name="Refresher" Grid.Row="1" Refreshing="OnRefreshing">
+            <ScrollView>
+                <VerticalStackLayout x:Name="Column" Padding="24,20,24,32" Spacing="12">
+
+                    <Border
+                        x:Name="ErrorBox"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcPillRedBg}"
+                        StrokeThickness="0"
+                        Padding="14,12">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Label x:Name="ErrorLabel" FontSize="13" TextColor="{StaticResource UcPillRedFg}" LineBreakMode="WordWrap" />
+                    </Border>
+
+                    <VerticalStackLayout x:Name="EmptyState" IsVisible="False" Padding="10,40,10,10" Spacing="8">
+                        <Label Text="Nothing yet" Style="{StaticResource UcH2}" HorizontalTextAlignment="Center" />
+                        <Label
+                            Text="Updates about your study groups, applications and account will appear here."
+                            Style="{StaticResource UcMutedText}"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout x:Name="CardsHost" Spacing="12">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:NotificationDto">
+                                <Grid HorizontalOptions="Fill">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnNotificationTapped" />
+                                    </Grid.GestureRecognizers>
+
+                                    <Border Style="{StaticResource UcCard}" Padding="0">
+                                        <Grid ColumnDefinitions="Auto,*">
+
+                                            <!-- Unread marker. WasUnread is what it was when
+                                                 this list loaded — by now the server has
+                                                 marked it read, so the row cannot say. -->
+                                            <BoxView
+                                                Grid.Column="0"
+                                                WidthRequest="4"
+                                                Color="{StaticResource UcBrandStart}"
+                                                IsVisible="{Binding WasUnread}" />
+
+                                            <Grid
+                                                Grid.Column="1"
+                                                Padding="16,14"
+                                                RowSpacing="6"
+                                                RowDefinitions="Auto,Auto,Auto">
+
+                                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                                    <Label
+                                                        Grid.Column="0"
+                                                        Text="{Binding Title}"
+                                                        Style="{StaticResource UcH3}"
+                                                        LineBreakMode="WordWrap" />
+                                                    <Label
+                                                        Grid.Column="1"
+                                                        Text="{Binding WhenLabel}"
+                                                        Style="{StaticResource UcTiny}"
+                                                        VerticalOptions="Start" />
+                                                </Grid>
+
+                                                <Label
+                                                    Grid.Row="1"
+                                                    Text="{Binding Message}"
+                                                    Style="{StaticResource UcBody}"
+                                                    LineBreakMode="WordWrap" />
+
+                                                <Label
+                                                    Grid.Row="2"
+                                                    Text="Tap to open  ›"
+                                                    Style="{StaticResource UcTiny}"
+                                                    TextColor="{StaticResource UcBrandStart}"
+                                                    IsVisible="{Binding HasLink}" />
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>

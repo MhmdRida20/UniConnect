@@ -76,6 +76,14 @@ namespace UniConnect.Controllers.Api
             public string? MyStatus { get; set; }
 
             public bool AmMember => MyStatus == nameof(MembershipStatus.Approved);
+
+            /// <summary>
+            /// The first few approved members' names, for the avatar row on the
+            /// mobile browse cards. Names rather than the whole member list: the
+            /// card draws initials, so that is all it needs, and the full list
+            /// is a per-group detail call away for anyone who wants it.
+            /// </summary>
+            public List<string> MemberNames { get; set; } = new();
         }
 
         public class MemberDto
@@ -160,7 +168,16 @@ namespace UniConnect.Controllers.Api
             ApprovedCount = g.Members.Count(m => m.Status == MembershipStatus.Approved),
             MeetingLocation = g.MeetingLocation,
             CreatedAt = g.CreatedAt,
-            CreatorName = g.Creator?.FullName
+            CreatorName = g.Creator?.FullName,
+
+            // Capped at four: the card shows at most that many avatars before
+            // collapsing the rest into a "+N", so sending more would be waste.
+            MemberNames = g.Members
+                .Where(m => m.Status == MembershipStatus.Approved)
+                .OrderBy(m => m.JoinedAt)
+                .Take(4)
+                .Select(m => m.User?.FullName ?? "?")
+                .ToList()
         };
 
         private static MemberDto ToMember(StudyGroupMember m) => new()

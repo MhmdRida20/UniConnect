@@ -23,4 +23,11 @@
         <ShellContent ContentTemplate="{DataTemplate pages:GroupsPage}" />
     </ShellItem>
 
+    <!-- Its own section for the same reason: the app draws its own tab bar, so
+         switching to it replaces the stack rather than stacking on top of the
+         group list. -->
+    <ShellItem Route="internships">
+        <ShellContent ContentTemplate="{DataTemplate pages:InternshipsPage}" />
+    </ShellItem>
+
 </Shell>

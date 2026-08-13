@@ -69,8 +69,12 @@
 		-->
 		<MauiImage Update="Resources\Images\ic_*.svg" BaseSize="24,24" />
 		
-		<!-- Custom Fonts -->
-		<MauiFont Include="Resources\Fonts\*" />
+		<!--
+		    Custom Fonts. Restricted to *.ttf so Montserrat-OFL.txt — the licence
+		    the font is redistributed under, which has to travel with it — is not
+		    handed to the font packager.
+		-->
+		<MauiFont Include="Resources\Fonts\*.ttf" />
 
 		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />

@@ -232,6 +232,10 @@ builder.Services.AddScoped<UniConnect.Services.AttendanceSubmissionService>();
 // StudyGroupsApiController (mobile) so the two can't drift apart.
 builder.Services.AddScoped<UniConnect.Services.StudyGroupService>();
 
+// Student-facing internship rules, shared by the web controller and the mobile
+// API so the two clients cannot disagree about who may apply to what.
+builder.Services.AddScoped<UniConnect.Services.InternshipService>();
+
 var app = builder.Build();
 
 // --- Apply migrations and seed at startup -----------------------------------

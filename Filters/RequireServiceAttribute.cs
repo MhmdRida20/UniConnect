@@ -32,17 +32,31 @@ namespace UniConnect.Filters
             var catalog = context.HttpContext.RequestServices
                 .GetRequiredService<IServiceCatalogService>();
 
+            // An API caller gets status codes, not redirects. Sending the mobile
+            // app to an HTML "not available" page would arrive as a 200 full of
+            // markup, which its JSON parser reads as an empty result — a
+            // disabled service would look like "no internships" instead of
+            // saying so.
+            var isApi = context.HttpContext.Request.Path.StartsWithSegments("/api");
+
             var user = await userManager.GetUserAsync(context.HttpContext.User);
             if (user is null)
             {
-                context.Result = new ChallengeResult();
+                context.Result = isApi ? new UnauthorizedResult() : new ChallengeResult();
                 return;
             }
 
             var enabled = await catalog.IsServiceEnabledAsync(user.UniversityCode, _serviceCode);
             if (!enabled)
             {
-                context.Result = new RedirectToActionResult("NotAvailable", "Home", new { service = _serviceCode });
+                context.Result = isApi
+                    ? new ObjectResult(new
+                    {
+                        error = "This feature is not enabled for your university.",
+                        code = "SERVICE_DISABLED"
+                    })
+                    { StatusCode = StatusCodes.Status403Forbidden }
+                    : new RedirectToActionResult("NotAvailable", "Home", new { service = _serviceCode });
                 return;
             }
 
