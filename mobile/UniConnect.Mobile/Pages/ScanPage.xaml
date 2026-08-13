@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             x:Class="UniConnect.Mobile.Pages.ScanPage"
+             Title="Scan QR Code"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="Black">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12" BackgroundColor="#0f172a">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="#26ffffff"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="21" />
+                    </Border.StrokeShape>
+                    <Image Source="ic_arrow_left_white.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCancelTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label Grid.Column="1" Text="Scan QR Code" Style="{StaticResource UcH1}" FontSize="20" TextColor="White" VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <zxing:CameraBarcodeReaderView x:Name="BarcodeReader" BarcodesDetected="OnBarcodesDetected" />
+
+            <VerticalStackLayout VerticalOptions="End" Padding="24" Spacing="12">
+                <Border BackgroundColor="#99000000" StrokeThickness="0" Padding="14">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12" />
+                    </Border.StrokeShape>
+                    <Label
+                        Text="Point your camera at the QR code shown by your instructor."
+                        TextColor="White"
+                        HorizontalTextAlignment="Center" />
+                </Border>
+            </VerticalStackLayout>
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

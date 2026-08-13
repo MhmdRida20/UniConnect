@@ -314,13 +314,13 @@
         <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
             <Grid ColumnDefinitions="*,*,*,*">
 
-                <VerticalStackLayout Grid.Column="0" Spacing="3" Opacity="0.45">
+                <VerticalStackLayout Grid.Column="0" Spacing="3">
                     <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
-                        <Image Source="ic_home_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                        <Image Source="ic_scan_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
                     </Border>
-                    <Label Text="Home" Style="{StaticResource UcTabLabel}" />
+                    <Label Text="Attendance" Style="{StaticResource UcTabLabel}" />
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnComingSoonTapped" CommandParameter="Home" />
+                        <TapGestureRecognizer Tapped="OnAttendanceTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 

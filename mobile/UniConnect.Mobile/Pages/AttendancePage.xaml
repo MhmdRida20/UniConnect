@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    My Attendance.
+
+    Same shape as GroupsPage: a fixed app bar and tab bar, one scrolling
+    surface between them. No FAB here — the primary action ("Check In") is
+    prominent enough in the header that a floating button would be redundant
+    rather than helpful, unlike Groups where "create" is a distinct action
+    from anything already on screen.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.AttendancePage"
+             Title="My Attendance"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- ===== Top app bar — identical to GroupsPage's ===== -->
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+
+                <Border
+                    Grid.Column="0"
+                    Background="{StaticResource UcAvatarBrush}"
+                    Stroke="{StaticResource UcMint}"
+                    StrokeThickness="2"
+                    HeightRequest="38" WidthRequest="38"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="19" />
+                    </Border.StrokeShape>
+                    <Label x:Name="ProfileInitials" Style="{StaticResource UcAvatarText}" FontSize="13" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label Grid.Column="1" Text="UniConnect" Style="{StaticResource UcAppBarTitle}" />
+
+                <Grid Grid.Column="2" WidthRequest="34" HeightRequest="30" VerticalOptions="Center">
+                    <ImageButton
+                        Source="ic_bell_green.png"
+                        BackgroundColor="Transparent"
+                        BorderWidth="0"
+                        HeightRequest="26" WidthRequest="26"
+                        Padding="0"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Center"
+                        Clicked="OnNotificationsClicked"
+                        SemanticProperties.Description="Notifications" />
+
+                    <Border
+                        x:Name="UnreadBadge"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcDanger}"
+                        StrokeThickness="0"
+                        Padding="5,1"
+                        MinimumWidthRequest="18"
+                        HorizontalOptions="End"
+                        VerticalOptions="Start"
+                        InputTransparent="True">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="999" />
+                        </Border.StrokeShape>
+                        <Label x:Name="UnreadBadgeLabel" FontSize="10" FontFamily="InterSemiBold" TextColor="White" HorizontalTextAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- ===== The one scrolling surface ===== -->
+        <RefreshView x:Name="Refresher" Grid.Row="1" Refreshing="OnRefreshing">
+            <ScrollView>
+                <VerticalStackLayout Padding="24,28,24,20" Spacing="20">
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="EVERYTHING IN ONE PORTAL" Style="{StaticResource UcEyebrow}" TextColor="{StaticResource UcGreen}" />
+                        <Label Text="My Attendance" Style="{StaticResource UcH1}" FontSize="32" />
+                        <Label x:Name="RecordCountLabel" Text="0 records" Style="{StaticResource UcBody}" FontSize="15" />
+                    </VerticalStackLayout>
+
+                    <!-- Primary action — leads to the check-in page (scan or manual token). -->
+                    <Button
+                        Text="Check In to Class"
+                        Style="{StaticResource UcBtnPrimaryLarge}"
+                        ImageSource="ic_scan_white.png"
+                        ContentLayout="Left,10"
+                        Clicked="OnCheckInClicked"
+                        HorizontalOptions="Fill" />
+
+                    <Border
+                        x:Name="ErrorBox"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcPillRedBg}"
+                        StrokeThickness="0"
+                        Padding="14">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Label x:Name="ErrorLabel" Style="{StaticResource UcDangerText}" />
+                    </Border>
+
+                    <ActivityIndicator x:Name="LoadingIndicator" IsRunning="True" HorizontalOptions="Center" />
+
+                    <!-- ===== Empty state ===== -->
+                    <VerticalStackLayout x:Name="EmptyState" IsVisible="False" Spacing="10" Padding="0,30" HorizontalOptions="Center">
+                        <Border
+                            BackgroundColor="{StaticResource UcSurfaceAlt}"
+                            StrokeThickness="0"
+                            HeightRequest="56" WidthRequest="56"
+                            HorizontalOptions="Center">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="18" />
+                            </Border.StrokeShape>
+                            <Image Source="ic_scan_green.png" WidthRequest="26" HeightRequest="26" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Text="No attendance records yet" Style="{StaticResource UcH2}" HorizontalTextAlignment="Center" />
+                        <Label
+                            Text="Scan a QR code in class, or enter a token manually, to check in."
+                            Style="{StaticResource UcMutedText}"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                    <!-- ===== History list — built in code-behind, one UcCardSoft per record ===== -->
+                    <VerticalStackLayout x:Name="HistoryStack" Spacing="10" />
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- ===== Bottom navigation — same 4 sections as GroupsPage, Attendance
+             replacing the "Home" placeholder slot rather than adding a 5th
+             column, so every existing page's tab bar only needs its icon/label
+             swapped, not its whole layout restructured. ===== -->
+        <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
+            <Grid ColumnDefinitions="*,*,*,*">
+
+                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                    <Border Style="{StaticResource UcTabPill}">
+                        <Image Source="ic_scan_green.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Attendance" Style="{StaticResource UcTabLabelActive}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="3">
+                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_users_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Groups" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnGroupsTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2" Spacing="3">
+                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_briefcase_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Internships" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnInternshipsTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="3" Spacing="3" Opacity="0.45">
+                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_user_circle_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Profile" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnComingSoonTapped" CommandParameter="Profile" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+
+</ContentPage>

@@ -232,6 +232,9 @@ public partial class InternshipsPage : ContentPage
 	private async void OnGroupsTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//groups");
 
+	private async void OnAttendanceTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync("//attendance");
+
 	private async void OnComingSoonTapped(object? sender, TappedEventArgs e)
 	{
 		var section = e.Parameter as string ?? "This section";

@@ -19,6 +19,13 @@
         <ShellContent ContentTemplate="{DataTemplate pages:LoginPage}" />
     </ShellItem>
 
+    <!-- Its own section, same reasoning as groups/internships: switching here
+         replaces the whole stack rather than stacking on top of another
+         section's history. -->
+    <ShellItem Route="attendance">
+        <ShellContent ContentTemplate="{DataTemplate pages:AttendancePage}" />
+    </ShellItem>
+
     <ShellItem Route="groups">
         <ShellContent ContentTemplate="{DataTemplate pages:GroupsPage}" />
     </ShellItem>

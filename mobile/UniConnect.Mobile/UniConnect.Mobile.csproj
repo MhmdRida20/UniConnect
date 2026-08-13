@@ -85,6 +85,8 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
 		<!-- Live chat and list updates over the same /studygroupHub the web uses. -->
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
+		<PackageReference Include="ZXing.Net.MAUI" Version="0.4.0" />
+		<PackageReference Include="ZXing.Net.MAUI.Controls" Version="0.4.0" />
 	</ItemGroup>
 
 </Project>

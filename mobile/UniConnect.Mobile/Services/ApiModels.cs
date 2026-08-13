@@ -470,6 +470,59 @@ public class ApplicationSummary
     public bool IsInProgress => !IsAccepted && !IsRejected && !IsWithdrawn;
 }
 
+// ===== Attendance =====
+
+/// <summary>Result of looking a scanned/typed token up, before anything is submitted.</summary>
+public class SessionInfoDto
+{
+    public bool Found { get; set; }
+    public string? Error { get; set; }
+    public string? CourseCode { get; set; }
+    public string? CourseName { get; set; }
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
+
+    /// <summary>
+    /// Session times come back exactly as the instructor set them — the server
+    /// stores this one as local, not UTC (see CloseExpiredAttendanceSessionsService's
+    /// notes on why), so this is display-formatted as-is rather than run through
+    /// the SpecifyKind(Utc)-then-ToLocalTime() conversion every other timestamp
+    /// in this file uses. Applying that here would double-shift it.
+    /// </summary>
+    public string TimeRangeLabel =>
+        StartTime.HasValue && EndTime.HasValue
+            ? $"{StartTime:MMM dd, yyyy \u00b7 HH:mm} \u2013 {EndTime:HH:mm}"
+            : string.Empty;
+}
+
+public class AttendanceSubmitRequest
+{
+    public string Token { get; set; } = string.Empty;
+    public double? Lat { get; set; }
+    public double? Lng { get; set; }
+}
+
+public class AttendanceSubmitResponse
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>One row on the "My Attendance" list.</summary>
+public class AttendanceHistoryEntry
+{
+    public string CourseName { get; set; } = string.Empty;
+    public DateTime SessionStartTime { get; set; }
+    public string Status { get; set; } = string.Empty;
+
+    // Also local at the source (see SessionInfoDto's note) — no UTC conversion here either.
+    public string DateLabel => SessionStartTime.ToString("MMM dd, yyyy");
+
+    public bool IsPresent => Status == "Present";
+    public bool IsLate => Status == "Late";
+    public bool IsAbsent => Status == "Absent";
+}
+
 /// <summary>
 /// Two-letter monograms for member and message avatars — the same rule as the
 /// Initials() local function in Views/StudyGroups/Details.cshtml.
