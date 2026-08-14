@@ -19,11 +19,6 @@
         <ShellContent ContentTemplate="{DataTemplate pages:LoginPage}" />
     </ShellItem>
 
-    <!-- The dashboard, and where sign-in lands. -->
-    <ShellItem Route="home">
-        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
-    </ShellItem>
-
     <ShellItem Route="groups">
         <ShellContent ContentTemplate="{DataTemplate pages:GroupsPage}" />
     </ShellItem>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Check In to Class.
+
+    Same three-band shape as CreateGroupPage: app bar, scrolling form, action
+    bar pinned to the bottom. Scanning is the fast path (a button that opens
+    the camera); manual entry is the fallback for a device without one, or a
+    QR code that will not focus.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.AttendanceCheckInPage"
+             Title="Check In"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- ===== App bar ===== -->
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="21" />
+                    </Border.StrokeShape>
+                    <Image Source="ic_arrow_left_green.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label Grid.Column="1" Text="Check In" Style="{StaticResource UcH1}" FontSize="23" TextColor="{StaticResource UcBrandEnd}" VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <!-- ===== Form ===== -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24,24,24,28" Spacing="22">
+
+                <Label Text="Scan the QR code your instructor is showing, or enter the code below it manually." Style="{StaticResource UcBody}" />
+
+                <Button
+                    Text="Scan QR Code"
+                    Style="{StaticResource UcBtnPrimaryLarge}"
+                    ImageSource="ic_scan_white.png"
+                    ContentLayout="Left,10"
+                    Clicked="OnScanClicked"
+                    HorizontalOptions="Fill" />
+
+                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10" VerticalOptions="Center">
+                    <BoxView Grid.Column="0" HeightRequest="1" Color="{StaticResource UcBorder}" VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="or" Style="{StaticResource UcMutedText}" />
+                    <BoxView Grid.Column="2" HeightRequest="1" Color="{StaticResource UcBorder}" VerticalOptions="Center" />
+                </Grid>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Attendance Code" Style="{StaticResource UcFieldLabel}" />
+                    <Border Style="{StaticResource UcFieldBox}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Image Grid.Column="0" Source="ic_edit_muted.png" Style="{StaticResource UcIcon}" />
+                            <Entry Grid.Column="1" x:Name="TokenEntry" Placeholder="Enter the code manually" TextChanged="OnTokenTextChanged" />
+                        </Grid>
+                    </Border>
+                    <Label x:Name="TokenError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                </VerticalStackLayout>
+
+                <!-- ===== Confirmed session — shown once a code checks out ===== -->
+                <Border x:Name="SessionCard" IsVisible="False" Style="{StaticResource UcCardSoft}" BackgroundColor="{StaticResource UcPrimaryTint}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label x:Name="SessionCourseLabel" Style="{StaticResource UcH2}" />
+                        <Label x:Name="SessionTimeLabel" Style="{StaticResource UcMutedText}" />
+                        <Label Text="Your location will be checked against the classroom when you confirm." Style="{StaticResource UcTiny}" Margin="0,4,0,0" />
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ===== Action bar ===== -->
+        <Border Grid.Row="2" Style="{StaticResource UcActionBar}">
+            <VerticalStackLayout Spacing="10">
+                <ActivityIndicator x:Name="Busy" IsRunning="False" IsVisible="False" HorizontalOptions="Center" />
+
+                <Button
+                    x:Name="CheckCodeBtn"
+                    Text="Check Code"
+                    Style="{StaticResource UcBtnOutline}"
+                    Clicked="OnCheckCodeClicked"
+                    HorizontalOptions="Fill" />
+
+                <Button
+                    x:Name="ConfirmBtn"
+                    Text="Confirm Attendance"
+                    Style="{StaticResource UcBtnPrimaryLarge}"
+                    ImageSource="ic_check_circle_white.png"
+                    ContentLayout="Left,10"
+                    IsVisible="False"
+                    Clicked="OnConfirmClicked"
+                    HorizontalOptions="Fill" />
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+
+</ContentPage>

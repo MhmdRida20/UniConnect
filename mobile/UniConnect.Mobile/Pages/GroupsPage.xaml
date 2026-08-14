@@ -414,16 +414,21 @@
             SemanticProperties.Description="Create a new study group" />
 
         <!-- ===== Bottom navigation ===== -->
+        <!-- ===== Bottom navigation =====
+             Groups and Internships are real; Attendance now is too. Profile is
+             the app's planned shape and says so when tapped rather than
+             opening an empty screen. -->
         <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
             <Grid ColumnDefinitions="*,*,*,*">
 
                 <VerticalStackLayout Grid.Column="0" Spacing="3">
                     <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
-                        <Image Source="ic_home_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                        <Image Source="ic_scan_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
-                    <Label Text="Home" Style="{StaticResource UcTabLabel}" />
+                    <Label Text="Attendance" Style="{StaticResource UcTabLabel}" />
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnHomeTapped" />
+                        <TapGestureRecognizer Tapped="OnAttendanceTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
