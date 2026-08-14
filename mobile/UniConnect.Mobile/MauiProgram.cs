@@ -41,6 +41,12 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AuthApi>();
 		builder.Services.AddSingleton<StudyGroupsApi>();
 		builder.Services.AddSingleton<InternshipsApi>();
+		builder.Services.AddSingleton<ProfileApi>();
+		builder.Services.AddSingleton<HomeApi>();
+
+		// One cached profile for the whole app, so every app bar draws the same
+		// avatar and a new picture reaches all of them at once.
+		builder.Services.AddSingleton<ProfileStore>();
 		builder.Services.AddSingleton<NotificationsApi>();
 
 		// One hub connection shared by every screen that wants live updates.

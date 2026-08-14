@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    My Profile — the mobile counterpart of Views/Profile/Index.cshtml.
+
+    Deliberately the basics: identity, the two editable fields, and sign out.
+    The web page's completeness meter, vehicles and career profile are left to
+    the portal.
+
+    Name, university ID and email are read-only for the same reason as on the
+    web — they come from the university's records, not from the student.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.ProfilePage"
+             Title="My Profile"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ===== App bar ===== -->
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="21" />
+                    </Border.StrokeShape>
+                    <Image
+                        Source="ic_arrow_left_green.png"
+                        WidthRequest="20" HeightRequest="20"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label
+                    Grid.Column="1"
+                    Text="My Profile"
+                    Style="{StaticResource UcH1}"
+                    FontSize="21"
+                    TextColor="{StaticResource UcGreen}"
+                    VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <RefreshView x:Name="Refresher" Grid.Row="1" Refreshing="OnRefreshing">
+            <ScrollView>
+                <VerticalStackLayout x:Name="Column" Padding="20,20,20,32" Spacing="16">
+
+                    <Border
+                        x:Name="ErrorBox"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcPillRedBg}"
+                        StrokeThickness="0"
+                        Padding="14,12">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Label x:Name="ErrorLabel" FontSize="13" TextColor="{StaticResource UcPillRedFg}" LineBreakMode="WordWrap" />
+                    </Border>
+
+                    <!-- ===== Identity ===== -->
+                    <Border Style="{StaticResource UcCardSoft}">
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="18">
+
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="16">
+
+                                <!-- The photo is drawn over the initials, so the
+                                     monogram is what shows until one is uploaded
+                                     and again the moment it is removed. -->
+                                <Border
+                                    Grid.Column="0"
+                                    Background="{StaticResource UcAvatarBrush}"
+                                    StrokeThickness="0"
+                                    HeightRequest="72" WidthRequest="72"
+                                    VerticalOptions="Center">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="36" />
+                                    </Border.StrokeShape>
+                                    <Grid>
+                                        <Label
+                                            x:Name="AvatarInitials"
+                                            Style="{StaticResource UcAvatarText}"
+                                            FontSize="24" />
+                                        <Image
+                                            x:Name="AvatarImage"
+                                            IsVisible="False"
+                                            Aspect="AspectFill"
+                                            HeightRequest="72" WidthRequest="72" />
+                                    </Grid>
+                                </Border>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                    <Label x:Name="NameLabel" Style="{StaticResource UcH2}" FontSize="18" LineBreakMode="WordWrap" />
+                                    <Label x:Name="EmailLabel" Style="{StaticResource UcMutedText}" LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="14">
+                                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                                    <Label Text="University ID" Style="{StaticResource UcTiny}" />
+                                    <Label x:Name="UniversityIdLabel" Style="{StaticResource UcH3}" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Spacing="3">
+                                    <Label Text="University" Style="{StaticResource UcTiny}" />
+                                    <Label x:Name="UniversityLabel" Style="{StaticResource UcH3}" />
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Image Grid.Column="0" Source="ic_info_green.png" Style="{StaticResource UcIconSm}" VerticalOptions="Start" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="Name, ID and email come from your university's own records and can't be edited here."
+                                    Style="{StaticResource UcTiny}"
+                                    LineBreakMode="WordWrap" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- ===== Editable ===== -->
+                    <Border Style="{StaticResource UcCardSoft}">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
+
+                            <Label Grid.Row="0" Text="Phone Number" Style="{StaticResource UcFieldLabel}" />
+
+                            <Border Grid.Row="1" Style="{StaticResource UcSearchField}">
+                                <Entry
+                                    x:Name="PhoneEntry"
+                                    Placeholder="e.g. +961 71 234 567"
+                                    Keyboard="Telephone"
+                                    MaxLength="20" />
+                            </Border>
+
+                            <Label Grid.Row="2" Text="Profile Picture" Style="{StaticResource UcFieldLabel}" />
+
+                            <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <Button
+                                    Grid.Column="0"
+                                    x:Name="ChoosePictureBtn"
+                                    Text="Choose a photo"
+                                    Style="{StaticResource UcBtnOutline}"
+                                    Clicked="OnChoosePictureClicked" />
+
+                                <ImageButton
+                                    Grid.Column="1"
+                                    x:Name="RemovePictureBtn"
+                                    IsVisible="False"
+                                    Source="ic_trash_red.png"
+                                    Style="{StaticResource UcIconBtnDanger}"
+                                    Clicked="OnRemovePictureClicked"
+                                    SemanticProperties.Description="Remove profile picture" />
+                            </Grid>
+
+                            <Label
+                                Grid.Row="4"
+                                Text="PNG or JPEG, max 2 MB."
+                                Style="{StaticResource UcTiny}" />
+                        </Grid>
+                    </Border>
+
+                    <Button
+                        x:Name="SaveBtn"
+                        Text="Save changes"
+                        Style="{StaticResource UcBtnPrimaryLarge}"
+                        Clicked="OnSaveClicked"
+                        HorizontalOptions="Fill" />
+
+                    <ActivityIndicator x:Name="Busy" IsRunning="False" IsVisible="False" HorizontalOptions="Center" />
+
+                    <!-- ===== Session ===== -->
+                    <Border Style="{StaticResource UcCardSoft}">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                            <Label
+                                Grid.Row="0"
+                                Text="Signing out clears this device's session. Your data stays on your account."
+                                Style="{StaticResource UcMutedText}"
+                                LineBreakMode="WordWrap" />
+
+                            <Button
+                                Grid.Row="1"
+                                Text="Sign out"
+                                ImageSource="ic_logout_red.png"
+                                ContentLayout="Left,8"
+                                Style="{StaticResource UcBtnDanger}"
+                                Clicked="OnSignOutClicked"
+                                HorizontalOptions="Fill" />
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>

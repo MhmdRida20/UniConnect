@@ -198,21 +198,26 @@
 
                             <!-- External listings still need a way through, so the
                                  employer's own link or inbox is offered here. -->
+                            <!-- Primary: when a listing is external this is the
+                                 only way to actually apply, so it carries the
+                                 same weight as the in-app submit button. -->
                             <Button
                                 Grid.Row="1"
                                 x:Name="ExternalApplyBtn"
                                 IsVisible="False"
                                 Text="Open employer's application page"
-                                Style="{StaticResource UcBtnOutline}"
+                                Style="{StaticResource UcBtnPrimaryLarge}"
                                 Clicked="OnExternalApplyClicked"
                                 HorizontalOptions="Fill" />
                         </Grid>
                     </Border>
 
+                    <!-- Secondary: navigation away from this listing, so it must
+                         not compete with whichever apply button is above it. -->
                     <Button
                         x:Name="MyApplicationsBtn"
                         Text="View my applications"
-                        Style="{StaticResource UcBtnGhost}"
+                        Style="{StaticResource UcBtnOutline}"
                         Clicked="OnMyApplicationsClicked"
                         HorizontalOptions="Fill" />
                 </VerticalStackLayout>

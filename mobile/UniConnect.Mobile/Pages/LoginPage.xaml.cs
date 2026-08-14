@@ -129,7 +129,7 @@ public partial class LoginPage : ContentPage
 		Dispatcher.Dispatch(async () =>
 		{
 			if (await _session.HasValidTokenAsync())
-				await Shell.Current.GoToAsync("//groups");
+				await Shell.Current.GoToAsync("//home");
 		});
 	}
 
@@ -152,7 +152,7 @@ public partial class LoginPage : ContentPage
 			// Nothing sensitive should outlive a successful sign-in.
 			PasswordEntry.Text = string.Empty;
 
-			await Shell.Current.GoToAsync("//groups");
+			await Shell.Current.GoToAsync("//home");
 		}
 		catch (ApiException ex)
 		{

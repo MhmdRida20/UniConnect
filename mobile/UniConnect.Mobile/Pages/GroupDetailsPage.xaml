@@ -290,11 +290,17 @@
                                                         Style="{StaticResource UcBtnTinyGhost}"
                                                         Clicked="OnTransferClicked"
                                                         CommandParameter="{Binding MemberId}" />
-                                                    <Button
-                                                        Text="Remove"
-                                                        Style="{StaticResource UcBtnTinyDanger}"
+                                                    <!-- Icon rather than the word: the row
+                                                         already carries a name, a status and
+                                                         "Make leader", and a second worded
+                                                         button pushed the name into
+                                                         truncation. -->
+                                                    <ImageButton
+                                                        Source="ic_trash_red.png"
+                                                        Style="{StaticResource UcIconBtnDanger}"
                                                         Clicked="OnRemoveClicked"
-                                                        CommandParameter="{Binding MemberId}" />
+                                                        CommandParameter="{Binding MemberId}"
+                                                        SemanticProperties.Description="Remove member" />
                                                 </HorizontalStackLayout>
                                             </Grid>
                                         </DataTemplate>

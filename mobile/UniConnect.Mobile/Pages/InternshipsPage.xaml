@@ -18,31 +18,60 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
 
-        <!-- ===== Top app bar ===== -->
+        <!-- ===== Top app bar =====
+             The same three elements on every screen: account avatar left, brand
+             centre, notifications right. The avatar is the account menu — that
+             is where sign out lives, which is why there is no separate button.
+
+             The bell sits in a 44x44 box so it is a real touch target; the icon
+             itself is centred inside it, and the badge hangs on the top-right
+             corner with a small negative margin so it overlaps rather than
+             squashing the icon into the remaining space. -->
         <Border Grid.Row="0" Style="{StaticResource UcAppBar}">
-            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
-                <Label
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+
+                <Border
                     Grid.Column="0"
-                    Text="UniConnect"
-                    Style="{StaticResource UcAppBarTitle}"
-                    TextColor="{StaticResource UcGreen}"
-                    VerticalOptions="Center" />
+                    Background="{StaticResource UcAvatarBrush}"
+                    Stroke="{StaticResource UcMint}"
+                    StrokeThickness="2"
+                    HeightRequest="38" WidthRequest="38"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="19" />
+                    </Border.StrokeShape>
+                    <!-- The photo is layered over the monogram, so the initials
+                         show until a picture exists and again if it is removed. -->
+                    <Grid>
+                        <Label
+                            x:Name="ProfileInitials"
+                            Style="{StaticResource UcAvatarText}"
+                            FontSize="13" />
+                        <Image
+                            x:Name="ProfilePhoto"
+                            IsVisible="False"
+                            Aspect="AspectFill"
+                            HeightRequest="38" WidthRequest="38" />
+                    </Grid>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
 
-                <Button
-                    Grid.Column="1"
-                    Text="My applications"
-                    Style="{StaticResource UcBtnPill}"
-                    Clicked="OnMyApplicationsClicked" />
+                <Label Grid.Column="1" Text="UniConnect" Style="{StaticResource UcAppBarTitle}" />
 
-                <Grid Grid.Column="2" WidthRequest="34" HeightRequest="30" VerticalOptions="Center">
+                <Grid Grid.Column="2" WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+
+                    <!-- BorderWidth 0 matters: WinUI's button chrome otherwise
+                         draws a visible box around a transparent ImageButton. -->
                     <ImageButton
                         Source="ic_bell_green.png"
                         BackgroundColor="Transparent"
                         BorderWidth="0"
-                        HeightRequest="26" WidthRequest="26"
+                        HeightRequest="24" WidthRequest="24"
                         Padding="0"
                         Aspect="AspectFit"
-                        HorizontalOptions="Start"
+                        HorizontalOptions="Center"
                         VerticalOptions="Center"
                         Clicked="OnNotificationsClicked"
                         SemanticProperties.Description="Notifications" />
@@ -54,6 +83,7 @@
                         StrokeThickness="0"
                         Padding="5,1"
                         MinimumWidthRequest="18"
+                        Margin="0,4,2,0"
                         HorizontalOptions="End"
                         VerticalOptions="Start"
                         InputTransparent="True">
@@ -154,7 +184,25 @@
                         </Border>
                     </Grid>
 
-                    <Label x:Name="ResultsLabel" Style="{StaticResource UcTiny}" Margin="2,0,0,0" />
+                    <!-- "My applications" sits here rather than in the app bar,
+                         which is now identical on every screen. This is the seam
+                         between the browse controls above and the results below,
+                         so the action does not interrupt the filter group and is
+                         still in view before any scrolling. -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label
+                            Grid.Column="0"
+                            x:Name="ResultsLabel"
+                            Style="{StaticResource UcTiny}"
+                            Margin="2,0,0,0"
+                            VerticalOptions="Center" />
+
+                        <Button
+                            Grid.Column="1"
+                            Text="My applications"
+                            Style="{StaticResource UcBtnPill}"
+                            Clicked="OnMyApplicationsClicked" />
+                    </Grid>
 
                     <!-- Shown when nothing scores well and the student's career
                          profile is thin, which is the case where "add your skills"
@@ -314,17 +362,17 @@
         <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
             <Grid ColumnDefinitions="*,*,*,*">
 
-                <VerticalStackLayout Grid.Column="0" Spacing="3" Opacity="0.45">
+                <VerticalStackLayout Grid.Column="0" Spacing="3">
                     <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_home_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Home" Style="{StaticResource UcTabLabel}" />
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnComingSoonTapped" CommandParameter="Home" />
+                        <TapGestureRecognizer Tapped="OnHomeTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Grid.Column="1" Spacing="3" Opacity="0.45">
+                <VerticalStackLayout Grid.Column="1" Spacing="3">
                     <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_users_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
                     </Border>
@@ -341,13 +389,13 @@
                     <Label Text="Internships" Style="{StaticResource UcTabLabelActive}" />
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Grid.Column="3" Spacing="3" Opacity="0.45">
+                <VerticalStackLayout Grid.Column="3" Spacing="3">
                     <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_user_circle_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Profile" Style="{StaticResource UcTabLabel}" />
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnComingSoonTapped" CommandParameter="Profile" />
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
             </Grid>

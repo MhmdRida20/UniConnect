@@ -420,9 +420,15 @@
     </Style>
 
     <Style x:Key="UcBtnOutline" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource UcPrimaryDark}" />
-        <Setter Property="BorderColor" Value="{StaticResource UcPrimary}" />
+        <!-- Background, not just BackgroundColor. They are two different
+             properties: the implicit Button style paints a gradient Brush into
+             Background, and clearing BackgroundColor alone leaves that brush in
+             place — which is how an outline button ended up with green text on
+             a green fill. -->
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
+        <Setter Property="TextColor" Value="{StaticResource UcGreen}" />
+        <Setter Property="BorderColor" Value="{StaticResource UcGreen}" />
         <Setter Property="BorderWidth" Value="1" />
         <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="FontSize" Value="14" />
@@ -450,16 +456,21 @@
 
     <Style x:Key="UcBtnDanger" TargetType="Button" BasedOn="{StaticResource UcBtnOutline}">
         <Setter Property="TextColor" Value="{StaticResource UcDanger}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource UcSurface}" />
         <Setter Property="BorderColor" Value="{StaticResource UcDanger}" />
     </Style>
 
     <Style x:Key="UcBtnGhost" TargetType="Button" BasedOn="{StaticResource UcBtnOutline}">
-        <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
-        <Setter Property="BorderColor" Value="{StaticResource UcBorder}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource UcMint}" />
+        <Setter Property="TextColor" Value="{StaticResource UcGreen}" />
+        <Setter Property="BorderColor" Value="Transparent" />
+        <Setter Property="BorderWidth" Value="0" />
     </Style>
 
     <!-- Compact approve/reject/remove actions in member rows -->
     <Style x:Key="UcBtnTiny" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource UcBrandBrushH}" />
+        <Setter Property="TextColor" Value="White" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="CornerRadius" Value="9" />
@@ -481,6 +492,12 @@
     </Style>
 
     <Style x:Key="UcBtnTinyGhost" TargetType="Button" BasedOn="{StaticResource UcBtnTiny}">
+        <!-- Background, not just BackgroundColor. They are two different
+             properties: the implicit Button style paints a gradient Brush into
+             Background, and clearing BackgroundColor alone leaves that brush in
+             place — which is how an outline button ended up with green text on
+             a green fill. -->
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="TextColor" Value="{StaticResource UcTextSoft}" />
         <Setter Property="BorderColor" Value="{StaticResource UcBorder}" />
@@ -488,6 +505,12 @@
     </Style>
 
     <Style x:Key="UcBtnTinyDanger" TargetType="Button" BasedOn="{StaticResource UcBtnTiny}">
+        <!-- Background, not just BackgroundColor. They are two different
+             properties: the implicit Button style paints a gradient Brush into
+             Background, and clearing BackgroundColor alone leaves that brush in
+             place — which is how an outline button ended up with green text on
+             a green fill. -->
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="TextColor" Value="{StaticResource UcDanger}" />
         <Setter Property="BorderColor" Value="{StaticResource UcDanger}" />
@@ -823,6 +846,32 @@
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontFamily" Value="InterSemiBold" />
         <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- A round icon-only action, for rows too tight to carry a worded button.
+         Tinted rather than outlined so it reads as a destructive action at a
+         glance, and 40pt square so it is still a comfortable target. -->
+    <Style x:Key="UcIconBtnDanger" TargetType="ImageButton">
+        <Setter Property="BackgroundColor" Value="{StaticResource UcPillRedBg}" />
+        <Setter Property="Background" Value="{StaticResource UcPillRedBg}" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="HeightRequest" Value="40" />
+        <Setter Property="WidthRequest" Value="40" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.92" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
     </Style>
 
     <!-- Filled green pill for a top-bar action. -->

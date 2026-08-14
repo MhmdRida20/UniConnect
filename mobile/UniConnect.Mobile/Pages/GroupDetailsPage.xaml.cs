@@ -422,8 +422,18 @@ public partial class GroupDetailsPage : ContentPage
 	private static Style? AppStyle(string key) =>
 		Application.Current?.Resources.TryGetValue(key, out var value) == true ? value as Style : null;
 
-	private static int? MemberIdOf(object? sender) =>
-		(sender as Button)?.CommandParameter is int id ? id : null;
+	/// <summary>
+	/// The member id carried by whichever control was tapped. Button and
+	/// ImageButton both have a CommandParameter but share no base type that
+	/// declares it, so each is checked — the remove action is an ImageButton and
+	/// a Button-only cast would have made it silently do nothing.
+	/// </summary>
+	private static int? MemberIdOf(object? sender) => sender switch
+	{
+		Button b when b.CommandParameter is int id => id,
+		ImageButton ib when ib.CommandParameter is int id => id,
+		_ => null
+	};
 
 	private void SetBusy(bool busy)
 	{

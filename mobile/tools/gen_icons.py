@@ -77,6 +77,7 @@ ICONS = [
     ("lock", "green"),
     ("lock", "muted"),
     ("logout", "white"),
+    ("logout", "red"),
     ("mail", "muted"),
     ("plus", "green"),
     ("plus", "white"),
@@ -93,6 +94,11 @@ ICONS = [
     ("user-multiple", "muted"),
     ("users", "green"),
     ("users", "white"),
+    # Home dashboard: one per service card, plus the clubs stat.
+    ("user-multiple", "green"),
+    ("qr", "green"),
+    ("ticket", "green"),
+    ("flag", "green"),
 ]
 
 TEMPLATE = ('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" '

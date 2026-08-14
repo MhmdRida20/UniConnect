@@ -236,6 +236,9 @@ builder.Services.AddScoped<UniConnect.Services.StudyGroupService>();
 // API so the two clients cannot disagree about who may apply to what.
 builder.Services.AddScoped<UniConnect.Services.InternshipService>();
 
+// FR-06 profile editing, shared by the web controller and the mobile API.
+builder.Services.AddScoped<UniConnect.Services.ProfileService>();
+
 var app = builder.Build();
 
 // --- Apply migrations and seed at startup -----------------------------------

@@ -9,6 +9,7 @@ public partial class GroupsPage : ContentPage
 	private readonly SessionStore _session;
 	private readonly StudyGroupHubClient _hub;
 	private readonly NotificationsApi _notifications;
+	private readonly ProfileStore _profiles;
 
 	/// <summary>What the list shows: the loaded groups after the search filter.</summary>
 	private readonly ObservableCollection<GroupSummary> _visible = new();
@@ -39,22 +40,15 @@ public partial class GroupsPage : ContentPage
 		_session = ServiceHelper.Get<SessionStore>();
 		_hub = ServiceHelper.Get<StudyGroupHubClient>();
 		_notifications = ServiceHelper.Get<NotificationsApi>();
+		_profiles = ServiceHelper.Get<ProfileStore>();
+
+		// Redraw when the profile screen saves a new picture.
+		_profiles.Changed += () => Dispatcher.Dispatch(() => ApplyProfile(_profiles.Current));
 
 		BindableLayout.SetItemsSource(CardsHost, _visible);
 		BuildChips();
 
 		SizeChanged += OnPageSizeChanged;
-	}
-
-	/// <summary>
-	/// Fills the account avatar. Done here rather than in the constructor
-	/// because reading the session is async, and the initials should refresh if
-	/// a different student signs in without the process restarting.
-	/// </summary>
-	private async Task LoadProfileAsync()
-	{
-		var session = await _session.GetAsync();
-		ProfileInitials.Text = Avatar.Initials(session?.FullName);
 	}
 
 	// ---- responsive layout -------------------------------------------------
@@ -74,15 +68,17 @@ public partial class GroupsPage : ContentPage
 
 		var innerWidth = contentWidth - (PageGutter * 2);
 
+		// The Picker asks for whatever its longest item needs — and the items
+		// are "CSC420 · Web Development with ASP.NET" — so left alone it widens
+		// the header and takes every card with it.
 		CoursePicker.WidthRequest = innerWidth - (InputPadding * 2);
 
-		// Same reason as the Picker: a horizontal ScrollView reports its whole
-		// content as its desired width, so the chip row would widen the header
-		// past the viewport and take every card with it.
+		// Same reason: a horizontal ScrollView reports its whole content as its
+		// desired width.
 		ChipScroller.WidthRequest = innerWidth;
 	}
 
-	/// <summary>Side margin on the page, per the design system's 24px rhythm.</summary>
+	/// <summary>Side margin on the page.</summary>
 	private const double PageGutter = 24;
 
 	/// <summary>Horizontal padding inside an input frame.</summary>
@@ -132,8 +128,9 @@ public partial class GroupsPage : ContentPage
 	/// not cascade upwards, so indexing this.Resources would miss everything in
 	/// UniConnect.xaml.
 	/// </summary>
-	private static Style Theme(string key) =>
-		(Style)Application.Current!.Resources[key];
+	private static Style Theme(string key) => (Style)Application.Current!.Resources[key];
+
+	// ---- lifecycle ---------------------------------------------------------
 
 	protected override async void OnAppearing()
 	{
@@ -173,8 +170,7 @@ public partial class GroupsPage : ContentPage
 		await _hub.LeaveLobbyAsync();
 	}
 
-	private void OnListChanged() =>
-		Dispatcher.Dispatch(() => UpdateBanner.IsVisible = true);
+	private void OnListChanged() => Dispatcher.Dispatch(() => UpdateBanner.IsVisible = true);
 
 	private async void OnBannerRefreshClicked(object? sender, EventArgs e)
 	{
@@ -182,7 +178,7 @@ public partial class GroupsPage : ContentPage
 		await LoadGroupsAsync();
 	}
 
-	// ---- loading ----------------------------------------------------------
+	// ---- loading -----------------------------------------------------------
 
 	private async Task LoadCoursesAsync()
 	{
@@ -231,7 +227,7 @@ public partial class GroupsPage : ContentPage
 		}
 	}
 
-	// ---- filtering --------------------------------------------------------
+	// ---- filtering ---------------------------------------------------------
 
 	/// <summary>
 	/// Search and scope, both local: the course dropdown is a server query
@@ -302,17 +298,34 @@ public partial class GroupsPage : ContentPage
 		await LoadGroupsAsync();
 	}
 
-	/// <summary>
-	/// The avatar is the account menu. Sign out lives here rather than as its
-	/// own button, which is what leaves the top bar with room for the brand.
-	/// </summary>
-	private async void OnProfileTapped(object? sender, TappedEventArgs e)
-	{
-		var session = await _session.GetAsync();
-		var name = session?.FullName ?? "Your account";
+	// ---- account -----------------------------------------------------------
 
-		var choice = await DisplayActionSheet(name, "Cancel", null, "Sign out");
-		if (choice == "Sign out") await SignOutAsync();
+	/// <summary>
+	/// The avatar opens the profile screen, which is where sign out lives. It
+	/// used to raise a native action sheet, whose styling the app cannot reach
+	/// and which looked nothing like the rest of it.
+	/// </summary>
+	private async void OnProfileTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync(nameof(ProfilePage));
+
+	/// <summary>
+	/// Draws the account avatar from the shared store, so a picture changed on
+	/// the profile screen shows here without this page re-fetching anything.
+	/// </summary>
+	private async Task LoadProfileAsync()
+	{
+		var profile = await _profiles.GetAsync();
+		ApplyProfile(profile);
+	}
+
+	private void ApplyProfile(ProfileDto? profile)
+	{
+		ProfileInitials.Text = profile?.Initials ?? "?";
+
+		ProfilePhoto.Source = profile?.HasPicture == true
+			? ImageSource.FromUri(new Uri(profile.ProfilePictureUrl!))
+			: null;
+		ProfilePhoto.IsVisible = profile?.HasPicture == true;
 	}
 
 	private async void OnNotificationsClicked(object? sender, EventArgs e) =>
@@ -331,18 +344,11 @@ public partial class GroupsPage : ContentPage
 		UnreadBadgeLabel.Text = count > 99 ? "99+" : count.ToString();
 	}
 
-	/// <summary>
-	/// The tab bar shows the app's planned shape, but Study Groups is the only
-	/// section built. Saying so beats opening an empty screen.
-	/// </summary>
 	private async void OnInternshipsTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//internships");
 
-	private async void OnComingSoonTapped(object? sender, TappedEventArgs e)
-	{
-		var section = e.Parameter as string ?? "This section";
-		await DisplayAlert(section, $"{section} is not part of the mobile app yet. Use the web portal for now.", "OK");
-	}
+	private async void OnHomeTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync("//home");
 
 	// ---- navigation -------------------------------------------------------
 
@@ -358,20 +364,12 @@ public partial class GroupsPage : ContentPage
 		await Shell.Current.GoToAsync($"{nameof(GroupDetailsPage)}?id={group.Id}");
 	}
 
-	private async Task SignOutAsync()
-	{
-		// Drop the hub connection too — it is authenticated as the outgoing
-		// student and would otherwise keep receiving their groups' traffic.
-		await _hub.StopAsync();
-		await _session.ClearAsync();
-		await Shell.Current.GoToAsync("//login");
-	}
-
 	private async Task<bool> HandleAuthFailureAsync(ApiException ex)
 	{
 		if (!ex.IsAuthFailure) return false;
 
 		await _session.ClearAsync();
+		_profiles.Clear();
 		await Shell.Current.GoToAsync("//login");
 		return true;
 	}

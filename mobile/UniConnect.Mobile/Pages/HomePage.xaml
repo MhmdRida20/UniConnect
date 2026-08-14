@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Home — the student dashboard.
+
+    Same three parts as the web home page's student branch: who you are and
+    where you study, your four counters, and the services your university has
+    actually switched on. Nothing here is invented client-side; every number and
+    every card comes from /api/home/dashboard, which runs the same queries the
+    web controller does.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pages="clr-namespace:UniConnect.Mobile.Pages"
+             x:Class="UniConnect.Mobile.Pages.HomePage"
+             Title="Home"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- ===== Top app bar =====
+             Identical to Groups and Internships: account avatar left, brand
+             centre, notifications right. -->
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+
+                <Border
+                    Grid.Column="0"
+                    Background="{StaticResource UcAvatarBrush}"
+                    Stroke="{StaticResource UcMint}"
+                    StrokeThickness="2"
+                    HeightRequest="38" WidthRequest="38"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="19" />
+                    </Border.StrokeShape>
+                    <Grid>
+                        <Label
+                            x:Name="ProfileInitials"
+                            Style="{StaticResource UcAvatarText}"
+                            FontSize="13" />
+                        <Image
+                            x:Name="ProfilePhoto"
+                            IsVisible="False"
+                            Aspect="AspectFill"
+                            HeightRequest="38" WidthRequest="38" />
+                    </Grid>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label Grid.Column="1" Text="UniConnect" Style="{StaticResource UcAppBarTitle}" />
+
+                <Grid Grid.Column="2" WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+                    <ImageButton
+                        Source="ic_bell_green.png"
+                        BackgroundColor="Transparent"
+                        BorderWidth="0"
+                        HeightRequest="24" WidthRequest="24"
+                        Padding="0"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        Clicked="OnNotificationsClicked"
+                        SemanticProperties.Description="Notifications" />
+
+                    <Border
+                        x:Name="UnreadBadge"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcDanger}"
+                        StrokeThickness="0"
+                        Padding="5,1"
+                        MinimumWidthRequest="18"
+                        Margin="0,4,2,0"
+                        HorizontalOptions="End"
+                        VerticalOptions="Start"
+                        InputTransparent="True">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="999" />
+                        </Border.StrokeShape>
+                        <Label
+                            x:Name="UnreadBadgeLabel"
+                            FontSize="10"
+                            FontFamily="InterSemiBold"
+                            TextColor="White"
+                            HorizontalTextAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- ===== The one scrolling surface ===== -->
+        <RefreshView x:Name="Refresher" Grid.Row="1" Refreshing="OnRefreshing">
+            <ScrollView>
+                <VerticalStackLayout x:Name="Column" Padding="24,24,24,16" Spacing="22">
+
+                    <Border
+                        x:Name="ErrorBox"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcPillRedBg}"
+                        StrokeThickness="0"
+                        Padding="14,12">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Label
+                            x:Name="ErrorLabel"
+                            FontSize="13.5"
+                            TextColor="{StaticResource UcPillRedFg}"
+                            LineBreakMode="WordWrap" />
+                    </Border>
+
+                    <!-- ===== Greeting =====
+                         The brand gradient, so the top of Home reads as the same
+                         surface as the sign-in screen the student just came from. -->
+                    <Border Background="{StaticResource UcHeroBrush}" StrokeThickness="0" Padding="22,24">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20" />
+                        </Border.StrokeShape>
+                        <!-- A Grid, not a stack: a stack measures against unbounded
+                             width, so a long university name would run off the card
+                             instead of wrapping. -->
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+
+                            <Label
+                                x:Name="GreetingLabel"
+                                Grid.Row="0"
+                                Text="WELCOME BACK"
+                                Style="{StaticResource UcEyebrow}" />
+
+                            <Label
+                                x:Name="NameLabel"
+                                Grid.Row="1"
+                                Style="{StaticResource UcDisplay}"
+                                FontSize="26"
+                                LineBreakMode="TailTruncation" />
+
+                            <Grid Grid.Row="2" ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,2,0,0">
+                                <Image
+                                    Grid.Column="0"
+                                    Source="ic_graduation_white.png"
+                                    WidthRequest="16" HeightRequest="16"
+                                    Aspect="AspectFit"
+                                    VerticalOptions="Center"
+                                    Opacity="0.85" />
+                                <Label
+                                    x:Name="UniversityLabel"
+                                    Grid.Column="1"
+                                    Style="{StaticResource UcHeroSub}"
+                                    LineBreakMode="WordWrap"
+                                    VerticalOptions="Center" />
+                            </Grid>
+
+                            <Border
+                                x:Name="ServiceCountPill"
+                                Grid.Row="3"
+                                Style="{StaticResource UcPillOnHero}"
+                                HorizontalOptions="Start"
+                                Margin="0,8,0,0">
+                                <Label
+                                    x:Name="ServiceCountLabel"
+                                    Style="{StaticResource UcPillTextOnHero}" />
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- ===== Counters =====
+                         A FlexLayout rather than a fixed Grid: a counter whose
+                         service the university has not enabled is dropped from the
+                         list entirely, and flex closes the gap instead of leaving
+                         a hole where the cell used to be. -->
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Your activity" Style="{StaticResource UcH1}" FontSize="19" />
+
+                        <FlexLayout
+                            x:Name="StatsHost"
+                            Wrap="Wrap"
+                            JustifyContent="SpaceBetween"
+                            AlignItems="Stretch">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="pages:HomeStat">
+                                    <Border
+                                        Style="{StaticResource UcCardSoft}"
+                                        Padding="16,15"
+                                        Margin="0,0,0,12"
+                                        FlexLayout.Basis="48%">
+                                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                                            <Border
+                                                Grid.Row="0"
+                                                BackgroundColor="{StaticResource UcMint}"
+                                                StrokeThickness="0"
+                                                HeightRequest="38" WidthRequest="38"
+                                                HorizontalOptions="Start">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="13" />
+                                                </Border.StrokeShape>
+                                                <Image
+                                                    Source="{Binding Icon}"
+                                                    WidthRequest="20" HeightRequest="20"
+                                                    Aspect="AspectFit"
+                                                    HorizontalOptions="Center" VerticalOptions="Center" />
+                                            </Border>
+
+                                            <Label
+                                                Grid.Row="1"
+                                                Text="{Binding Value}"
+                                                FontFamily="MontserratBold"
+                                                FontSize="26"
+                                                TextColor="{StaticResource UcText}" />
+
+                                            <Label
+                                                Grid.Row="2"
+                                                Text="{Binding Label}"
+                                                Style="{StaticResource UcTiny}"
+                                                LineBreakMode="WordWrap" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+                    </VerticalStackLayout>
+
+                    <!-- ===== Services ===== -->
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Campus services" Style="{StaticResource UcH1}" FontSize="19" />
+                        <Label
+                            x:Name="ServicesSubtitle"
+                            Style="{StaticResource UcMutedText}"
+                            Margin="0,-6,0,0"
+                            LineBreakMode="WordWrap" />
+
+                        <VerticalStackLayout x:Name="ServicesHost" Spacing="12">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="pages:HomeService">
+                                    <Border Style="{StaticResource UcCardSoft}" Padding="14,14">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnServiceTapped" />
+                                        </Border.GestureRecognizers>
+
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                            <Border
+                                                Grid.Column="0"
+                                                BackgroundColor="{StaticResource UcMint}"
+                                                StrokeThickness="0"
+                                                HeightRequest="44" WidthRequest="44"
+                                                VerticalOptions="Center">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="15" />
+                                                </Border.StrokeShape>
+                                                <Image
+                                                    Source="{Binding Icon}"
+                                                    WidthRequest="22" HeightRequest="22"
+                                                    Aspect="AspectFit"
+                                                    HorizontalOptions="Center" VerticalOptions="Center" />
+                                            </Border>
+
+                                            <Grid
+                                                Grid.Column="1"
+                                                RowDefinitions="Auto,Auto"
+                                                RowSpacing="3"
+                                                VerticalOptions="Center">
+                                                <Label
+                                                    Grid.Row="0"
+                                                    Text="{Binding Name}"
+                                                    Style="{StaticResource UcH3}"
+                                                    LineBreakMode="TailTruncation" />
+                                                <Label
+                                                    Grid.Row="1"
+                                                    Text="{Binding Description}"
+                                                    Style="{StaticResource UcTiny}"
+                                                    LineBreakMode="WordWrap"
+                                                    MaxLines="2" />
+                                            </Grid>
+
+                                            <!-- Either "open this here" or "this one is
+                                                 web only" — never a chevron that leads
+                                                 to an apology. -->
+                                            <Image
+                                                Grid.Column="2"
+                                                Source="ic_arrow_right_muted.png"
+                                                WidthRequest="18" HeightRequest="18"
+                                                Aspect="AspectFit"
+                                                VerticalOptions="Center"
+                                                IsVisible="{Binding IsInApp}" />
+
+                                            <Border
+                                                Grid.Column="2"
+                                                Style="{StaticResource UcPillGrey}"
+                                                VerticalOptions="Center"
+                                                IsVisible="{Binding IsWebOnly}">
+                                                <Label Text="Web" Style="{StaticResource UcPillTextGrey}" />
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <Border
+                            x:Name="NoServicesBox"
+                            IsVisible="False"
+                            Style="{StaticResource UcCardSoft}"
+                            Padding="18,20">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="6">
+                                <Label
+                                    Grid.Row="0"
+                                    Text="No services enabled yet"
+                                    Style="{StaticResource UcH3}"
+                                    HorizontalTextAlignment="Center" />
+                                <Label
+                                    Grid.Row="1"
+                                    Text="Your university hasn't switched any modules on. Contact your administrator to find out what's coming."
+                                    Style="{StaticResource UcMutedText}"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Clears the tab bar at the end of the scroll. -->
+                    <BoxView HeightRequest="12" Color="Transparent" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- ===== Bottom navigation ===== -->
+        <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
+            <Grid ColumnDefinitions="*,*,*,*">
+
+                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                    <Border Style="{StaticResource UcTabPill}">
+                        <Image Source="ic_home_green.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Home" Style="{StaticResource UcTabLabelActive}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="3">
+                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_users_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Groups" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnGroupsTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2" Spacing="3">
+                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_briefcase_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Internships" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnInternshipsTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="3" Spacing="3">
+                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_user_circle_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Profile" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+
+</ContentPage>

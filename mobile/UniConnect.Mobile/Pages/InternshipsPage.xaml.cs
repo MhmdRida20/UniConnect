@@ -8,6 +8,8 @@ public partial class InternshipsPage : ContentPage
 	private readonly InternshipsApi _api;
 	private readonly SessionStore _session;
 	private readonly NotificationsApi _notifications;
+	private readonly ProfileStore _profiles;
+	private readonly StudyGroupHubClient _hub;
 
 	/// <summary>What the list shows: the loaded listings after the search filter.</summary>
 	private readonly ObservableCollection<InternshipSummary> _visible = new();
@@ -44,6 +46,11 @@ public partial class InternshipsPage : ContentPage
 		_api = ServiceHelper.Get<InternshipsApi>();
 		_session = ServiceHelper.Get<SessionStore>();
 		_notifications = ServiceHelper.Get<NotificationsApi>();
+		_profiles = ServiceHelper.Get<ProfileStore>();
+
+		// Redraw when the profile screen saves a new picture.
+		_profiles.Changed += () => Dispatcher.Dispatch(() => ApplyProfile(_profiles.Current));
+		_hub = ServiceHelper.Get<StudyGroupHubClient>();
 
 		BindableLayout.SetItemsSource(CardsHost, _visible);
 
@@ -125,6 +132,8 @@ public partial class InternshipsPage : ContentPage
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
+
+		await LoadProfileAsync();
 
 		// Re-read every time: applying on the details page changes the badge
 		// shown on the card here.
@@ -214,6 +223,34 @@ public partial class InternshipsPage : ContentPage
 	private async void OnMyApplicationsClicked(object? sender, EventArgs e) =>
 		await Shell.Current.GoToAsync(nameof(MyApplicationsPage));
 
+	/// <summary>
+	/// The avatar opens the profile screen, which is where sign out lives. It
+	/// used to raise a native action sheet, whose styling the app cannot reach
+	/// and which looked nothing like the rest of it.
+	/// </summary>
+	private async void OnProfileTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync(nameof(ProfilePage));
+
+	/// <summary>
+	/// Draws the account avatar from the shared store, so a picture changed on
+	/// the profile screen shows here without this page re-fetching anything.
+	/// </summary>
+	private async Task LoadProfileAsync()
+	{
+		var profile = await _profiles.GetAsync();
+		ApplyProfile(profile);
+	}
+
+	private void ApplyProfile(ProfileDto? profile)
+	{
+		ProfileInitials.Text = profile?.Initials ?? "?";
+
+		ProfilePhoto.Source = profile?.HasPicture == true
+			? ImageSource.FromUri(new Uri(profile.ProfilePictureUrl!))
+			: null;
+		ProfilePhoto.IsVisible = profile?.HasPicture == true;
+	}
+
 	private async void OnNotificationsClicked(object? sender, EventArgs e) =>
 		await Shell.Current.GoToAsync(nameof(NotificationsPage));
 
@@ -232,11 +269,8 @@ public partial class InternshipsPage : ContentPage
 	private async void OnGroupsTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//groups");
 
-	private async void OnComingSoonTapped(object? sender, TappedEventArgs e)
-	{
-		var section = e.Parameter as string ?? "This section";
-		await DisplayAlert(section, $"{section} is not part of the mobile app yet. Use the web portal for now.", "OK");
-	}
+	private async void OnHomeTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync("//home");
 
 	private async Task<bool> HandleAuthFailureAsync(ApiException ex)
 	{
