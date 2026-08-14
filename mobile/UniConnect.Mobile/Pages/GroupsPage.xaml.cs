@@ -349,14 +349,9 @@ public partial class GroupsPage : ContentPage
 
 	private async void OnHomeTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//home");
+
 	private async void OnAttendanceTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//attendance");
-
-	private async void OnComingSoonTapped(object? sender, TappedEventArgs e)
-	{
-		var section = e.Parameter as string ?? "This section";
-		await DisplayAlert(section, $"{section} is not part of the mobile app yet. Use the web portal for now.", "OK");
-	}
 
 	// ---- navigation -------------------------------------------------------
 

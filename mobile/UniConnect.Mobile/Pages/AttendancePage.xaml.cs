@@ -7,6 +7,7 @@ public partial class AttendancePage : ContentPage
     private readonly AttendanceApi _api;
     private readonly SessionStore _session;
     private readonly NotificationsApi _notifications;
+    private readonly ProfileStore _profiles;
 
     public AttendancePage()
     {
@@ -15,27 +16,36 @@ public partial class AttendancePage : ContentPage
         _api = ServiceHelper.Get<AttendanceApi>();
         _session = ServiceHelper.Get<SessionStore>();
         _notifications = ServiceHelper.Get<NotificationsApi>();
+        _profiles = ServiceHelper.Get<ProfileStore>();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await LoadProfileAsync();
+        ApplyProfile(await _profiles.GetAsync());
         await LoadUnreadCountAsync();
         await LoadHistoryAsync();
     }
 
-    private async Task LoadProfileAsync()
+    /// <summary>
+    /// Draws the account avatar from the shared store, so a picture changed on
+    /// the profile screen shows here without this page re-fetching anything.
+    /// </summary>
+    private void ApplyProfile(ProfileDto? profile)
     {
-        var session = await _session.GetAsync();
-        ProfileInitials.Text = Avatar.Initials(session?.FullName);
+        ProfileInitials.Text = profile?.Initials ?? "?";
+
+        ProfilePhoto.Source = profile?.HasPicture == true
+            ? ImageSource.FromUri(new Uri(profile.ProfilePictureUrl!))
+            : null;
+        ProfilePhoto.IsVisible = profile?.HasPicture == true;
     }
 
     private async Task LoadUnreadCountAsync()
     {
         var count = await _notifications.GetUnreadCountAsync();
         UnreadBadge.IsVisible = count > 0;
-        UnreadBadgeLabel.Text = count > 9 ? "9+" : count.ToString();
+        UnreadBadgeLabel.Text = count > 99 ? "99+" : count.ToString();
     }
 
     private async void OnRefreshing(object? sender, EventArgs e)
@@ -123,38 +133,28 @@ public partial class AttendancePage : ContentPage
     private async void OnNotificationsClicked(object? sender, EventArgs e) =>
         await Shell.Current.GoToAsync(nameof(NotificationsPage));
 
-    private async void OnGroupsTapped(object? sender, EventArgs e) =>
+    private async void OnHomeTapped(object? sender, TappedEventArgs e) =>
+        await Shell.Current.GoToAsync("//home");
+
+    private async void OnGroupsTapped(object? sender, TappedEventArgs e) =>
         await Shell.Current.GoToAsync("//groups");
 
-    private async void OnInternshipsTapped(object? sender, EventArgs e) =>
+    private async void OnInternshipsTapped(object? sender, TappedEventArgs e) =>
         await Shell.Current.GoToAsync("//internships");
 
-    private async void OnComingSoonTapped(object? sender, TappedEventArgs e)
-    {
-        var section = e.Parameter as string ?? "This section";
-        await DisplayAlert(section, $"{section} is not part of the mobile app yet. Use the web portal for now.", "OK");
-    }
-
-    private async void OnProfileTapped(object? sender, TappedEventArgs e)
-    {
-        var session = await _session.GetAsync();
-        var name = session?.FullName ?? "Your account";
-
-        var choice = await DisplayActionSheet(name, "Cancel", null, "Sign out");
-        if (choice == "Sign out") await SignOutAsync();
-    }
-
-    private async Task SignOutAsync()
-    {
-        await _session.ClearAsync();
-        await Shell.Current.GoToAsync("//login");
-    }
+    /// <summary>
+    /// The avatar and the Profile tab both open the profile screen, which is
+    /// where sign out lives — hence no sign-out control on this page.
+    /// </summary>
+    private async void OnProfileTapped(object? sender, TappedEventArgs e) =>
+        await Shell.Current.GoToAsync(nameof(ProfilePage));
 
     private async Task<bool> HandleAuthFailureAsync(ApiException ex)
     {
         if (!ex.IsAuthFailure) return false;
 
         await _session.ClearAsync();
+        _profiles.Clear();
         await Shell.Current.GoToAsync("//login");
         return true;
     }

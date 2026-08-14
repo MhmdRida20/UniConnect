@@ -325,7 +325,7 @@
 
         <!-- ===== Bottom navigation ===== -->
         <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
-            <Grid ColumnDefinitions="*,*,*,*">
+            <Grid ColumnDefinitions="*,*,*,*,*">
 
                 <VerticalStackLayout Grid.Column="0" Spacing="3">
                     <Border Style="{StaticResource UcTabPill}">
@@ -335,7 +335,7 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="3">
-                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_users_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Groups" Style="{StaticResource UcTabLabel}" />
@@ -345,7 +345,7 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="2" Spacing="3">
-                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_briefcase_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Internships" Style="{StaticResource UcTabLabel}" />
@@ -355,7 +355,17 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="3" Spacing="3">
-                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_scan_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Attendance" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAttendanceTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="4" Spacing="3">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_user_circle_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Profile" Style="{StaticResource UcTabLabel}" />

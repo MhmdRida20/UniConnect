@@ -32,3 +32,10 @@ Thumbs.db
 
 # App secrets (optional — keep local connection strings private)
 appsettings.Development.json
+
+# Archives. A build/source zip was once committed here by accident and put
+# 88 MB into the history permanently — git keeps every version of a binary
+# forever, so the repo can only ever grow. Hand these over out of band.
+*.zip
+*.7z
+*.rar

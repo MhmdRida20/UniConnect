@@ -228,6 +228,9 @@ public partial class HomePage : ContentPage
 	{
 		ServiceCodes.StudyGroups => "//groups",
 		ServiceCodes.Internships => "//internships",
+
+		ServiceCodes.Attendance => "//attendance",
+
 		_ => null
 	};
 
@@ -280,6 +283,9 @@ public partial class HomePage : ContentPage
 
 	private async void OnInternshipsTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//internships");
+
+	private async void OnAttendanceTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync("//attendance");
 
 	private async void OnProfileTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync(nameof(ProfilePage));

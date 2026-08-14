@@ -40,21 +40,17 @@ public static class MauiProgram
         // leaks sockets, and the base address never changes while the app runs.
         builder.Services.AddSingleton(sp => ApiHttp.CreateClient(sp.GetRequiredService<SessionStore>()));
 
-		builder.Services.AddSingleton<AuthApi>();
-		builder.Services.AddSingleton<StudyGroupsApi>();
-		builder.Services.AddSingleton<InternshipsApi>();
-		builder.Services.AddSingleton<ProfileApi>();
-		builder.Services.AddSingleton<HomeApi>();
-
-		// One cached profile for the whole app, so every app bar draws the same
-		// avatar and a new picture reaches all of them at once.
-		builder.Services.AddSingleton<ProfileStore>();
-		builder.Services.AddSingleton<NotificationsApi>();
         builder.Services.AddSingleton<AuthApi>();
         builder.Services.AddSingleton<StudyGroupsApi>();
         builder.Services.AddSingleton<InternshipsApi>();
         builder.Services.AddSingleton<NotificationsApi>();
         builder.Services.AddSingleton<AttendanceApi>();
+        builder.Services.AddSingleton<ProfileApi>();
+        builder.Services.AddSingleton<HomeApi>();
+
+        // One cached profile for the whole app, so every app bar draws the same
+        // avatar and a new picture reaches all of them at once.
+        builder.Services.AddSingleton<ProfileStore>();
 
         // One hub connection shared by every screen that wants live updates.
         builder.Services.AddSingleton<StudyGroupHubClient>();
@@ -85,14 +81,14 @@ public static class MauiProgram
         Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping("UcNoBorder",
             (handler, view) => StripWinUiChrome(handler.PlatformView));
 #elif ANDROID
-		Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("UcNoBorder", (handler, view) =>
-			handler.PlatformView.Background = null);
+        Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("UcNoBorder", (handler, view) =>
+            handler.PlatformView.Background = null);
 
-		Microsoft.Maui.Handlers.EditorHandler.Mapper.AppendToMapping("UcNoBorder", (handler, view) =>
-			handler.PlatformView.Background = null);
+        Microsoft.Maui.Handlers.EditorHandler.Mapper.AppendToMapping("UcNoBorder", (handler, view) =>
+            handler.PlatformView.Background = null);
 
-		Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping("UcNoBorder", (handler, view) =>
-			handler.PlatformView.Background = null);
+        Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping("UcNoBorder", (handler, view) =>
+            handler.PlatformView.Background = null);
 #endif
     }
 

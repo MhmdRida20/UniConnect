@@ -8,26 +8,40 @@
     FlyoutBehavior="Disabled">
 
     <!--
-        Two separate ShellItems rather than two ShellContents, so Shell treats
-        them as independent sections and does not draw a tab bar across them.
-        Switching with an absolute route ("//groups") replaces the whole
-        navigation stack, which is what sign-in and sign-out both want: no back
-        button from the group list to the login screen.
+        One ShellItem per top-level section rather than ShellContents inside a
+        single item, so Shell treats them as independent and does not draw a tab
+        bar of its own across them — the app draws its own. Switching with an
+        absolute route ("//home") replaces the whole navigation stack, which is
+        what sign-in, sign-out and every tab tap want: no back button from a
+        section to the one before it, and none from the dashboard to login.
+
+        Every route the app navigates to with "//" needs an entry here. A
+        missing one does not fail the build — it fails at the moment of
+        navigation, which is how a merge once left sign-in pointing at a "//home"
+        that no longer existed.
     -->
 
     <ShellItem Route="login">
         <ShellContent ContentTemplate="{DataTemplate pages:LoginPage}" />
     </ShellItem>
 
+    <ShellItem Route="home">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
+    </ShellItem>
+
     <ShellItem Route="groups">
         <ShellContent ContentTemplate="{DataTemplate pages:GroupsPage}" />
     </ShellItem>
 
-    <!-- Its own section for the same reason: the app draws its own tab bar, so
-         switching to it replaces the stack rather than stacking on top of the
-         group list. -->
     <ShellItem Route="internships">
         <ShellContent ContentTemplate="{DataTemplate pages:InternshipsPage}" />
+    </ShellItem>
+
+    <!-- A section rather than a pushed route because it owns a tab: tapping a
+         tab has to replace the stack, not push onto the stack of whichever
+         section you happened to be in. -->
+    <ShellItem Route="attendance">
+        <ShellContent ContentTemplate="{DataTemplate pages:AttendancePage}" />
     </ShellItem>
 
 </Shell>

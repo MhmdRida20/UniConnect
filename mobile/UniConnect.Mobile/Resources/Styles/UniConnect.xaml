@@ -760,22 +760,30 @@
         </Setter>
     </Style>
 
+    <!-- 10.5 rather than 11, and allowed to shrink further: "Internships" and
+         "Attendance" are the longest labels and five of them share the width of
+         a phone. NoWrap keeps every tab one line high so the bar cannot grow a
+         second row on the narrowest devices. -->
     <Style x:Key="UcTabLabel" TargetType="Label">
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontSize" Value="10.5" />
         <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
         <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="LineBreakMode" Value="NoWrap" />
     </Style>
 
     <Style x:Key="UcTabLabelActive" TargetType="Label" BasedOn="{StaticResource UcTabLabel}">
         <Setter Property="TextColor" Value="{StaticResource UcGreen}" />
     </Style>
 
-    <!-- The pill behind the selected tab's icon. -->
+    <!-- The pill behind the selected tab's icon.
+         Padding is 14 rather than 20 a side because the bar carries five tabs:
+         on a 375pt phone that is ~71pt a column, and a wider pill would touch
+         its neighbours. -->
     <Style x:Key="UcTabPill" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource UcMint}" />
         <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="Padding" Value="20,7" />
+        <Setter Property="Padding" Value="14,7" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="StrokeShape">
             <RoundRectangle CornerRadius="999" />

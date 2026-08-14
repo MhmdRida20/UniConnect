@@ -358,24 +358,25 @@
             </ScrollView>
         </RefreshView>
 
-        <!-- ===== Bottom navigation ===== -->
+        <!-- ===== Bottom navigation =====
+             21px icons and 14,7 pill padding, matching the other sections: this
+             page used 24px, which no longer fits now the bar carries five. -->
         <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
-            <Grid ColumnDefinitions="*,*,*,*">
+            <Grid ColumnDefinitions="*,*,*,*,*">
 
                 <VerticalStackLayout Grid.Column="0" Spacing="3">
-                    <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
-                        <Image Source="ic_scan_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_home_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
-                    <Label Text="Attendance" Style="{StaticResource UcTabLabel}" />
+                    <Label Text="Home" Style="{StaticResource UcTabLabel}" />
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnHomeTapped" />
-                        <TapGestureRecognizer Tapped="OnAttendanceTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="3">
-                    <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
-                        <Image Source="ic_users_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_users_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Groups" Style="{StaticResource UcTabLabel}" />
                     <VerticalStackLayout.GestureRecognizers>
@@ -385,14 +386,24 @@
 
                 <VerticalStackLayout Grid.Column="2" Spacing="3">
                     <Border Style="{StaticResource UcTabPill}">
-                        <Image Source="ic_briefcase_green.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                        <Image Source="ic_briefcase_green.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Internships" Style="{StaticResource UcTabLabelActive}" />
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="3" Spacing="3">
-                    <Border Padding="20,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
-                        <Image Source="ic_user_circle_muted.png" WidthRequest="24" HeightRequest="24" Aspect="AspectFit" />
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_scan_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Attendance" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAttendanceTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="4" Spacing="3">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_user_circle_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Profile" Style="{StaticResource UcTabLabel}" />
                     <VerticalStackLayout.GestureRecognizers>

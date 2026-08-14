@@ -2,11 +2,10 @@
 <!--
     My Attendance.
 
-    Same shape as GroupsPage: a fixed app bar and tab bar, one scrolling
-    surface between them. No FAB here — the primary action ("Check In") is
-    prominent enough in the header that a floating button would be redundant
-    rather than helpful, unlike Groups where "create" is a distinct action
-    from anything already on screen.
+    Same shape as the other sections: a fixed app bar and tab bar with one
+    scrolling surface between them. No FAB — the primary action ("Check In") is
+    prominent enough in the body that a floating button would be redundant,
+    unlike Groups where "create" is distinct from anything already on screen.
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -16,7 +15,8 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
 
-        <!-- ===== Top app bar — identical to GroupsPage's ===== -->
+        <!-- ===== Top app bar — the same three elements as every other section:
+             account avatar left, brand centre, notifications right. ===== -->
         <Border Grid.Row="0" Style="{StaticResource UcAppBar}">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
 
@@ -30,7 +30,19 @@
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="19" />
                     </Border.StrokeShape>
-                    <Label x:Name="ProfileInitials" Style="{StaticResource UcAvatarText}" FontSize="13" />
+                    <!-- The photo is layered over the monogram, so the initials
+                         show until a picture exists and again if it is removed. -->
+                    <Grid>
+                        <Label
+                            x:Name="ProfileInitials"
+                            Style="{StaticResource UcAvatarText}"
+                            FontSize="13" />
+                        <Image
+                            x:Name="ProfilePhoto"
+                            IsVisible="False"
+                            Aspect="AspectFill"
+                            HeightRequest="38" WidthRequest="38" />
+                    </Grid>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnProfileTapped" />
                     </Border.GestureRecognizers>
@@ -38,15 +50,18 @@
 
                 <Label Grid.Column="1" Text="UniConnect" Style="{StaticResource UcAppBarTitle}" />
 
-                <Grid Grid.Column="2" WidthRequest="34" HeightRequest="30" VerticalOptions="Center">
+                <!-- 44x44 with the icon centred inside it: a real touch target,
+                     and the badge hangs off the corner with a small negative
+                     margin so it overlaps rather than squashing the icon. -->
+                <Grid Grid.Column="2" WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
                     <ImageButton
                         Source="ic_bell_green.png"
                         BackgroundColor="Transparent"
                         BorderWidth="0"
-                        HeightRequest="26" WidthRequest="26"
+                        HeightRequest="24" WidthRequest="24"
                         Padding="0"
                         Aspect="AspectFit"
-                        HorizontalOptions="Start"
+                        HorizontalOptions="Center"
                         VerticalOptions="Center"
                         Clicked="OnNotificationsClicked"
                         SemanticProperties.Description="Notifications" />
@@ -58,6 +73,7 @@
                         StrokeThickness="0"
                         Padding="5,1"
                         MinimumWidthRequest="18"
+                        Margin="0,4,2,0"
                         HorizontalOptions="End"
                         VerticalOptions="Start"
                         InputTransparent="True">
@@ -76,7 +92,6 @@
                 <VerticalStackLayout Padding="24,28,24,20" Spacing="20">
 
                     <VerticalStackLayout Spacing="6">
-                        <Label Text="EVERYTHING IN ONE PORTAL" Style="{StaticResource UcEyebrow}" TextColor="{StaticResource UcGreen}" />
                         <Label Text="My Attendance" Style="{StaticResource UcH1}" FontSize="32" />
                         <Label x:Name="RecordCountLabel" Text="0 records" Style="{StaticResource UcBody}" FontSize="15" />
                     </VerticalStackLayout>
@@ -130,22 +145,22 @@
             </ScrollView>
         </RefreshView>
 
-        <!-- ===== Bottom navigation — same 4 sections as GroupsPage, Attendance
-             replacing the "Home" placeholder slot rather than adding a 5th
-             column, so every existing page's tab bar only needs its icon/label
-             swapped, not its whole layout restructured. ===== -->
+        <!-- ===== Bottom navigation ===== -->
         <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
-            <Grid ColumnDefinitions="*,*,*,*">
+            <Grid ColumnDefinitions="*,*,*,*,*">
 
                 <VerticalStackLayout Grid.Column="0" Spacing="3">
-                    <Border Style="{StaticResource UcTabPill}">
-                        <Image Source="ic_scan_green.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_home_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
-                    <Label Text="Attendance" Style="{StaticResource UcTabLabelActive}" />
+                    <Label Text="Home" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnHomeTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="3">
-                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_users_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Groups" Style="{StaticResource UcTabLabel}" />
@@ -155,7 +170,7 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="2" Spacing="3">
-                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_briefcase_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Internships" Style="{StaticResource UcTabLabel}" />
@@ -164,13 +179,20 @@
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Grid.Column="3" Spacing="3" Opacity="0.45">
-                    <Border Padding="18,5" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                <VerticalStackLayout Grid.Column="3" Spacing="3">
+                    <Border Style="{StaticResource UcTabPill}">
+                        <Image Source="ic_scan_green.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Attendance" Style="{StaticResource UcTabLabelActive}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="4" Spacing="3">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_user_circle_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Profile" Style="{StaticResource UcTabLabel}" />
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnComingSoonTapped" CommandParameter="Profile" />
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
             </Grid>
