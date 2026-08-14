@@ -39,3 +39,8 @@ appsettings.Development.json
 *.zip
 *.7z
 *.rar
+
+# User-uploaded runtime data (CVs, ticket attachments, profile
+# pictures). This is data the running app writes, not source, and it
+# is other people's personal documents.
+wwwroot/uploads/
