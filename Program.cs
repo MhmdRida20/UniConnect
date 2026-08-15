@@ -239,6 +239,10 @@ builder.Services.AddScoped<UniConnect.Services.InternshipService>();
 // FR-06 profile editing, shared by the web controller and the mobile API.
 builder.Services.AddScoped<UniConnect.Services.ProfileService>();
 
+// Ride Sharing rules for the mobile API — see RideService's own doc comment
+// for why this isn't (yet) also wired into the existing RidesController.
+builder.Services.AddScoped<UniConnect.Services.RideService>();
+
 var app = builder.Build();
 
 // --- Apply migrations and seed at startup -----------------------------------

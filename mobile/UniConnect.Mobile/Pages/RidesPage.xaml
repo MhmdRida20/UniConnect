@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Available Rides.
+
+    Same three-band shape as every other section. A FAB for "Offer a Ride"
+    rather than a header button — same reasoning as Groups: creating a ride
+    is a distinct action from anything already on screen, unlike Attendance's
+    "Check In" which IS the screen's whole purpose.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.RidesPage"
+             Title="Rides"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- ===== Top app bar ===== -->
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+
+                <Border
+                    Grid.Column="0"
+                    Background="{StaticResource UcAvatarBrush}"
+                    Stroke="{StaticResource UcMint}"
+                    StrokeThickness="2"
+                    HeightRequest="38" WidthRequest="38"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="19" />
+                    </Border.StrokeShape>
+                    <Grid>
+                        <Label x:Name="ProfileInitials" Style="{StaticResource UcAvatarText}" FontSize="13" />
+                        <Image x:Name="ProfilePhoto" IsVisible="False" Aspect="AspectFill" HeightRequest="38" WidthRequest="38" />
+                    </Grid>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Label Grid.Column="1" Text="UniConnect" Style="{StaticResource UcAppBarTitle}" />
+
+                <Grid Grid.Column="2" WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+                    <ImageButton
+                        Source="ic_bell_green.png"
+                        BackgroundColor="Transparent"
+                        BorderWidth="0"
+                        HeightRequest="24" WidthRequest="24"
+                        Padding="0"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        Clicked="OnNotificationsClicked"
+                        SemanticProperties.Description="Notifications" />
+
+                    <Border
+                        x:Name="UnreadBadge"
+                        IsVisible="False"
+                        BackgroundColor="{StaticResource UcDanger}"
+                        StrokeThickness="0"
+                        Padding="5,1"
+                        MinimumWidthRequest="18"
+                        Margin="0,4,2,0"
+                        HorizontalOptions="End"
+                        VerticalOptions="Start"
+                        InputTransparent="True">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="999" />
+                        </Border.StrokeShape>
+                        <Label x:Name="UnreadBadgeLabel" FontSize="10" FontFamily="InterSemiBold" TextColor="White" HorizontalTextAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- ===== Scrolling surface + FAB ===== -->
+        <Grid Grid.Row="1">
+            <RefreshView x:Name="Refresher" Refreshing="OnRefreshing">
+                <ScrollView>
+                    <VerticalStackLayout Padding="24,28,24,90" Spacing="20">
+
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="EVERYTHING IN ONE PORTAL" Style="{StaticResource UcEyebrow}" TextColor="{StaticResource UcGreen}" />
+                            <Label Text="Available Rides" Style="{StaticResource UcH1}" FontSize="32" />
+                            <Label x:Name="SubtitleLabel" Text="Rides posted by other students at your university." Style="{StaticResource UcBody}" FontSize="15" />
+                        </VerticalStackLayout>
+
+                        <Button
+                            Text="My Rides &amp; Requests"
+                            Style="{StaticResource UcBtnOutline}"
+                            Clicked="OnMyRidesClicked"
+                            HorizontalOptions="Fill" />
+
+                        <Border x:Name="ErrorBox" IsVisible="False" BackgroundColor="{StaticResource UcPillRedBg}" StrokeThickness="0" Padding="14">
+                            <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                            <Label x:Name="ErrorLabel" Style="{StaticResource UcDangerText}" />
+                        </Border>
+
+                        <ActivityIndicator x:Name="LoadingIndicator" IsRunning="True" HorizontalOptions="Center" />
+
+                        <VerticalStackLayout x:Name="EmptyState" IsVisible="False" Spacing="10" Padding="0,30" HorizontalOptions="Center">
+                            <Border BackgroundColor="{StaticResource UcSurfaceAlt}" StrokeThickness="0" HeightRequest="56" WidthRequest="56" HorizontalOptions="Center">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="18" /></Border.StrokeShape>
+                                <Image Source="ic_car_green.png" WidthRequest="26" HeightRequest="26" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <Label Text="No rides available right now" Style="{StaticResource UcH2}" HorizontalTextAlignment="Center" />
+                            <Label Text="Check back later, or offer a ride yourself." Style="{StaticResource UcMutedText}" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout x:Name="RidesStack" Spacing="10" />
+
+                    </VerticalStackLayout>
+                </ScrollView>
+            </RefreshView>
+
+            <!-- FAB — offer a ride -->
+            <ImageButton
+                Style="{StaticResource UcFab}"
+                Source="ic_plus_white.png"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="0,0,20,20"
+                Clicked="OnOfferRideClicked"
+                SemanticProperties.Description="Offer a ride" />
+        </Grid>
+
+        <!-- ===== Bottom navigation ===== -->
+        <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
+            <Grid ColumnDefinitions="*,*,*,*,*,*">
+
+                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                    <Border Padding="12,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_home_muted.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Home" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnHomeTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="3">
+                    <Border Padding="12,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_users_muted.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Groups" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnGroupsTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2" Spacing="3">
+                    <Border Padding="12,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_briefcase_muted.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Internships" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnInternshipsTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="3" Spacing="3">
+                    <Border Padding="12,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_scan_muted.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Attendance" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAttendanceTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="4" Spacing="3">
+                    <Border Style="{StaticResource UcTabPill}">
+                        <Image Source="ic_car_green.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Rides" Style="{StaticResource UcTabLabelActive}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="5" Spacing="3">
+                    <Border Padding="12,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_user_circle_muted.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Profile" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileTabTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+
+</ContentPage>

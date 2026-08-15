@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.MyRidesPage"
+             Title="My Rides"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="21" /></Border.StrokeShape>
+                    <Image Source="ic_arrow_left_green.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Label Grid.Column="1" Text="My Rides &amp; Requests" Style="{StaticResource UcH1}" FontSize="21" TextColor="{StaticResource UcBrandEnd}" VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <RefreshView x:Name="Refresher" Grid.Row="1" Refreshing="OnRefreshing">
+            <ScrollView>
+                <VerticalStackLayout Padding="24,20,24,28" Spacing="24">
+
+                    <ActivityIndicator x:Name="LoadingIndicator" IsRunning="True" HorizontalOptions="Center" />
+                    <Label x:Name="ErrorLabel" IsVisible="False" Style="{StaticResource UcDangerText}" />
+
+                    <VerticalStackLayout x:Name="ContentStack" IsVisible="False" Spacing="24">
+
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Rides I'm Driving" Style="{StaticResource UcH2}" />
+                            <VerticalStackLayout x:Name="DrivingStack" Spacing="10" />
+                            <Label x:Name="NoDrivingLabel" Text="You haven't offered any rides yet." Style="{StaticResource UcMutedText}" IsVisible="False" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Rides I've Requested" Style="{StaticResource UcH2}" />
+                            <VerticalStackLayout x:Name="RequestedStack" Spacing="10" />
+                            <Label x:Name="NoRequestedLabel" Text="You haven't requested any rides yet." Style="{StaticResource UcMutedText}" IsVisible="False" />
+                        </VerticalStackLayout>
+
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>

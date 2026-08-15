@@ -275,6 +275,9 @@ public partial class InternshipsPage : ContentPage
 	private async void OnAttendanceTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//attendance");
 
+	private async void OnRidesTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync("//rides");
+
 	private async Task<bool> HandleAuthFailureAsync(ApiException ex)
 	{
 		if (!ex.IsAuthFailure) return false;

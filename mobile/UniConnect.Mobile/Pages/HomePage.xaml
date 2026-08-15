@@ -325,7 +325,7 @@
 
         <!-- ===== Bottom navigation ===== -->
         <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
-            <Grid ColumnDefinitions="*,*,*,*,*">
+            <Grid ColumnDefinitions="*,*,*,*,*,*">
 
                 <VerticalStackLayout Grid.Column="0" Spacing="3">
                     <Border Style="{StaticResource UcTabPill}">
@@ -365,6 +365,16 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="4" Spacing="3">
+                    <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
+                        <Image Source="ic_car_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
+                    </Border>
+                    <Label Text="Rides" Style="{StaticResource UcTabLabel}" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnRidesTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="5" Spacing="3">
                     <Border Padding="14,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
                         <Image Source="ic_user_circle_muted.png" WidthRequest="21" HeightRequest="21" Aspect="AspectFit" />
                     </Border>

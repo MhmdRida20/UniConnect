@@ -353,6 +353,9 @@ public partial class GroupsPage : ContentPage
 	private async void OnAttendanceTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//attendance");
 
+	private async void OnRidesTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync("//rides");
+
 	// ---- navigation -------------------------------------------------------
 
 	private async void OnRefreshing(object? sender, EventArgs e) => await LoadGroupsAsync();

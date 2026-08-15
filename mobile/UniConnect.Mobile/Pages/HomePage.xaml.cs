@@ -287,6 +287,9 @@ public partial class HomePage : ContentPage
 	private async void OnAttendanceTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync("//attendance");
 
+	private async void OnRidesTapped(object? sender, TappedEventArgs e) =>
+		await Shell.Current.GoToAsync("//rides");
+
 	private async void OnProfileTapped(object? sender, TappedEventArgs e) =>
 		await Shell.Current.GoToAsync(nameof(ProfilePage));
 

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.RegisterVehiclePage"
+             Title="Register a Vehicle"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="21" /></Border.StrokeShape>
+                    <Image Source="ic_arrow_left_green.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Label Grid.Column="1" Text="Register a Vehicle" Style="{StaticResource UcH1}" FontSize="21" TextColor="{StaticResource UcBrandEnd}" VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout x:Name="FormColumn" Padding="24,20,24,28" Spacing="22">
+
+                <Label Text="Registering a vehicle is what lets you offer rides — you can register more than one and pick which to use each time." Style="{StaticResource UcBody}" />
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Vehicle Type" Style="{StaticResource UcFieldLabel}" />
+                    <Border Style="{StaticResource UcFieldBox}">
+                        <Entry x:Name="TypeEntry" Placeholder="e.g., Toyota Corolla" MaxLength="50" />
+                    </Border>
+                    <Label x:Name="TypeError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Plate Number" Style="{StaticResource UcFieldLabel}" />
+                    <Border Style="{StaticResource UcFieldBox}">
+                        <Entry x:Name="PlateEntry" Placeholder="e.g., 123456" MaxLength="20" />
+                    </Border>
+                    <Label x:Name="PlateError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Color" Style="{StaticResource UcFieldLabel}" />
+                    <Border Style="{StaticResource UcFieldBox}">
+                        <Entry x:Name="ColorEntry" Placeholder="e.g., White" MaxLength="30" />
+                    </Border>
+                    <Label x:Name="ColorError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Seat Capacity" Style="{StaticResource UcFieldLabel}" />
+                    <Border Style="{StaticResource UcFieldBox}" Padding="10,8" HorizontalOptions="Start">
+                        <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="14">
+                            <Border Grid.Column="0" x:Name="CapacityDown" Style="{StaticResource UcStepperBtn}">
+                                <Label Text="\u2212" Style="{StaticResource UcStepperGlyph}" />
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnCapacityDown" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                            <Label Grid.Column="1" x:Name="CapacityLabel" Style="{StaticResource UcH2}" FontSize="17" WidthRequest="26" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                            <Border Grid.Column="2" x:Name="CapacityUp" Style="{StaticResource UcStepperBtn}">
+                                <Label Text="+" Style="{StaticResource UcStepperGlyph}" />
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnCapacityUp" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="2" Style="{StaticResource UcActionBar}">
+            <VerticalStackLayout x:Name="ActionColumn" Spacing="10">
+                <ActivityIndicator x:Name="Busy" IsRunning="False" IsVisible="False" HorizontalOptions="Center" />
+                <Button x:Name="SubmitButton" Text="Register Vehicle" Style="{StaticResource UcBtnPrimaryLarge}" Clicked="OnSubmitClicked" HorizontalOptions="Fill" />
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+
+</ContentPage>

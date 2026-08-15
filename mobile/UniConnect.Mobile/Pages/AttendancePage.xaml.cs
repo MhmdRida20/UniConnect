@@ -142,6 +142,9 @@ public partial class AttendancePage : ContentPage
     private async void OnInternshipsTapped(object? sender, TappedEventArgs e) =>
         await Shell.Current.GoToAsync("//internships");
 
+    private async void OnRidesTapped(object? sender, TappedEventArgs e) =>
+        await Shell.Current.GoToAsync("//rides");
+
     /// <summary>
     /// The avatar and the Profile tab both open the profile screen, which is
     /// where sign out lives — hence no sign-out control on this page.

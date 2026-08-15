@@ -44,4 +44,8 @@
         <ShellContent ContentTemplate="{DataTemplate pages:AttendancePage}" />
     </ShellItem>
 
+    <ShellItem Route="rides">
+        <ShellContent ContentTemplate="{DataTemplate pages:RidesPage}" />
+    </ShellItem>
+
 </Shell>

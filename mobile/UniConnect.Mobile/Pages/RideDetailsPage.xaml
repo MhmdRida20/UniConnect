@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.RideDetailsPage"
+             Title="Ride Details"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="21" /></Border.StrokeShape>
+                    <Image Source="ic_arrow_left_green.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Label Grid.Column="1" Text="Ride Details" Style="{StaticResource UcH1}" FontSize="23" TextColor="{StaticResource UcBrandEnd}" VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <RefreshView x:Name="Refresher" Grid.Row="1" Refreshing="OnRefreshing">
+            <ScrollView>
+                <VerticalStackLayout Padding="24,24,24,28" Spacing="18">
+
+                    <ActivityIndicator x:Name="LoadingIndicator" IsRunning="True" HorizontalOptions="Center" />
+                    <Label x:Name="ErrorLabel" IsVisible="False" Style="{StaticResource UcDangerText}" />
+
+                    <VerticalStackLayout x:Name="ContentStack" IsVisible="False" Spacing="18">
+
+                        <Border Style="{StaticResource UcCardSoft}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label x:Name="RouteLabel" Style="{StaticResource UcH1}" FontSize="20" />
+                                <Label x:Name="WhenLabel" Style="{StaticResource UcMutedText}" />
+                                <Label x:Name="DriverLabel" Style="{StaticResource UcBody}" />
+                                <Label x:Name="SeatsLabel" Style="{StaticResource UcBody}" />
+                                <Label x:Name="NotesLabel" Style="{StaticResource UcMutedText}" IsVisible="False" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- ===== Passenger view — request a seat ===== -->
+                        <VerticalStackLayout x:Name="PassengerSection" Spacing="10">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="Pickup Location" Style="{StaticResource UcFieldLabel}" />
+                                <Border Style="{StaticResource UcFieldBox}">
+                                    <Entry x:Name="PickupEntry" Placeholder="Where should the driver pick you up?" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <Button x:Name="RequestButton" Text="Request a Seat" Style="{StaticResource UcBtnPrimaryLarge}" Clicked="OnRequestClicked" HorizontalOptions="Fill" />
+                        </VerticalStackLayout>
+
+                        <Border x:Name="MyRequestBox" IsVisible="False" Style="{StaticResource UcCardSoft}" BackgroundColor="{StaticResource UcPrimaryTint}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label x:Name="MyRequestStatusLabel" Style="{StaticResource UcH2}" />
+                                <Button x:Name="CancelRequestButton" Text="Cancel My Request" Style="{StaticResource UcBtnOutline}" Clicked="OnCancelRequestClicked" HorizontalOptions="Start" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- ===== Driver view — manage requests ===== -->
+                        <VerticalStackLayout x:Name="DriverSection" Spacing="10" IsVisible="False">
+                            <Label Text="Requests" Style="{StaticResource UcH2}" />
+                            <VerticalStackLayout x:Name="RequestsStack" Spacing="10" />
+                            <Label x:Name="NoRequestsLabel" Text="No requests yet." Style="{StaticResource UcMutedText}" IsVisible="False" />
+                            <Button Text="Cancel This Ride" Style="{StaticResource UcBtnOutline}" TextColor="{StaticResource UcDanger}" Clicked="OnCancelRideClicked" HorizontalOptions="Start" Margin="0,10,0,0" />
+                        </VerticalStackLayout>
+
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>

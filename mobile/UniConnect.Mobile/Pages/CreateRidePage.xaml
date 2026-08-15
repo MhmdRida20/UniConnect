@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UniConnect.Mobile.Pages.CreateRidePage"
+             Title="Offer a Ride"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <Border Grid.Row="0" Style="{StaticResource UcAppBar}" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    BackgroundColor="{StaticResource UcSurfaceAlt}"
+                    StrokeThickness="0"
+                    HeightRequest="42" WidthRequest="42"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="21" /></Border.StrokeShape>
+                    <Image Source="ic_arrow_left_green.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Label Grid.Column="1" Text="Offer a Ride" Style="{StaticResource UcH1}" FontSize="23" TextColor="{StaticResource UcBrandEnd}" VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout x:Name="FormColumn" Padding="24,20,24,28" Spacing="22">
+
+                <!-- ===== Shown only if the student has no active vehicle yet ===== -->
+                <Border x:Name="NoVehicleBox" IsVisible="False" Style="{StaticResource UcCardSoft}" BackgroundColor="#fef3c7">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Register a Vehicle First" Style="{StaticResource UcH2}" />
+                        <Label Text="You need at least one registered vehicle before you can offer a ride." Style="{StaticResource UcMutedText}" />
+                        <Button Text="Register a Vehicle" Style="{StaticResource UcBtnPrimaryLarge}" Clicked="OnRegisterVehicleClicked" HorizontalOptions="Start" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <VerticalStackLayout x:Name="FormFields" IsVisible="False" Spacing="22">
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Departure Location" Style="{StaticResource UcFieldLabel}" />
+                        <Border Style="{StaticResource UcFieldBox}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0" Source="ic_location_teal.png" Style="{StaticResource UcIcon}" />
+                                <Entry Grid.Column="1" x:Name="DepartureEntry" Placeholder="e.g., Hamra" MaxLength="150" />
+                            </Grid>
+                        </Border>
+                        <Label x:Name="DepartureError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Destination" Style="{StaticResource UcFieldLabel}" />
+                        <Border Style="{StaticResource UcFieldBox}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0" Source="ic_location_teal.png" Style="{StaticResource UcIcon}" />
+                                <Entry Grid.Column="1" x:Name="DestinationEntry" Placeholder="e.g., USAL Campus" MaxLength="150" />
+                            </Grid>
+                        </Border>
+                        <Label x:Name="DestinationError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                        <VerticalStackLayout Grid.Column="0" Spacing="8">
+                            <Label Text="Date" Style="{StaticResource UcFieldLabel}" />
+                            <Border Style="{StaticResource UcFieldBox}">
+                                <DatePicker x:Name="DepartureDatePicker" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="8">
+                            <Label Text="Time" Style="{StaticResource UcFieldLabel}" />
+                            <Border Style="{StaticResource UcFieldBox}">
+                                <TimePicker x:Name="DepartureTimePicker" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Label x:Name="DepartureTimeError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Vehicle" Style="{StaticResource UcFieldLabel}" />
+                        <Border Style="{StaticResource UcFieldBox}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0" Source="ic_car_green.png" Style="{StaticResource UcIcon}" />
+                                <Picker Grid.Column="1" x:Name="VehiclePicker" VerticalOptions="Center" SelectedIndexChanged="OnVehicleChanged" />
+                            </Grid>
+                        </Border>
+                        <Label x:Name="VehicleError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Total Seats" Style="{StaticResource UcFieldLabel}" />
+                        <Border Style="{StaticResource UcFieldBox}" Padding="10,8" HorizontalOptions="Start">
+                            <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="14">
+                                <Border Grid.Column="0" x:Name="SeatsDown" Style="{StaticResource UcStepperBtn}">
+                                    <Label Text="\u2212" Style="{StaticResource UcStepperGlyph}" />
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnSeatsDown" />
+                                    </Border.GestureRecognizers>
+                                </Border>
+                                <Label Grid.Column="1" x:Name="SeatsLabel" Style="{StaticResource UcH2}" FontSize="17" WidthRequest="26" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                <Border Grid.Column="2" x:Name="SeatsUp" Style="{StaticResource UcStepperBtn}">
+                                    <Label Text="+" Style="{StaticResource UcStepperGlyph}" />
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnSeatsUp" />
+                                    </Border.GestureRecognizers>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <Label x:Name="SeatsError" IsVisible="False" Style="{StaticResource UcDangerText}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Notes (optional)" Style="{StaticResource UcFieldLabel}" />
+                        <Border Style="{StaticResource UcFieldBox}" Padding="16,10">
+                            <Editor x:Name="NotesEditor" Placeholder="Anything passengers should know?" MaxLength="300" HeightRequest="80" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="2" Style="{StaticResource UcActionBar}">
+            <VerticalStackLayout x:Name="ActionColumn" Spacing="10">
+                <ActivityIndicator x:Name="Busy" IsRunning="False" IsVisible="False" HorizontalOptions="Center" />
+                <Button x:Name="SubmitButton" Text="Post This Ride" Style="{StaticResource UcBtnPrimaryLarge}" Clicked="OnSubmitClicked" HorizontalOptions="Fill" />
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+
+</ContentPage>

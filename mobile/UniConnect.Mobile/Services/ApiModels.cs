@@ -523,6 +523,114 @@ public class AttendanceHistoryEntry
     public bool IsAbsent => Status == "Absent";
 }
 
+// ===== Ride Sharing =====
+
+public class DriverDto
+{
+    public string FullName { get; set; } = string.Empty;
+}
+
+public class VehicleSummaryDto
+{
+    public string VehicleType { get; set; } = string.Empty;
+    public string PlateNumber { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
+}
+
+public class RideListItemDto
+{
+    public int Id { get; set; }
+    public string DepartureLocation { get; set; } = string.Empty;
+    public string Destination { get; set; } = string.Empty;
+    public DateTime DepartureTime { get; set; }
+    public int AvailableSeats { get; set; }
+    public int TotalSeats { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DriverDto Driver { get; set; } = new();
+    public VehicleSummaryDto? Vehicle { get; set; }
+    public string? MyRequestStatus { get; set; }
+
+    /// <summary>
+    /// Local at the source, same reasoning as SessionInfoDto's note on
+    /// Attendance — Ride.DepartureTime defaults to DateTime.Now.AddHours(1)
+    /// and is validated against DateTime.Now server-side, so it is never
+    /// UTC and must never go through a SpecifyKind(Utc) conversion.
+    /// </summary>
+    public string DepartureLabel => DepartureTime.ToString("MMM dd, yyyy \u00b7 HH:mm");
+
+    public bool IAlreadyRequested => MyRequestStatus is "Pending" or "Accepted";
+}
+
+public class RideRequestDto
+{
+    public int Id { get; set; }
+    public string PassengerName { get; set; } = string.Empty;
+    public string PickupLocation { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTime RequestedAt { get; set; }
+}
+
+public class RideDetailsDto : RideListItemDto
+{
+    public string? Notes { get; set; }
+    public bool IsDriver { get; set; }
+    public List<RideRequestDto> Requests { get; set; } = new();
+}
+
+public class RideRequestSummaryDto
+{
+    public int RequestId { get; set; }
+    public int RideId { get; set; }
+    public string DriverName { get; set; } = string.Empty;
+    public string DepartureLocation { get; set; } = string.Empty;
+    public string Destination { get; set; } = string.Empty;
+    public DateTime DepartureTime { get; set; }
+    public string Status { get; set; } = string.Empty;
+
+    public string DepartureLabel => DepartureTime.ToString("MMM dd, yyyy \u00b7 HH:mm");
+}
+
+public class MyRidesResponse
+{
+    public List<RideListItemDto> Driving { get; set; } = new();
+    public List<RideRequestSummaryDto> Requested { get; set; } = new();
+}
+
+public class CreateRideRequest
+{
+    public string DepartureLocation { get; set; } = string.Empty;
+    public string Destination { get; set; } = string.Empty;
+    public DateTime DepartureTime { get; set; }
+    public int VehicleId { get; set; }
+    public int TotalSeats { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class RequestRideRequest
+{
+    public string PickupLocation { get; set; } = string.Empty;
+}
+
+public class VehicleDto
+{
+    public int Id { get; set; }
+    public string VehicleType { get; set; } = string.Empty;
+    public string PlateNumber { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
+    public int SeatCapacity { get; set; }
+    public string Status { get; set; } = string.Empty;
+
+    public string DisplayLabel => $"{VehicleType} \u2014 {PlateNumber} ({Color})";
+}
+
+public class CreateVehicleRequest
+{
+    public string VehicleType { get; set; } = string.Empty;
+    public string PlateNumber { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
+    public int SeatCapacity { get; set; }
+}
+
 /// <summary>
 /// Two-letter monograms for member and message avatars — the same rule as the
 /// Initials() local function in Views/StudyGroups/Details.cshtml.

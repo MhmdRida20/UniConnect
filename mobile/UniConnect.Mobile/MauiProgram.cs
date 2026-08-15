@@ -47,6 +47,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<AttendanceApi>();
         builder.Services.AddSingleton<ProfileApi>();
         builder.Services.AddSingleton<HomeApi>();
+        builder.Services.AddSingleton<RidesApi>();
+        builder.Services.AddSingleton<VehiclesApi>();
 
         // One cached profile for the whole app, so every app bar draws the same
         // avatar and a new picture reaches all of them at once.
