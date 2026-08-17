@@ -32,19 +32,22 @@ namespace UniConnect.Controllers
         private readonly UniConnect.Services.UniversityApiSyncRunner _syncRunner;
         private readonly UniConnect.ExternalApi.ExternalUniversityDataStore _externalStore;
         private readonly UniConnect.Services.AuditLogService _auditLog;
+        private readonly ILogger<AdminUniversitiesController> _logger;
 
         public AdminUniversitiesController(
             ApplicationDbContext db,
             UserManager<ApplicationUser> userManager,
             UniConnect.Services.UniversityApiSyncRunner syncRunner,
             UniConnect.ExternalApi.ExternalUniversityDataStore externalStore,
-            UniConnect.Services.AuditLogService auditLog)
+            UniConnect.Services.AuditLogService auditLog,
+            ILogger<AdminUniversitiesController> logger)
         {
             _db = db;
             _userManager = userManager;
             _syncRunner = syncRunner;
             _externalStore = externalStore;
             _auditLog = auditLog;
+            _logger = logger;
         }
 
         private bool IsSuperAdmin => User.IsInRole("Admin");
@@ -176,6 +179,16 @@ namespace UniConnect.Controllers
             _db.UniversitySettings.Add(new UniversitySettings { UniversityCode = code });
             await _db.SaveChangesAsync();
 
+            // From here on the University row exists. Anything that throws while
+            // provisioning would otherwise leave an institution that exists, has
+            // no logins, and blocks its own code from being reused — which is
+            // exactly what happened when a long university name overflowed
+            // ApplicationUser.FullName. The provisioning is wrapped so that a
+            // failure removes the half-built university and reports a form error,
+            // leaving the admin able to simply correct the input and retry.
+            try
+            {
+
             // SyncOneUniversityAsync itself now knows to report "NotApplicable"
             // rather than attempt anything for a non-Simulated university —
             // see the guard at the top of that method for why.
@@ -193,9 +206,9 @@ namespace UniConnect.Controllers
                 UserName = vm.CareerServicesEmail.Trim(),
                 Email = vm.CareerServicesEmail.Trim(),
                 EmailConfirmed = true, // admin-provisioned, same as Staff/Instructor accounts
-                FullName = $"{university.Name} — Career Services",
+                FullName = ScopedAccountName(university.Name, code, "Career Services"),
                 UniversityCode = university.Code,
-                UniversityId = $"CAREER-{code}",
+                UniversityId = ScopedUniversityId("CAREER-", code),
             };
             var careerCreateResult = await _userManager.CreateAsync(careerServicesUser, careerPassword);
             if (careerCreateResult.Succeeded)
@@ -205,7 +218,9 @@ namespace UniConnect.Controllers
                 {
                     UserId = careerServicesUser.Id,
                     UniversityCode = university.Code,
-                    CompanyName = $"{university.Name} — Career Services",
+                    // 150 here, not 50 — but University.Name is also 150, so the
+                    // suffix can still push it over on its own.
+                    CompanyName = ScopedAccountName(university.Name, code, "Career Services", maxLength: 150),
                     ContactEmail = vm.CareerServicesEmail.Trim(),
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -235,9 +250,9 @@ namespace UniConnect.Controllers
                 UserName = vm.UniversityAdminEmail.Trim(),
                 Email = vm.UniversityAdminEmail.Trim(),
                 EmailConfirmed = true,
-                FullName = $"{university.Name} — Admin",
+                FullName = ScopedAccountName(university.Name, code, "Admin"),
                 UniversityCode = university.Code,
-                UniversityId = $"UNIADMIN-{code}",
+                UniversityId = ScopedUniversityId("UNIADMIN-", code),
             };
             var uniAdminCreateResult = await _userManager.CreateAsync(universityAdminUser, uniAdminPassword);
             if (uniAdminCreateResult.Succeeded)
@@ -286,6 +301,67 @@ namespace UniConnect.Controllers
                 " (save these now, they won't be shown again). Now choose which services to enable.";
 
             return RedirectToAction(nameof(Services), new { code = university.Code });
+            }
+            catch (Exception ex)
+            {
+                // Undo the university so the code stays available. Done on a
+                // clean context because the failing one still holds the entities
+                // that could not be saved, and would replay them.
+                _db.ChangeTracker.Clear();
+
+                var orphanSettings = await _db.UniversitySettings
+                    .Where(s => s.UniversityCode == code).ToListAsync();
+                _db.UniversitySettings.RemoveRange(orphanSettings);
+
+                var orphan = await _db.Universities.FirstOrDefaultAsync(u => u.Code == code);
+                if (orphan is not null) _db.Universities.Remove(orphan);
+
+                await _db.SaveChangesAsync();
+
+                _logger.LogError(ex, "Provisioning failed for university {Code}; the partial record was removed.", code);
+
+                ModelState.AddModelError(string.Empty,
+                    "The university could not be set up, so nothing was saved and the code is still free. " +
+                    "Please check the details and try again. (" + ex.GetBaseException().Message + ")");
+                return View(vm);
+            }
+        }
+
+        /// <summary>
+        /// Builds "{university} — {suffix}" so that it fits ApplicationUser.FullName,
+        /// which is 50 characters while University.Name is 150.
+        ///
+        /// Without this, provisioning threw SqlException ("String or binary data
+        /// would be truncated") for any university whose name was longer than 31
+        /// characters — and because the University row is saved before the accounts
+        /// are, the failure left an institution that existed, had no logins, and
+        /// blocked its own code from being reused.
+        ///
+        /// Falls back to the university CODE rather than chopping the name
+        /// mid-word: "USAL — Career Services" reads like a deliberate label,
+        /// "University of Science and Ar — Career Services" reads like a bug.
+        /// </summary>
+        private static string ScopedAccountName(string universityName, string code, string suffix, int maxLength = 50)
+        {
+            var preferred = $"{universityName} — {suffix}";
+            if (preferred.Length <= maxLength) return preferred;
+
+            var byCode = $"{code} — {suffix}";
+            // Only if even the code form overflows — a 20-char code with a long
+            // suffix — does this trim, and then it trims the suffix, not the name.
+            return byCode.Length <= maxLength ? byCode : byCode[..maxLength];
+        }
+
+        /// <summary>
+        /// ApplicationUser.UniversityId is 20 characters and University.Code is 20,
+        /// so a prefixed identifier can overflow on its own. Truncating is safe
+        /// here: these are synthetic identifiers for provisioned accounts, unique
+        /// because the code is, not values matched against university records.
+        /// </summary>
+        private static string ScopedUniversityId(string prefix, string code, int maxLength = 20)
+        {
+            var value = $"{prefix}{code}";
+            return value.Length <= maxLength ? value : value[..maxLength];
         }
 
         private static string GenerateSecurePassword()
