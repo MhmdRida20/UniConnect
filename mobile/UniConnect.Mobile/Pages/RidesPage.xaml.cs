@@ -1,3 +1,4 @@
+﻿using UniConnect.Mobile.Controls;
 using UniConnect.Mobile.Services;
 
 namespace UniConnect.Mobile.Pages;
@@ -86,51 +87,23 @@ public partial class RidesPage : ContentPage
 
     private Border BuildRideCard(RideListItemDto ride)
     {
-        var routeLabel = new Label
-        {
-            Text = $"{ride.DepartureLocation}  \u2192  {ride.Destination}",
-            Style = (Style)Application.Current!.Resources["UcH2"]
-        };
-        var whenLabel = new Label { Text = ride.DepartureLabel, Style = (Style)Application.Current!.Resources["UcMutedText"] };
-        var driverLabel = new Label
-        {
-            Text = $"Driver: {ride.Driver.FullName}" + (ride.Vehicle is null ? "" : $"  \u00b7  {ride.Vehicle.VehicleType} ({ride.Vehicle.Color})"),
-            Style = (Style)Application.Current!.Resources["UcTiny"]
-        };
-        var seatsLabel = new Label
-        {
-            Text = $"{ride.AvailableSeats} of {ride.TotalSeats} seats free",
-            Style = (Style)Application.Current!.Resources["UcTiny"]
-        };
+        // Same card as My Rides, from the same helper \u2014 see RideCardParts for
+        // why the chip is a Border and why the route is two truncated lines.
+        (string, string, string)? status = ride.IAlreadyRequested
+            ? (ride.MyRequestStatus == "Accepted"
+                ? ("Accepted", "#dcfce7", "#15803d")
+                : ("Requested", "#fef3c7", "#92400e"))
+            : null;
 
-        var textStack = new VerticalStackLayout { Spacing = 3, Children = { routeLabel, whenLabel, driverLabel, seatsLabel } };
+        var driver = $"{ride.Driver.FullName}"
+            + (ride.Vehicle is null ? "" : $"  \u00b7  {ride.Vehicle.VehicleType}");
 
-        Frame? statusPill = null;
-        if (ride.IAlreadyRequested)
-        {
-            var (bg, fg, label) = ride.MyRequestStatus == "Accepted"
-                ? ("#dcfce7", "#15803d", "Accepted")
-                : ("#fef3c7", "#92400e", "Requested");
-            statusPill = new Frame
-            {
-                Padding = new Thickness(10, 4),
-                CornerRadius = 999,
-                HasShadow = false,
-                BackgroundColor = Color.FromArgb(bg),
-                Content = new Label { Text = label, FontSize = 11, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb(fg) }
-            };
-        }
-
-        var grid = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) } };
-        grid.Add(textStack, 0);
-        if (statusPill != null) grid.Add(statusPill, 1);
-
-        var card = new Border { Style = (Style)Application.Current!.Resources["UcCardSoft"], Content = grid };
-        var tap = new TapGestureRecognizer();
-        tap.Tapped += async (_, _) => await Shell.Current.GoToAsync($"{nameof(RideDetailsPage)}?id={ride.Id}");
-        card.GestureRecognizers.Add(tap);
-
-        return card;
+        return RideCardParts.Card(
+            ride.DepartureLocation, ride.Destination,
+            status,
+            $"{ride.DepartureLabel}  \u00b7  {driver}",
+            $"{ride.AvailableSeats} of {ride.TotalSeats} seats free",
+            () => Shell.Current.GoToAsync($"{nameof(RideDetailsPage)}?id={ride.Id}"));
     }
 
     private async void OnOfferRideClicked(object? sender, EventArgs e) =>
@@ -147,9 +120,6 @@ public partial class RidesPage : ContentPage
     private async void OnInternshipsTapped(object? sender, TappedEventArgs e) => await Shell.Current.GoToAsync("//internships");
     private async void OnAttendanceTapped(object? sender, TappedEventArgs e) => await Shell.Current.GoToAsync("//attendance");
 
-    private async void OnProfileTabTapped(object? sender, TappedEventArgs e) =>
-        await Shell.Current.GoToAsync(nameof(ProfilePage));
-
     private async void OnProfileTapped(object? sender, TappedEventArgs e) =>
         await Shell.Current.GoToAsync(nameof(ProfilePage));
 
@@ -161,3 +131,4 @@ public partial class RidesPage : ContentPage
         return true;
     }
 }
+

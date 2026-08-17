@@ -34,15 +34,15 @@
 
                     <VerticalStackLayout x:Name="ContentStack" IsVisible="False" Spacing="24">
 
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Rides I'm Driving" Style="{StaticResource UcH2}" />
-                            <VerticalStackLayout x:Name="DrivingStack" Spacing="10" />
+                        <VerticalStackLayout Spacing="12">
+                            <Label x:Name="DrivingHeader" Text="Rides I'm Driving" Style="{StaticResource UcH2}" />
+                            <VerticalStackLayout x:Name="DrivingStack" Spacing="12" />
                             <Label x:Name="NoDrivingLabel" Text="You haven't offered any rides yet." Style="{StaticResource UcMutedText}" IsVisible="False" />
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Rides I've Requested" Style="{StaticResource UcH2}" />
-                            <VerticalStackLayout x:Name="RequestedStack" Spacing="10" />
+                        <VerticalStackLayout Spacing="12">
+                            <Label x:Name="RequestedHeader" Text="Rides I've Requested" Style="{StaticResource UcH2}" />
+                            <VerticalStackLayout x:Name="RequestedStack" Spacing="12" />
                             <Label x:Name="NoRequestedLabel" Text="You haven't requested any rides yet." Style="{StaticResource UcMutedText}" IsVisible="False" />
                         </VerticalStackLayout>
 

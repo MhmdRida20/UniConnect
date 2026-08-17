@@ -764,30 +764,61 @@
          "Attendance" are the longest labels and five of them share the width of
          a phone. NoWrap keeps every tab one line high so the bar cannot grow a
          second row on the narrowest devices. -->
+    <!-- The bar carries FIVE destinations: Home, Groups, Internships,
+         Attendance, Rides. Profile is deliberately not among them - it is
+         reached from the avatar in the app bar, and having it in both places
+         both duplicated it and pushed the bar to six columns, at which point
+         "Internships" no longer fitted its column and the labels collided.
+
+         At five, a 375pt phone gives ~75pt a column, which "Internships" fits
+         at 10.5. TailTruncation rather than NoWrap so an unusually narrow
+         device degrades to an ellipsis instead of overlapping its neighbour. -->
     <Style x:Key="UcTabLabel" TargetType="Label">
         <Setter Property="FontSize" Value="10.5" />
         <Setter Property="FontFamily" Value="MontserratSemiBold" />
         <Setter Property="TextColor" Value="{StaticResource UcMuted}" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="LineBreakMode" Value="NoWrap" />
+        <Setter Property="HorizontalOptions" Value="Fill" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="LineBreakMode" Value="TailTruncation" />
+        <Setter Property="MaxLines" Value="1" />
     </Style>
 
     <Style x:Key="UcTabLabelActive" TargetType="Label" BasedOn="{StaticResource UcTabLabel}">
         <Setter Property="TextColor" Value="{StaticResource UcGreen}" />
     </Style>
 
-    <!-- The pill behind the selected tab's icon.
-         Padding is 14 rather than 20 a side because the bar carries five tabs:
-         on a 375pt phone that is ~71pt a column, and a wider pill would touch
-         its neighbours. -->
+    <!-- The pill behind the selected tab's icon. With the unselected tabs now
+         showing an icon only, this pill is the main thing marking where you
+         are, so it is given room: 14 a side puts it at ~48pt inside a ~62pt
+         column, clear of its neighbours. -->
     <Style x:Key="UcTabPill" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource UcMint}" />
         <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="Padding" Value="14,7" />
         <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Start" />
         <Setter Property="StrokeShape">
             <RoundRectangle CornerRadius="999" />
         </Setter>
+    </Style>
+
+    <!-- Status pill for list cards. A Border with a real corner radius, NOT a
+         Frame with CornerRadius=999: WinUI renders a radius larger than half the
+         height as a full ellipse, which drew these as ovals with clipped text. -->
+    <Style x:Key="UcStatusPill" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="9,4" />
+        <Setter Property="VerticalOptions" Value="Start" />
+        <Setter Property="HorizontalOptions" Value="End" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="11" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="UcStatusPillText" TargetType="Label">
+        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="FontFamily" Value="MontserratSemiBold" />
+        <Setter Property="LineBreakMode" Value="NoWrap" />
     </Style>
 
     <!-- ===== Refined list-screen components =====

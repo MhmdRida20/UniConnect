@@ -19,10 +19,10 @@
         <Border Grid.Row="0" Style="{StaticResource UcAppBar}">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
 
-                <Border
-                    Grid.Column="0"
+                <HorizontalStackLayout Grid.Column="0" Spacing="5" VerticalOptions="Center">
+                    <Border
                     Background="{StaticResource UcAvatarBrush}"
-                    Stroke="{StaticResource UcMint}"
+                    Stroke="{StaticResource UcGreen}"
                     StrokeThickness="2"
                     HeightRequest="38" WidthRequest="38"
                     VerticalOptions="Center">
@@ -33,10 +33,14 @@
                         <Label x:Name="ProfileInitials" Style="{StaticResource UcAvatarText}" FontSize="13" />
                         <Image x:Name="ProfilePhoto" IsVisible="False" Aspect="AspectFill" HeightRequest="38" WidthRequest="38" />
                     </Grid>
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnProfileTapped" />
-                    </Border.GestureRecognizers>
                 </Border>
+                    <Image Source="ic_chevron_down_muted.png"
+                           WidthRequest="13" HeightRequest="13" Aspect="AspectFit"
+                           VerticalOptions="Center" />
+                    <HorizontalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
+                    </HorizontalStackLayout.GestureRecognizers>
+                </HorizontalStackLayout>
 
                 <Label Grid.Column="1" Text="UniConnect" Style="{StaticResource UcAppBarTitle}" />
 
@@ -126,7 +130,7 @@
 
         <!-- ===== Bottom navigation ===== -->
         <Border Grid.Row="2" Style="{StaticResource UcBottomBar}">
-            <Grid ColumnDefinitions="*,*,*,*,*,*">
+            <Grid ColumnDefinitions="*,*,*,*,*">
 
                 <VerticalStackLayout Grid.Column="0" Spacing="3">
                     <Border Padding="12,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
@@ -173,16 +177,6 @@
                         <Image Source="ic_car_green.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" />
                     </Border>
                     <Label Text="Rides" Style="{StaticResource UcTabLabelActive}" />
-                </VerticalStackLayout>
-
-                <VerticalStackLayout Grid.Column="5" Spacing="3">
-                    <Border Padding="12,7" HorizontalOptions="Center" BackgroundColor="Transparent" StrokeThickness="0">
-                        <Image Source="ic_user_circle_muted.png" WidthRequest="20" HeightRequest="20" Aspect="AspectFit" />
-                    </Border>
-                    <Label Text="Profile" Style="{StaticResource UcTabLabel}" />
-                    <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnProfileTabTapped" />
-                    </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
             </Grid>
         </Border>

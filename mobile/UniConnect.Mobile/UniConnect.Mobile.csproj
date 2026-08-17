@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
+	<PropertyGroup> 
 		<!-- Android is the shipping target; Windows is here purely as a fast
 		     development loop (no emulator boot, no deploy step) for screens and
 		     API wiring. iOS and Mac Catalyst are deliberately absent: building

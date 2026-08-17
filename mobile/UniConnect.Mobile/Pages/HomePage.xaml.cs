@@ -228,9 +228,8 @@ public partial class HomePage : ContentPage
 	{
 		ServiceCodes.StudyGroups => "//groups",
 		ServiceCodes.Internships => "//internships",
-
 		ServiceCodes.Attendance => "//attendance",
-
+		ServiceCodes.RideSharing => "//rides",
 		_ => null
 	};
 

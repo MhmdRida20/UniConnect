@@ -1,3 +1,4 @@
+using UniConnect.Mobile.Controls;
 using UniConnect.Mobile.Services;
 
 namespace UniConnect.Mobile.Pages;
@@ -40,10 +41,18 @@ public partial class MyRidesPage : ContentPage
         {
             var mine = await _api.GetMineAsync();
 
+            // the count sits in the heading so a long list still tells you how
+            // long it is without scrolling to the bottom of it
+            DrivingHeader.Text = mine.Driving.Count > 0
+                ? $"Rides I'm Driving  ({mine.Driving.Count})"
+                : "Rides I'm Driving";
             NoDrivingLabel.IsVisible = mine.Driving.Count == 0;
             foreach (var ride in mine.Driving)
                 DrivingStack.Children.Add(BuildDrivingCard(ride));
 
+            RequestedHeader.Text = mine.Requested.Count > 0
+                ? $"Rides I've Requested  ({mine.Requested.Count})"
+                : "Rides I've Requested";
             NoRequestedLabel.IsVisible = mine.Requested.Count == 0;
             foreach (var req in mine.Requested)
                 RequestedStack.Children.Add(BuildRequestedCard(req));
@@ -73,35 +82,12 @@ public partial class MyRidesPage : ContentPage
             _ => ("#fee2e2", "#991b1b")
         };
 
-        var textStack = new VerticalStackLayout
-        {
-            Spacing = 3,
-            Children =
-            {
-                new Label { Text = $"{ride.DepartureLocation}  \u2192  {ride.Destination}", Style = (Style)Application.Current!.Resources["UcH2"] },
-                new Label { Text = ride.DepartureLabel, Style = (Style)Application.Current!.Resources["UcMutedText"] },
-                new Label { Text = $"{ride.AvailableSeats} of {ride.TotalSeats} seats free", Style = (Style)Application.Current!.Resources["UcTiny"] }
-            }
-        };
-
-        var statusPill = new Frame
-        {
-            Padding = new Thickness(10, 4),
-            CornerRadius = 999,
-            HasShadow = false,
-            BackgroundColor = Color.FromArgb(bg),
-            Content = new Label { Text = ride.Status, FontSize = 11, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb(fg) }
-        };
-
-        var grid = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) } };
-        grid.Add(textStack, 0);
-        grid.Add(statusPill, 1);
-
-        var card = new Border { Style = (Style)Application.Current!.Resources["UcCardSoft"], Content = grid };
-        var tap = new TapGestureRecognizer();
-        tap.Tapped += async (_, _) => await Shell.Current.GoToAsync($"{nameof(RideDetailsPage)}?id={ride.Id}");
-        card.GestureRecognizers.Add(tap);
-        return card;
+        return RideCardParts.Card(
+            ride.DepartureLocation, ride.Destination,
+            (ride.Status, bg, fg),
+            ride.DepartureLabel,
+            $"{ride.AvailableSeats} of {ride.TotalSeats} seats free",
+            () => Shell.Current.GoToAsync($"{nameof(RideDetailsPage)}?id={ride.Id}"));
     }
 
     private Border BuildRequestedCard(RideRequestSummaryDto req)
@@ -113,35 +99,12 @@ public partial class MyRidesPage : ContentPage
             _ => ("#fef3c7", "#92400e")
         };
 
-        var textStack = new VerticalStackLayout
-        {
-            Spacing = 3,
-            Children =
-            {
-                new Label { Text = $"{req.DepartureLocation}  \u2192  {req.Destination}", Style = (Style)Application.Current!.Resources["UcH2"] },
-                new Label { Text = $"Driver: {req.DriverName}", Style = (Style)Application.Current!.Resources["UcMutedText"] },
-                new Label { Text = req.DepartureLabel, Style = (Style)Application.Current!.Resources["UcTiny"] }
-            }
-        };
-
-        var statusPill = new Frame
-        {
-            Padding = new Thickness(10, 4),
-            CornerRadius = 999,
-            HasShadow = false,
-            BackgroundColor = Color.FromArgb(bg),
-            Content = new Label { Text = req.Status, FontSize = 11, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb(fg) }
-        };
-
-        var grid = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) } };
-        grid.Add(textStack, 0);
-        grid.Add(statusPill, 1);
-
-        var card = new Border { Style = (Style)Application.Current!.Resources["UcCardSoft"], Content = grid };
-        var tap = new TapGestureRecognizer();
-        tap.Tapped += async (_, _) => await Shell.Current.GoToAsync($"{nameof(RideDetailsPage)}?id={req.RideId}");
-        card.GestureRecognizers.Add(tap);
-        return card;
+        return RideCardParts.Card(
+            req.DepartureLocation, req.Destination,
+            (req.Status, bg, fg),
+            req.DepartureLabel,
+            $"Driver: {req.DriverName}",
+            () => Shell.Current.GoToAsync($"{nameof(RideDetailsPage)}?id={req.RideId}"));
     }
 
     private async void OnBackTapped(object? sender, TappedEventArgs e) =>

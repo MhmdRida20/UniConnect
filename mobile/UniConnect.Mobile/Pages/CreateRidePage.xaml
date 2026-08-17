@@ -61,17 +61,24 @@
                         <Label x:Name="DestinationError" IsVisible="False" Style="{StaticResource UcDangerText}" />
                     </VerticalStackLayout>
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                    <!-- Padding is tightened from the shared 16 to 12 here: these
+                         two boxes are half-width, and a DatePicker plus its glyph
+                         does not fit a 375pt phone's column at the wider padding.
+                         The time is forced to 24h for the same reason, so "10:22"
+                         fits where "10:22 AM" was being clipped. -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
                         <VerticalStackLayout Grid.Column="0" Spacing="8">
                             <Label Text="Date" Style="{StaticResource UcFieldLabel}" />
-                            <Border Style="{StaticResource UcFieldBox}">
-                                <DatePicker x:Name="DepartureDatePicker" VerticalOptions="Center" />
+                            <Border Style="{StaticResource UcFieldBox}" Padding="12,6">
+                                <DatePicker x:Name="DepartureDatePicker" Format="d MMM yyyy"
+                                            FontSize="14" VerticalOptions="Center" HorizontalOptions="Fill" />
                             </Border>
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" Spacing="8">
                             <Label Text="Time" Style="{StaticResource UcFieldLabel}" />
-                            <Border Style="{StaticResource UcFieldBox}">
-                                <TimePicker x:Name="DepartureTimePicker" VerticalOptions="Center" />
+                            <Border Style="{StaticResource UcFieldBox}" Padding="12,6">
+                                <TimePicker x:Name="DepartureTimePicker" Format="HH:mm"
+                                            FontSize="14" VerticalOptions="Center" HorizontalOptions="Fill" />
                             </Border>
                         </VerticalStackLayout>
                     </Grid>
@@ -93,7 +100,9 @@
                         <Border Style="{StaticResource UcFieldBox}" Padding="10,8" HorizontalOptions="Start">
                             <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="14">
                                 <Border Grid.Column="0" x:Name="SeatsDown" Style="{StaticResource UcStepperBtn}">
-                                    <Label Text="\u2212" Style="{StaticResource UcStepperGlyph}" />
+                                    <!-- XAML has no \u escape; it needs an XML character
+                                         reference, or the literal text "\u2212" is drawn. -->
+                                    <Label Text="&#x2212;" Style="{StaticResource UcStepperGlyph}" />
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnSeatsDown" />
                                     </Border.GestureRecognizers>

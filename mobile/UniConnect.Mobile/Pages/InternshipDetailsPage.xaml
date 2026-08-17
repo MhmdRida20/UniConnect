@@ -205,9 +205,10 @@
                                 Grid.Row="1"
                                 x:Name="ExternalApplyBtn"
                                 IsVisible="False"
-                                Text="Open employer's application page"
+                                Text="Open application page"
                                 Style="{StaticResource UcBtnPrimaryLarge}"
                                 Clicked="OnExternalApplyClicked"
+                                LineBreakMode="WordWrap"
                                 HorizontalOptions="Fill" />
                         </Grid>
                     </Border>
