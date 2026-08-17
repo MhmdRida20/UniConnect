@@ -1,0 +1,44 @@
+@page
+@model ResendEmailConfirmationModel
+@{
+    ViewData["Title"] = "Resend confirmation code";
+    ViewData["AuthMode"] = "login";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<form method="post" class="auth-form">
+    <div class="auth-head">
+        <span class="auth-head-ico"><svg class="hgi"><use href="#i-refresh"></use></svg></span>
+        <h1 class="auth-title">Send a new code</h1>
+        <p class="auth-subtitle">Tell us your email address and we'll send a fresh confirmation code.</p>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="auth-summary text-danger" role="alert"></div>
+
+    <div class="auth-field">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-mail"></use></svg></span>
+        <div class="auth-float">
+            <input asp-for="Input.Email" id="Input_Email" class="auth-input"
+                   autocomplete="username" autofocus placeholder=" " />
+            <label asp-for="Input.Email" class="auth-label">Email address</label>
+        </div>
+    </div>
+    <span asp-validation-for="Input.Email" class="auth-error"></span>
+
+    <button type="submit" class="auth-submit">
+        <span>Send the code</span>
+        <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+    </button>
+
+    <div class="auth-switch">
+        Remembered your code?
+        <a asp-page="./ConfirmEmail">
+            Enter it here
+            <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+        </a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,11 @@
+@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Registration confirmation";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+@* The handler always redirects — to the code form, or to Login if the email is
+   missing or unknown. Nothing renders here in practice; this markup exists only
+   so the page is well-formed. *@
+<p class="auth-subtitle">Taking you to the confirmation page…</p>

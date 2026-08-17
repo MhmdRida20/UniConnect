@@ -217,25 +217,85 @@ namespace UniConnect.Controllers.Api
         // registering exactly as before, unaffected, through the existing
         // web page: Areas/Identity/Pages/Account/RegisterInstructor.cshtml.cs.
 
-        // Builds and sends the same confirmation email the web registration
-        // flow sends — the link opens Identity UI's ConfirmEmail web page
-        // (no native equivalent needed; a mobile browser handles it fine),
-        // after which the account can log in through POST /api/auth/login.
-        private async Task SendConfirmationEmailAsync(ApplicationUser user)
+        // The same 6-digit code the web flow sends, from the same helper.
+        // Confirmation itself is POST /api/auth/confirm-email below, so a
+        // student who signs up in the app never has to leave it.
+        private Task SendConfirmationEmailAsync(ApplicationUser user) =>
+            UniConnect.Areas.Identity.Pages.Account.EmailCodeSender.SendAsync(
+                _userManager, _emailSender, user);
+
+        // ---------- CONFIRM EMAIL ----------------------------------------------
+        // Mirrors the web ConfirmEmail page, including its attempt limiting:
+        // six digits with a few minutes' life is guessable at volume, and
+        // ConfirmEmailAsync counts nothing by itself.
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailRequest request)
         {
-            var userId = await _userManager.GetUserIdAsync(user);
-            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
-            var callbackUrl = Url.Page(
-                "/Account/ConfirmEmail",
-                pageHandler: null,
-                values: new { area = "Identity", userId, code },
-                protocol: Request.Scheme,
-                host: Request.Host.ToString());
+            var user = await _userManager.FindByEmailAsync(request.Email);
 
-            await _emailSender.SendEmailAsync(user.Email!, "Confirm your UniConnect account",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl!)}'>clicking here</a>.");
+            // Same response whether or not the account exists — otherwise this
+            // endpoint enumerates registered addresses.
+            if (user is null)
+                return BadRequest(new { error = "invalid_code", message = "That code is not valid or has expired." });
+
+            if (user.EmailConfirmed)
+                return Ok(new { message = "This account is already confirmed. You can sign in." });
+
+            if (await _userManager.IsLockedOutAsync(user))
+                return StatusCode(423, new { error = "locked_out", message = "Too many incorrect codes. Try again later." });
+
+            var result = await _userManager.ConfirmEmailAsync(user, request.Code);
+
+            if (!result.Succeeded)
+            {
+                await _userManager.AccessFailedAsync(user);
+
+                await _auditLog.LogAsync("FailedLogin", userId: user.Id, universityCode: user.UniversityCode,
+                    entityType: "User", entityId: user.Id,
+                    details: "[Mobile] Invalid email confirmation code.");
+
+                return BadRequest(new { error = "invalid_code", message = "That code is not valid or has expired." });
+            }
+
+            await _userManager.ResetAccessFailedCountAsync(user);
+
+            // Makes the code single-use: ConfirmEmailAsync leaves the security
+            // stamp alone, so the code would otherwise stay valid to the end of
+            // its window.
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            await _auditLog.LogAsync("EmailConfirmed", userId: user.Id, universityCode: user.UniversityCode,
+                entityType: "User", entityId: user.Id, details: "[Mobile] Email confirmed by code.");
+
+            return Ok(new { message = "Your email is confirmed. You can now sign in." });
+        }
+
+        // ---------- RESEND CONFIRMATION CODE -----------------------------------
+        [HttpPost("resend-confirmation")]
+        public async Task<IActionResult> ResendConfirmation(ResendConfirmationRequest request)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user is not null && !user.EmailConfirmed)
+                await SendConfirmationEmailAsync(user);
+
+            // Unconditional response, for the same enumeration reason.
+            return Ok(new { message = "If that address needs confirming, a new code is on its way." });
+        }
+
+        public class ConfirmEmailRequest
+        {
+            [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+            [Required, RegularExpression(@"^\d{6}$", ErrorMessage = "The code is 6 digits.")]
+            public string Code { get; set; } = string.Empty;
+        }
+
+        public class ResendConfirmationRequest
+        {
+            [Required, EmailAddress] public string Email { get; set; } = string.Empty;
         }
     }
 }

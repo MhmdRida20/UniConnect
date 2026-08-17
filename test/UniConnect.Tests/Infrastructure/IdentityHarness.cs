@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -37,6 +38,12 @@ public static class IdentityHarness
                 RequireNonAlphanumeric = false,
                 RequireUppercase = false,
                 RequireLowercase = true
+            },
+            // Also mirrors Program.cs: email confirmation is a 6-digit code
+            // from the Email provider, not a Data Protection token.
+            Tokens =
+            {
+                EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider
             }
         });
 
@@ -60,6 +67,22 @@ public static class IdentityHarness
         manager.RegisterTokenProvider(
             TokenOptions.DefaultAuthenticatorProvider,
             new AuthenticatorTokenProvider<ApplicationUser>());
+
+        // Needed for email confirmation now that it uses a typed 6-digit code:
+        // GenerateEmailConfirmationTokenAsync resolves this provider by name.
+        manager.RegisterTokenProvider(
+            TokenOptions.DefaultEmailProvider,
+            new EmailTokenProvider<ApplicationUser>());
+
+        // The Data Protection provider, which everything NOT moved to codes
+        // still uses — password reset above all. Registering it here is what
+        // lets a test assert that reset tokens stayed long and opaque.
+        manager.RegisterTokenProvider(
+            TokenOptions.DefaultProvider,
+            new DataProtectorTokenProvider<ApplicationUser>(
+                DataProtectionProvider.Create("UniConnect.Tests"),
+                Options.Create(new DataProtectionTokenProviderOptions()),
+                NullLogger<DataProtectorTokenProvider<ApplicationUser>>.Instance));
 
         return manager;
     }

@@ -32,6 +32,21 @@ builder.Services
     .AddDefaultIdentity<ApplicationUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = true; // now enforced for real — see SmtpEmailSender
+
+        // Email confirmation is a 6-digit code the user types, not a link they
+        // click. The default provider is the Data Protector one, whose token is
+        // a long opaque string — fine in a URL, impossible to transcribe. The
+        // Email provider is TOTP-based and emits exactly six digits.
+        //
+        // Scope: this changes ONLY email confirmation. Password reset keeps its
+        // Data Protection token via Tokens.PasswordResetTokenProvider, which is
+        // correct — a reset link is clicked, never typed.
+        //
+        // Measured, not assumed: the underlying timestep is 3 minutes and
+        // Identity scans two steps either side, so a code lives 6-9 minutes.
+        // That short life is why the confirmation page leads with "send a new
+        // code", and why the email says it expires.
+        options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 6;
         options.Password.RequireNonAlphanumeric = false;

@@ -1,0 +1,73 @@
+@page
+@model ConfirmEmailModel
+@{
+    ViewData["Title"] = "Confirm your email";
+    ViewData["AuthMode"] = "login";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<form method="post" class="auth-form">
+    <div class="auth-head">
+        <span class="auth-head-ico"><svg class="hgi"><use href="#i-mail"></use></svg></span>
+        <h1 class="auth-title">Check your email</h1>
+        <p class="auth-subtitle">
+            @if (!string.IsNullOrWhiteSpace(Model.Email))
+            {
+                <text>We sent a 6-digit code to <strong>@Model.Email</strong>. Enter it below.</text>
+            }
+            else
+            {
+                <text>Enter the 6-digit code we sent you.</text>
+            }
+        </p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="auth-summary text-success" role="status">@Model.StatusMessage</div>
+    }
+
+    <div asp-validation-summary="ModelOnly" class="auth-summary text-danger" role="alert"></div>
+
+    <input asp-for="Input.Email" type="hidden" />
+
+    <div class="auth-field">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-shield"></use></svg></span>
+        <div class="auth-float">
+            @* Same input treatment as the two-factor challenge: numeric keypad on
+               a phone, and one-time-code so the OS can offer the value it just
+               saw arrive. *@
+            <input asp-for="Input.Code" id="Input_Code" class="auth-input"
+                   autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="6" autofocus placeholder=" " />
+            <label asp-for="Input.Code" class="auth-label">6-digit code</label>
+        </div>
+    </div>
+    <span asp-validation-for="Input.Code" class="auth-error"></span>
+
+    <button type="submit" class="auth-submit">
+        <span>Confirm my email</span>
+        <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+    </button>
+
+    @* Prominent rather than tucked away: the code is only valid for a few
+       minutes, so needing a new one is the common case, not the exception. *@
+    <div class="auth-mini-links">
+        <button type="submit" asp-page-handler="Resend"
+                class="btn btn-link p-0 align-baseline" style="font: inherit;">
+            Didn't get it, or has it expired? Send a new code
+        </button>
+    </div>
+
+    <div class="auth-switch">
+        Already confirmed?
+        <a asp-page="./Login">
+            Sign in
+            <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+        </a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
