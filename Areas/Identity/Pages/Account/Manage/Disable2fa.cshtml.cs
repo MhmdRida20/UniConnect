@@ -43,9 +43,14 @@ namespace UniConnect.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
+            // The scaffolded page throws here, which renders a 500 for the
+            // ordinary cases of a bookmarked URL, a back button after
+            // disabling, or a double-submitted form. Nothing has gone wrong —
+            // the user simply has nothing to disable — so send them to the
+            // status page instead.
             if (!await _userManager.GetTwoFactorEnabledAsync(user))
             {
-                throw new InvalidOperationException($"Cannot disable 2FA for user as it's not currently enabled.");
+                return RedirectToPage("./TwoFactorAuthentication");
             }
 
             return Page();
@@ -59,10 +64,19 @@ namespace UniConnect.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
+            // Same reasoning as OnGet: a resubmitted form is not an error.
+            if (!await _userManager.GetTwoFactorEnabledAsync(user))
+            {
+                return RedirectToPage("./TwoFactorAuthentication");
+            }
+
             var disable2faResult = await _userManager.SetTwoFactorEnabledAsync(user, false);
             if (!disable2faResult.Succeeded)
             {
-                throw new InvalidOperationException($"Unexpected error occurred disabling 2FA.");
+                // This one genuinely is unexpected — a store failure — but it
+                // still should not be a 500 in the user's face.
+                StatusMessage = "Error: two-factor could not be turned off. Please try again.";
+                return RedirectToPage("./TwoFactorAuthentication");
             }
 
             _logger.LogInformation("User with ID '{UserId}' has disabled 2fa.", _userManager.GetUserId(User));

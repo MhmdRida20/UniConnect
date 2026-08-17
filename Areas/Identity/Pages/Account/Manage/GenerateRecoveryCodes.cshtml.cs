@@ -51,10 +51,12 @@ namespace UniConnect.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
-            var isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
-            if (!isTwoFactorEnabled)
+            // Redirect rather than throw: recovery codes only mean anything
+            // once two-factor is on, and arriving here early is a wrong turn,
+            // not a fault. The scaffolded version renders a 500.
+            if (!await _userManager.GetTwoFactorEnabledAsync(user))
             {
-                throw new InvalidOperationException($"Cannot generate recovery codes for user because they do not have 2FA enabled.");
+                return RedirectToPage("./TwoFactorAuthentication");
             }
 
             return Page();
@@ -68,11 +70,10 @@ namespace UniConnect.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
-            var isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
             var userId = await _userManager.GetUserIdAsync(user);
-            if (!isTwoFactorEnabled)
+            if (!await _userManager.GetTwoFactorEnabledAsync(user))
             {
-                throw new InvalidOperationException($"Cannot generate recovery codes for user as they do not have 2FA enabled.");
+                return RedirectToPage("./TwoFactorAuthentication");
             }
 
             var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
