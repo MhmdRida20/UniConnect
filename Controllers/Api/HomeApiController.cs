@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -76,12 +76,20 @@ namespace UniConnect.Controllers.Api
             // start disagreeing with each other. ----------
             var stats = new DashboardStats
             {
+                // The Archived filters: deleting a group or a club archives it
+                // instead of removing the row, and the membership row outlives
+                // it either way — so without these the dashboard keeps counting
+                // things the student has already deleted.
                 GroupsJoined = await _db.StudyGroupMembers.CountAsync(
-                    m => m.UserId == user.Id && m.Status == MembershipStatus.Approved),
+                    m => m.UserId == user.Id
+                         && m.Status == MembershipStatus.Approved
+                         && m.StudyGroup!.Status != StudyGroupStatus.Archived),
                 RidesTaken = await _db.RideRequests.CountAsync(
                     r => r.PassengerId == user.Id && r.Status == RideRequestStatus.Accepted),
                 ClubsJoined = await _db.ClubMembers.CountAsync(
-                    m => m.UserId == user.Id && m.Status == ClubMembershipStatus.Approved),
+                    m => m.UserId == user.Id
+                         && m.Status == ClubMembershipStatus.Approved
+                         && m.Club!.Status != ClubStatus.Archived),
             };
 
             // Live via the adapter — same reasoning as the web dashboard fix:

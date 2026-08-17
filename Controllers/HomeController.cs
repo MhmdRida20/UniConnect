@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -96,8 +96,16 @@ namespace UniConnect.Controllers
                         // Same "cheap" approach as the instructor stats above
                         // — plain local DB counts, no adapter calls at all,
                         // used for the hero cards + counter row.
+                        // Archived groups are excluded. Deleting a group archives
+                        // it rather than removing the row (StudyGroupService
+                        // .DeleteAsync — members and the whole message history
+                        // hang off it), and the membership row survives too. So
+                        // counting memberships alone left a student who had just
+                        // deleted their only group still looking at "1 joined".
                         ViewBag.StudentGroupsJoined = await _db.StudyGroupMembers.CountAsync(
-                            m => m.UserId == user.Id && m.Status == MembershipStatus.Approved);
+                            m => m.UserId == user.Id
+                                 && m.Status == MembershipStatus.Approved
+                                 && m.StudyGroup!.Status != StudyGroupStatus.Archived);
                         ViewBag.StudentRidesTaken = await _db.RideRequests.CountAsync(
                             r => r.PassengerId == user.Id && r.Status == RideRequestStatus.Accepted);
 
@@ -124,8 +132,11 @@ namespace UniConnect.Controllers
                                 e => e.UniversityId == user.UniversityId && e.UniversityCode == user.UniversityCode);
                         }
 
+                        // Archived clubs excluded for the same reason as groups above.
                         ViewBag.StudentClubsJoined = await _db.ClubMembers.CountAsync(
-                            m => m.UserId == user.Id && m.Status == ClubMembershipStatus.Approved);
+                            m => m.UserId == user.Id
+                                 && m.Status == ClubMembershipStatus.Approved
+                                 && m.Club!.Status != ClubStatus.Archived);
                     }
                 }
             }

@@ -448,6 +448,28 @@ namespace UniConnect.Controllers
                     await _db.Instructors.Where(i => i.UniversityCode == code).ToListAsync());
                 _db.StaffRecords.RemoveRange(
                     await _db.StaffRecords.Where(s => s.UniversityCode == code).ToListAsync());
+                // Groups and clubs the UI has already retired. Deleting either
+                // one archives it rather than dropping the row — the members and
+                // the whole message history hang off it — so an archived row is
+                // the only trace left of something the users consider gone.
+                //
+                // Without this the teardown could never succeed: nothing in the
+                // app physically removes these rows, so a single group anyone
+                // had ever created and then deleted pinned the university in
+                // place permanently, with no path out from any screen.
+                //
+                // Anything still ACTIVE deliberately keeps blocking. That is the
+                // safety check doing its job, and DescribeRemainingActivityAsync
+                // below now names it. Children cascade in the database.
+                _db.StudyGroups.RemoveRange(
+                    await _db.StudyGroups
+                        .Where(g => g.UniversityCode == code && g.Status == StudyGroupStatus.Archived)
+                        .ToListAsync());
+                _db.Clubs.RemoveRange(
+                    await _db.Clubs
+                        .Where(c => c.UniversityCode == code && c.Status == ClubStatus.Archived)
+                        .ToListAsync());
+
                 await _db.SaveChangesAsync();
 
                 var accounts = await _userManager.Users.Where(u => u.UniversityCode == code).ToListAsync();
@@ -505,9 +527,15 @@ namespace UniConnect.Controllers
 
             Note(await _db.Rides.CountAsync(r => r.UniversityCode == code), "ride", "rides");
             Note(await _db.Tickets.CountAsync(t => t.UniversityCode == code), "support ticket", "support tickets");
-            Note(await _db.Clubs.CountAsync(c => c.UniversityCode == code), "club", "clubs");
             Note(await _db.AttendanceSessions.CountAsync(a => a.UniversityCode == code), "attendance session", "attendance sessions");
-            Note(await _db.StudyGroups.CountAsync(g => g.UniversityCode == code), "study group", "study groups");
+
+            // Archived ones are cleared by the teardown, so only live ones can
+            // still be the obstacle — naming an archived group here would send
+            // the admin looking for something already deleted.
+            Note(await _db.StudyGroups.CountAsync(
+                g => g.UniversityCode == code && g.Status != StudyGroupStatus.Archived), "active study group", "active study groups");
+            Note(await _db.Clubs.CountAsync(
+                c => c.UniversityCode == code && c.Status != ClubStatus.Archived), "active club", "active clubs");
 
             // Accounts are deleted by the teardown itself, so listing them
             // alongside a real blocker just adds noise — an account almost
