@@ -1,0 +1,92 @@
+@page
+@model ShowRecoveryCodesModel
+@{
+    ViewData["Title"] = "Recovery codes";
+}
+
+<div class="container form-page" style="padding-top:1.5rem;">
+    <h2 class="mb-3">Save your recovery codes</h2>
+
+    <div class="alert alert-warning">
+        <strong>This is the only time these are shown.</strong>
+        Each code works once. If you lose your phone and have no codes left, only an
+        administrator can restore access to your account.
+    </div>
+
+    <div class="uc-form-card mb-3">
+        <div class="row row-cols-2 row-cols-sm-2 g-2 mb-3" id="codeGrid">
+            @foreach (var code in Model.RecoveryCodes)
+            {
+                <div class="col">
+                    <code style="display:block;background:#f1f5f9;padding:.5rem .75rem;border-radius:8px;
+                                 font-size:1rem;letter-spacing:.05em;text-align:center;user-select:all;">@code</code>
+                </div>
+            }
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-secondary" id="copyCodes">
+                <svg class="hgi hgi-sm me-1"><use href="#i-copy"></use></svg>Copy all
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="downloadCodes">
+                <svg class="hgi hgi-sm me-1"><use href="#i-file"></use></svg>Download as text
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Print</button>
+        </div>
+    </div>
+
+    @* A deliberate speed bump. Without it the natural action is to click past
+       this page, and the codes are unrecoverable once it is gone. *@
+    <div class="uc-form-card">
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="savedConfirm" />
+            <label class="form-check-label" for="savedConfirm">
+                I have saved these codes somewhere I can get to without my phone.
+            </label>
+        </div>
+
+        <a asp-page="./TwoFactorAuthentication" class="btn btn-primary disabled" id="doneBtn"
+           aria-disabled="true" tabindex="-1">Done</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var codes = Array.prototype.map.call(
+                document.querySelectorAll('#codeGrid code'),
+                function (el) { return el.textContent.trim(); });
+
+            var check = document.getElementById('savedConfirm');
+            var done = document.getElementById('doneBtn');
+
+            check.addEventListener('change', function () {
+                done.classList.toggle('disabled', !check.checked);
+                done.setAttribute('aria-disabled', String(!check.checked));
+                if (check.checked) { done.removeAttribute('tabindex'); }
+                else { done.setAttribute('tabindex', '-1'); }
+            });
+
+            document.getElementById('copyCodes').addEventListener('click', function () {
+                if (!navigator.clipboard) return;
+                navigator.clipboard.writeText(codes.join('\n'));
+                this.innerHTML = 'Copied';
+            });
+
+            // Blob rather than a data: URI so the filename is honoured and the
+            // codes never appear in browser history.
+            document.getElementById('downloadCodes').addEventListener('click', function () {
+                var header = 'UniConnect recovery codes\nGenerated ' + new Date().toISOString() + '\n\n';
+                var blob = new Blob([header + codes.join('\n') + '\n'], { type: 'text/plain' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'uniconnect-recovery-codes.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        })();
+    </script>
+}

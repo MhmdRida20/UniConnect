@@ -106,14 +106,23 @@
                             }
                         </span>
                         <span class="text-muted small">@u.Email</span>
-                        @if (u.IsSuspended)
-                        {
-                            <span class="uc-pill uc-pill-amber">Suspended</span>
-                        }
-                        else
-                        {
-                            <span class="uc-pill uc-pill-green">Active</span>
-                        }
+                        @* One grid cell, not two — the row's grid-template-columns
+                           has exactly four tracks, so the 2FA badge has to sit
+                           inside the status cell rather than beside it. *@
+                        <span class="d-flex align-items-center gap-1 flex-wrap">
+                            @if (u.IsSuspended)
+                            {
+                                <span class="uc-pill uc-pill-amber">Suspended</span>
+                            }
+                            else
+                            {
+                                <span class="uc-pill uc-pill-green">Active</span>
+                            }
+                            @if (u.TwoFactorEnabled)
+                            {
+                                <span class="uc-pill uc-pill-grey" title="Two-factor authentication is on">2FA</span>
+                            }
+                        </span>
 
                         @if (u.Id == currentUserId)
                         {
@@ -142,6 +151,20 @@
                                         @* Not disabled in markup — the script below turns it off until the
                                            value actually changes, so the button still works without JS. *@
                                         <button class="btn btn-outline-secondary btn-sm" data-role-set>Set</button>
+                                    </form>
+                                }
+                                @* The recovery path for a student who has lost both
+                                   their authenticator device and their recovery
+                                   codes. Only offered when there is something to
+                                   reset, so ordinary rows are unchanged. Every use
+                                   is audited against the admin who did it. *@
+                                @if (u.TwoFactorEnabled)
+                                {
+                                    <form asp-action="ResetTwoFactor" method="post"
+                                          data-confirm="Reset two-factor for @u.FullName? They will sign in with their password alone until they set it up again.">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@u.Id" />
+                                        <button class="btn btn-sm btn-outline-secondary">Reset 2FA</button>
                                     </form>
                                 }
                                 <form asp-action="ToggleSuspend" method="post"

@@ -97,6 +97,19 @@ namespace UniConnect.Areas.Identity.Pages.Account
                 return LocalRedirect(returnUrl);
             }
 
+            // SignInResult has a FOURTH outcome besides Succeeded, IsLockedOut
+            // and plain failure: the password was correct but the account has a
+            // second factor. It must be handled ABOVE the audit call below —
+            // a 2FA challenge is not a failed login, and recording it as one
+            // both pollutes the audit trail and (before this branch existed)
+            // dropped the user onto "Invalid login attempt", locking out
+            // anyone who enabled 2FA. See docs/TWO_FACTOR_PLAN.md step 1.
+            if (result.RequiresTwoFactor)
+            {
+                return RedirectToPage("./LoginWith2fa",
+                    new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
+            }
+
             var attemptedUser = await _userManager.FindByEmailAsync(Input.Email);
             var reason = result.IsLockedOut ? "LockedOut" : result.IsNotAllowed ? "NotAllowed (e.g. unconfirmed email or suspended)" : "InvalidCredentials";
 

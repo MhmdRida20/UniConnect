@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,7 +40,7 @@ public static class IdentityHarness
             }
         });
 
-        return new UserManager<ApplicationUser>(
+        var manager = new UserManager<ApplicationUser>(
             store,
             options,
             new PasswordHasher<ApplicationUser>(),
@@ -48,6 +50,66 @@ public static class IdentityHarness
             new IdentityErrorDescriber(),
             new ServiceCollection().BuildServiceProvider(),
             NullLogger<UserManager<ApplicationUser>>.Instance);
+
+        // In the app these arrive via AddDefaultTokenProviders(), which runs at
+        // DI registration time. Building UserManager by hand skips that
+        // entirely, leaving _tokenProviders empty — so any call naming a
+        // provider throws NotSupportedException rather than failing an
+        // assertion. Registering the authenticator provider here is what makes
+        // TOTP testable at all.
+        manager.RegisterTokenProvider(
+            TokenOptions.DefaultAuthenticatorProvider,
+            new AuthenticatorTokenProvider<ApplicationUser>());
+
+        return manager;
+    }
+
+    /// <summary>
+    /// A SignInManager whose password and two-factor outcomes are dictated by
+    /// the test rather than by Identity.
+    ///
+    /// The real class cannot be exercised here: PasswordSignInAsync reaches
+    /// IsTwoFactorClientRememberedAsync, which calls Context.AuthenticateAsync
+    /// and needs a registered IAuthenticationService — an amount of plumbing
+    /// far larger than the behaviour under test. Every method used below is
+    /// virtual, so overriding them is enough, and it keeps the assertions on
+    /// OUR branching rather than on Microsoft's.
+    /// </summary>
+    public sealed class StubSignInManager : SignInManager<ApplicationUser>
+    {
+        public SignInResult PasswordResult { get; set; } = SignInResult.Success;
+        public SignInResult CheckPasswordResult { get; set; } = SignInResult.Success;
+        public ApplicationUser? TwoFactorUser { get; set; }
+        public bool SignedOut { get; private set; }
+
+        public StubSignInManager(UserManager<ApplicationUser> users)
+            : base(users,
+                   new HttpContextAccessor { HttpContext = new DefaultHttpContext() },
+                   new UserClaimsPrincipalFactory<ApplicationUser>(
+                       users, Microsoft.Extensions.Options.Options.Create(new IdentityOptions())),
+                   Microsoft.Extensions.Options.Options.Create(new IdentityOptions()),
+                   NullLogger<SignInManager<ApplicationUser>>.Instance,
+                   new AuthenticationSchemeProvider(Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions())),
+                   new DefaultUserConfirmation<ApplicationUser>())
+        {
+        }
+
+        public override Task<SignInResult> PasswordSignInAsync(
+            string userName, string password, bool isPersistent, bool lockoutOnFailure)
+            => Task.FromResult(PasswordResult);
+
+        public override Task<SignInResult> CheckPasswordSignInAsync(
+            ApplicationUser user, string password, bool lockoutOnFailure)
+            => Task.FromResult(CheckPasswordResult);
+
+        public override Task<ApplicationUser?> GetTwoFactorAuthenticationUserAsync()
+            => Task.FromResult(TwoFactorUser);
+
+        public override Task SignOutAsync()
+        {
+            SignedOut = true;
+            return Task.CompletedTask;
+        }
     }
 
     public static RoleManager<IdentityRole> CreateRoleManager(ApplicationDbContext db)

@@ -1,0 +1,33 @@
+@page
+@model ResetAuthenticatorModel
+@{
+    ViewData["Title"] = "Change authenticator app";
+}
+
+<div class="container form-page" style="padding-top:1.5rem;">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a asp-page="./TwoFactorAuthentication" class="btn btn-sm btn-outline-secondary">
+            <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>
+        </a>
+        <h2 class="mb-0">Change authenticator app</h2>
+    </div>
+
+    <div class="uc-form-card">
+        <div class="alert alert-warning">
+            <strong>Your current authenticator app will stop working.</strong>
+            Two-factor authentication is switched off until you finish setting up the
+            new app, and the old entry on your phone should be deleted.
+        </div>
+
+        <p class="text-muted small mb-3">
+            Use this when you change phone, reinstall your authenticator app, or think
+            the setup key may have been seen by someone else.
+        </p>
+
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-danger" type="submit">Reset authenticator app</button>
+            <a asp-page="./TwoFactorAuthentication" class="btn btn-outline-secondary ms-1">Cancel</a>
+        </form>
+    </div>
+</div>

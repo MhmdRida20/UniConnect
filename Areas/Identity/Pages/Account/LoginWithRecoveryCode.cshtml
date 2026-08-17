@@ -1,0 +1,50 @@
+@page
+@model LoginWithRecoveryCodeModel
+@{
+    ViewData["Title"] = "Recovery code verification";
+    ViewData["AuthMode"] = "login";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<form method="post" class="auth-form">
+    <div class="auth-head">
+        <span class="auth-head-ico"><svg class="hgi"><use href="#i-id"></use></svg></span>
+        <h1 class="auth-title">Use a recovery code</h1>
+        <p class="auth-subtitle">Enter one of the codes you saved when you turned on two-factor authentication.</p>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="auth-summary text-danger" role="alert"></div>
+
+    <div class="auth-field">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-id"></use></svg></span>
+        <div class="auth-float">
+            @* Codes are alphanumeric, so no numeric inputmode here. Autocomplete
+               is off deliberately: a recovery code is single-use and should not
+               be retained by the browser. *@
+            <input asp-for="Input.RecoveryCode" id="Input_RecoveryCode" class="auth-input"
+                   autocomplete="off" spellcheck="false" autofocus placeholder=" " />
+            <label asp-for="Input.RecoveryCode" class="auth-label">Recovery code</label>
+        </div>
+    </div>
+    <span asp-validation-for="Input.RecoveryCode" class="auth-error"></span>
+
+    <p class="auth-note text-muted small">
+        Each code works once. After signing in, generate a fresh set from
+        <strong>Two-factor authentication</strong> in your profile.
+    </p>
+
+    <button type="submit" class="auth-submit">
+        <span>Sign in</span>
+        <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+    </button>
+
+    <div class="auth-mini-links">
+        <a asp-page="./LoginWith2fa" asp-route-returnUrl="@Model.ReturnUrl">
+            Back to the authenticator code
+        </a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

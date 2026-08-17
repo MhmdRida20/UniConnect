@@ -141,6 +141,60 @@ namespace UniConnect.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // ---------- RESET TWO-FACTOR ---------------------------------------------
+        // The escape hatch for a student who has lost both their authenticator
+        // device and their recovery codes. Without it, the only remedy is
+        // editing AspNetUsers by hand, which is not something to be doing on a
+        // live system.
+        //
+        // What stops this becoming a back door is the audit entry: every reset
+        // names the administrator who performed it. The same tenant restriction
+        // as ToggleSuspend applies, so a UniversityAdmin cannot clear 2FA on
+        // another institution's account.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetTwoFactor(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+
+            if (!IsSuperAdmin)
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser is null || user.UniversityCode != currentUser.UniversityCode)
+                    return Forbid();
+            }
+
+            if (!user.TwoFactorEnabled && await _userManager.GetAuthenticatorKeyAsync(user) is null)
+            {
+                TempData["Error"] = $"{user.FullName} does not have two-factor authentication set up.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Order matters. Clearing the flag first means that if the second
+            // call fails, the user can still log in with their password alone
+            // rather than being stranded at a challenge they cannot answer.
+            await _userManager.SetTwoFactorEnabledAsync(user, false);
+            await _userManager.ResetAuthenticatorKeyAsync(user);
+
+            // Invalidates any remembered-browser cookies still carrying the old
+            // stamp, so a machine that was skipping the challenge stops doing so.
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            await _auditLog.LogAsync(
+                "TwoFactorAdminReset",
+                userId: _userManager.GetUserId(User),
+                universityCode: user.UniversityCode,
+                entityType: "User",
+                entityId: user.Id,
+                details: $"Two-factor reset by administrator. Target user: {user.FullName} ({user.Email})");
+
+            TempData["Success"] =
+                $"Two-factor authentication has been reset for {user.FullName}. " +
+                "They can sign in with their password and set it up again.";
+            return RedirectToAction(nameof(Index));
+        }
+
         // ---------- CHANGE ROLE — FR-83 ------------------------------------------
         // Deliberately does NOT allow assigning "Admin" or "Company" through
         // this screen: Super Admin accounts are provisioned deliberately

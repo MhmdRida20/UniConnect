@@ -106,6 +106,31 @@ namespace UniConnect.Controllers.Api
                 return StatusCode(403, new { error = "suspended", message = "This account has been suspended." });
             }
 
+            // CheckPasswordSignInAsync above validates the password and applies
+            // lockout, but it ignores TwoFactorEnabled entirely — so without
+            // this block a user who turned on 2FA on the web would still be let
+            // in here with a password alone, and the second factor would be
+            // decorative rather than real.
+            //
+            // Refusing is the honest option while the app has no code-entry
+            // screen. The enrolment page says so before the user opts in, so
+            // this is a stated consequence rather than a surprise. Accepting an
+            // optional totpCode in this request is the long-term answer; it
+            // needs a mobile release, so it is deliberately not done here.
+            // See docs/TWO_FACTOR_PLAN.md step 7.
+            if (user.TwoFactorEnabled)
+            {
+                await _auditLog.LogAsync("FailedLogin", userId: user.Id, universityCode: user.UniversityCode,
+                    entityType: "User", entityId: user.Id,
+                    details: "[Mobile] Refused: account has two-factor authentication enabled.");
+
+                return StatusCode(403, new
+                {
+                    error = "two_factor_required",
+                    message = "This account uses two-factor authentication, which the mobile app does not support yet. Please sign in on the web portal."
+                });
+            }
+
             var roles = await _userManager.GetRolesAsync(user);
             if (!roles.Any(r => MobileAllowedRoles.Contains(r)))
             {
