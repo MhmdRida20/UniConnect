@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -425,30 +425,106 @@ namespace UniConnect.Controllers
             var university = await _db.Universities.FindAsync(code);
             if (university is null) return NotFound();
 
+            // All or nothing. Without this the teardown committed in stages, so a
+            // delete that failed at the last step still destroyed everything the
+            // earlier steps had removed — the university survived with its synced
+            // students already gone, and the admin had no way to tell.
+            await using var tx = await _db.Database.BeginTransactionAsync();
+
             try
             {
-                var students = await _db.Students.Where(s => s.UniversityCode == code).ToListAsync();
-                _db.Students.RemoveRange(students);
+                // Everything the SYNC brought in, cleared together. These three
+                // are a mirror of the university's own records, not activity
+                // anyone created here, so a teardown owns all of them equally.
+                //
+                // Students alone used to be removed, which made the delete fail
+                // on any university that had ever synced: Instructors and
+                // StaffRecords are ON DELETE NO_ACTION, so SQL Server refused to
+                // drop the parent row while they existed, and the catch below
+                // then blamed rides and tickets that were not there.
+                _db.Students.RemoveRange(
+                    await _db.Students.Where(s => s.UniversityCode == code).ToListAsync());
+                _db.Instructors.RemoveRange(
+                    await _db.Instructors.Where(i => i.UniversityCode == code).ToListAsync());
+                _db.StaffRecords.RemoveRange(
+                    await _db.StaffRecords.Where(s => s.UniversityCode == code).ToListAsync());
                 await _db.SaveChangesAsync();
 
                 var accounts = await _userManager.Users.Where(u => u.UniversityCode == code).ToListAsync();
                 foreach (var account in accounts)
                     await _userManager.DeleteAsync(account);
 
+                // Courses, settings, service enablement, ticket categories and
+                // the company account all cascade from here.
                 _db.Universities.Remove(university);
                 await _db.SaveChangesAsync();
 
+                await tx.CommitAsync();
+
+                _logger.LogInformation("Deleted university {Code} ({Name}).", code, university.Name);
                 TempData["Success"] = $"{university.Name} and its data have been deleted.";
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                TempData["Error"] = $"Couldn't delete {university.Name} — it still has activity attached " +
-                    "(rides, study groups, tickets, or similar created by one of its accounts). " +
-                    "This safety check only lets you delete universities with no real usage yet.";
+                await tx.RollbackAsync();
+                _logger.LogWarning(ex, "Delete blocked for university {Code}.", code);
+
+                // Say what is actually holding the row, rather than guessing.
+                // The old message named a fixed list, so an admin blocked by
+                // something else was sent looking in the wrong place.
+                var blockers = await DescribeRemainingActivityAsync(code);
+
+                TempData["Error"] = blockers.Count > 0
+                    ? $"Couldn't delete {university.Name} — it still has {NaturalList(blockers)} attached. " +
+                      "Remove those first; this safety check only lets you delete universities with no real usage left."
+                    : $"Couldn't delete {university.Name} — something still references it. " +
+                      "The server log has the details.";
             }
 
             return RedirectToAction(nameof(Index));
         }
+
+        /// <summary>
+        /// Lists, in plain words, what is still pointing at a university after a
+        /// failed teardown.
+        ///
+        /// Only the ON DELETE NO_ACTION relationships are worth naming — the
+        /// cascading ones (courses, settings, service enablement, ticket
+        /// categories, the company account) can never be the obstacle. Counting
+        /// rather than loading, so the change tracker left dirty by the failed
+        /// SaveChanges cannot colour the answer.
+        /// </summary>
+        private async Task<List<string>> DescribeRemainingActivityAsync(string code)
+        {
+            var found = new List<string>();
+
+            void Note(int count, string singular, string plural)
+            {
+                if (count > 0) found.Add($"{count} {(count == 1 ? singular : plural)}");
+            }
+
+            Note(await _db.Rides.CountAsync(r => r.UniversityCode == code), "ride", "rides");
+            Note(await _db.Tickets.CountAsync(t => t.UniversityCode == code), "support ticket", "support tickets");
+            Note(await _db.Clubs.CountAsync(c => c.UniversityCode == code), "club", "clubs");
+            Note(await _db.AttendanceSessions.CountAsync(a => a.UniversityCode == code), "attendance session", "attendance sessions");
+            Note(await _db.StudyGroups.CountAsync(g => g.UniversityCode == code), "study group", "study groups");
+
+            // Accounts are deleted by the teardown itself, so listing them
+            // alongside a real blocker just adds noise — an account almost
+            // always survives BECAUSE it created one of the things above. Only
+            // worth naming when it is the one thing left unexplained.
+            if (found.Count == 0)
+                Note(await _userManager.Users.CountAsync(u => u.UniversityCode == code), "user account", "user accounts");
+
+            return found;
+        }
+
+        private static string NaturalList(IReadOnlyList<string> items) => items.Count switch
+        {
+            1 => items[0],
+            2 => $"{items[0]} and {items[1]}",
+            _ => $"{string.Join(", ", items.Take(items.Count - 1))}, and {items[^1]}"
+        };
 
         // ---------- SERVICES (GET): the enablement checklist for one university ---
         public async Task<IActionResult> Services(string code)
