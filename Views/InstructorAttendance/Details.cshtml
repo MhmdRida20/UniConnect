@@ -196,7 +196,10 @@
      hidden></div>
 
 @section Scripts {
-    <script src="https://unpkg.com/qrcode@1.5.0/build/qrcode.js"></script>
+    @* Local, not unpkg: a CDN outage mid-class would leave the instructor with
+       no QR to project, and the token fallback is a poor substitute in a
+       lecture theatre. Same file, version-pinned, served from wwwroot. *@
+    <script src="~/lib/qrcode/qrcode.js" asp-append-version="true"></script>
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/pages/attendance-details.js" asp-append-version="true"></script>
 }
