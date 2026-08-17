@@ -1490,6 +1490,28 @@ LIKELY QUESTIONS, AND THE SHORT ANSWERS
   submitted, which is why it appears on the security slide rather than the
   future-work one. Offer to demonstrate the QR enrolment.
 
+"Does two-factor work on the mobile app?"
+  No, and that is deliberate rather than unfinished. The mobile API validates
+  the password only, so leaving it alone would have meant a student could
+  enable 2FA on the web and still be let into the app with a password alone —
+  the second factor would have been decorative. The API refuses those accounts
+  with a clear message instead, and the enrolment page says so before the
+  student opts in. Accepting a code in the login request is the next step; it
+  needs a mobile release.
+
+"How do you know an authenticator app will actually accept your QR code?"
+  We compute the TOTP independently — in the test suite and again in an
+  end-to-end script — from nothing but the shared key and the clock, which is
+  exactly what a phone has. The server accepts those codes. We also loaded the
+  QR library outside the browser and had it encode the real provisioning URI.
+
+"What if a student loses their phone?"
+  Ten single-use recovery codes, shown once behind an explicit confirmation,
+  with copy, download and print. If those are gone too, an administrator can
+  reset the second factor — and that reset writes an audit entry naming the
+  administrator who did it, which is what keeps the escape hatch from being a
+  back door.
+
 "Why not just build this into the LMS?"
   Because it would require the university to let a third party write into its
   system of record. Our whole architecture exists to avoid asking for that.

@@ -6,19 +6,39 @@ Written 16 August 2026. **Rechecked line-by-line 17 August 2026** — every file
 reference, line number and claim below was re-verified against the working tree
 on that date. Corrections from the recheck are marked **[verified 17 Aug]**.
 
-## Status as of 17 August 2026: nothing has been implemented yet
+## Status: BOTH PHASES COMPLETE — 17 August 2026
+
+Implemented on branch `feature/two-factor`, in four commits.
 
 | | |
 | --- | --- |
-| 2FA pages scaffolded | **None.** `Areas/Identity/Pages/Account/` holds only Login, Register, RegisterChoice, RegisterInstructor, RegisterStaff |
-| Local QR library | **None.** `wwwroot/lib` contains no qrcode file |
-| `RequiresTwoFactor` branch | **Still missing.** The lockout bug below is live |
-| Scaffolder CLI | **Not installed** (see step 2) |
-| Test baseline | **271 passed, 0 failed** — re-run 17 Aug, still green |
+| `RequiresTwoFactor` branch | **Fixed** — `e25b451`, with a regression test |
+| 2FA pages | **8 scaffolded and restyled** onto `_AuthLayout` / the portal layouts |
+| QR enrolment | **Working**, from a local `wwwroot/lib/qrcode/qrcode.js` |
+| Mobile bypass | **Closed** — the API returns 403 for a 2FA account |
+| Admin reset | **Added and audited** on the Manage Users screen |
+| Unit tests | **290 passed, 0 failed** (was 271) |
+| End-to-end smoke | **23 passed, 0 failed** — `test/smoke/two_factor_e2e.py` |
+| Demo database | **Clean** — no account left with `TwoFactorEnabled = 1` |
 
-**The deck already claims 2FA as shipped** (slide 12), and the Q&A notes offer to
-demonstrate QR enrolment. Until phase 1 and 2 actually land, that offer cannot be
-honoured. See the last section for what to change if they do not.
+The deck's claim on slide 12 is therefore now true, and the Q&A offer to
+demonstrate QR enrolment can be honoured.
+
+**Two things found during implementation that this plan had not predicted** —
+both were 500 errors invisible to a compile and to the unit suite:
+
+1. `Disable2fa` and `GenerateRecoveryCodes` **throw** `InvalidOperationException`
+   on GET *and* POST whenever 2FA is not currently enabled. A bookmarked URL,
+   the back button after disabling, or a double-submitted form all reach them
+   legitimately. Fixed to redirect (`063c90b`).
+2. The scaffolder emits `_ManageNav.cshtml` linking to `./Index`, `./Email`,
+   `./ChangePassword`, `./PersonalData` — **none of which exist in this
+   project**, and `asp-page` to a missing page throws at request time. Deleted,
+   along with `ManageNavPages.cs`; the 2FA pages are reached from the existing
+   Profile screen instead.
+
+Both were caught only by driving a running server. That is why
+`test/smoke/two_factor_e2e.py` now exists.
 
 ---
 
@@ -81,17 +101,21 @@ removes the single most dangerous category of failure from the work.
 
 ## Timing — read before you start
 
-**[verified 17 Aug] It is now Monday 17 August. The defence is tomorrow.** This
-section was written assuming a working day plus a buffer; that buffer is gone.
-Read the recheck findings before deciding to start — in particular step 8, which
-needs roughly half a day of test-harness work that did not exist in the original
-estimate. If you begin now, the realistic scope for today is **step 1 alone**:
-the `RequiresTwoFactor` fix plus its regression test. That is worth doing on its
-own merits — it removes a live lockout bug — but it is not "2FA shipped", and
-the deck must be corrected accordingly (last section).
+**Both phases landed on 17 August.** The guidance below is kept as the record of
+how the work was sequenced, and still governs the merge.
 
 The defence is **Tuesday 18 August**. This is authentication code; a mistake
 locks people out of the system you are about to demonstrate.
+
+**Before demoing, confirm:**
+
+```sql
+SELECT COUNT(*) FROM AspNetUsers WHERE TwoFactorEnabled = 1;   -- expect 0
+```
+
+The demo account must not have 2FA on, because the mobile app refuses those
+accounts by design (step 7). Enrol a *separate* account if you want to show
+the QR flow live.
 
 - Do all of this **on a branch**, never on `main`.
 - Keep `main` in its current demo-ready state until phase 1 is fully tested.
