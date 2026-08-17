@@ -1,0 +1,105 @@
+@page
+@model EnableAuthenticatorModel
+@{
+    ViewData["Title"] = "Set up authenticator app";
+}
+
+<div class="container form-page" style="padding-top:1.5rem;">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a asp-page="./TwoFactorAuthentication" class="btn btn-sm btn-outline-secondary">
+            <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>
+        </a>
+        <h2 class="mb-0">Set up authenticator app</h2>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+    <div class="uc-form-card mb-3">
+        <ol class="mb-0" style="padding-left:1.1rem;">
+            <li class="mb-3">
+                <strong>Install an authenticator app</strong>
+                <p class="text-muted small mb-0">
+                    Google Authenticator, Microsoft Authenticator, or Authy — all free,
+                    and all work offline. Any one of them is fine.
+                </p>
+            </li>
+
+            <li class="mb-3">
+                <strong>Add UniConnect to the app</strong>
+
+                @* Phase 2 renders a QR code into this container. Until then — and
+                   whenever the renderer fails to load — the manual key below is
+                   the working path, not a fallback bolted on afterwards. *@
+                <div id="qrCode" class="my-2"></div>
+                <div id="qrCodeData" data-url="@Model.AuthenticatorUri" hidden></div>
+
+                <p class="text-muted small mb-2">
+                    Choose <em>enter a setup key</em> in the app, then type this key:
+                </p>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                    <code id="sharedKey"
+                          style="font-size:1.05rem;letter-spacing:.06em;background:#f1f5f9;
+                                 padding:.5rem .75rem;border-radius:8px;user-select:all;">@Model.SharedKey</code>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-copy-target="sharedKey">
+                        <svg class="hgi hgi-sm me-1"><use href="#i-copy"></use></svg>Copy
+                    </button>
+                </div>
+
+                <p class="text-muted small mb-0">
+                    Spaces are for readability — the app accepts it with or without them.
+                    Set the account type to <strong>time-based</strong> if asked.
+                </p>
+            </li>
+
+            <li>
+                <strong>Enter the code the app shows</strong>
+                <p class="text-muted small mb-2">
+                    The code changes every 30 seconds. If it is rejected, wait for the
+                    next one rather than retyping the same digits.
+                </p>
+
+                <form method="post" class="row g-2 align-items-start" style="max-width:26rem;">
+                    @Html.AntiForgeryToken()
+                    <div class="col-auto">
+                        <input asp-for="Input.Code" class="form-control"
+                               autocomplete="off" inputmode="numeric" pattern="[0-9]*"
+                               maxlength="7" placeholder="000000"
+                               style="letter-spacing:.25em;font-size:1.05rem;width:9rem;" />
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Verify and turn on</button>
+                    </div>
+                    <div class="col-12">
+                        <span asp-validation-for="Input.Code" class="text-danger small"></span>
+                    </div>
+                </form>
+            </li>
+        </ol>
+    </div>
+
+    <div class="alert alert-info small">
+        After verifying, you will be shown <strong>10 recovery codes</strong>. Save them —
+        they are the only way back in if you lose your phone.
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Copy-to-clipboard for the manual key. Progressive: if the Clipboard
+        // API is unavailable the key is still selectable by hand (user-select:all).
+        document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var el = document.getElementById(btn.dataset.copyTarget);
+                if (!el || !navigator.clipboard) return;
+                navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+                    var original = btn.innerHTML;
+                    btn.innerHTML = 'Copied';
+                    setTimeout(function () { btn.innerHTML = original; }, 1500);
+                });
+            });
+        });
+    </script>
+}

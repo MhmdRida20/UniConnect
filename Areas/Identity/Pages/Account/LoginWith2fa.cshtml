@@ -1,0 +1,56 @@
+@page
+@model LoginWith2faModel
+@{
+    ViewData["Title"] = "Two-factor authentication";
+    ViewData["AuthMode"] = "login";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<form method="post" class="auth-form" asp-route-returnUrl="@Model.ReturnUrl">
+    <div class="auth-head">
+        <span class="auth-head-ico"><svg class="hgi"><use href="#i-shield"></use></svg></span>
+        <h1 class="auth-title">Verify it's you</h1>
+        <p class="auth-subtitle">Open your authenticator app and enter the 6-digit code for UniConnect.</p>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="auth-summary text-danger" role="alert"></div>
+
+    <input asp-for="RememberMe" type="hidden" />
+
+    <div class="auth-field">
+        <span class="auth-field-ico"><svg class="hgi"><use href="#i-lock"></use></svg></span>
+        <div class="auth-float">
+            @* inputmode/pattern put the numeric keypad up on a phone, which is
+               where the code is being read from in the first place. *@
+            <input asp-for="Input.TwoFactorCode" id="Input_TwoFactorCode" class="auth-input"
+                   autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="7" autofocus placeholder=" " />
+            <label asp-for="Input.TwoFactorCode" class="auth-label">Authenticator code</label>
+        </div>
+    </div>
+    <span asp-validation-for="Input.TwoFactorCode" class="auth-error"></span>
+
+    <div class="auth-options">
+        <label class="auth-check" asp-for="Input.RememberMachine">
+            <input class="form-check-input" asp-for="Input.RememberMachine" />
+            @Html.DisplayNameFor(m => m.Input.RememberMachine)
+        </label>
+    </div>
+
+    <button type="submit" class="auth-submit">
+        <span>Verify and continue</span>
+        <svg class="hgi"><use href="#i-arrow-right"></use></svg>
+    </button>
+
+    @* Must be a visible link, not just a reachable URL: a student whose phone
+       is lost or reset has no other way back into their account. *@
+    <div class="auth-mini-links">
+        <a asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">
+            Lost your device? Use a recovery code
+        </a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

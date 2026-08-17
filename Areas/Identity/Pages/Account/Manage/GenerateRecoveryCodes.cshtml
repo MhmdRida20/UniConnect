@@ -1,0 +1,32 @@
+@page
+@model GenerateRecoveryCodesModel
+@{
+    ViewData["Title"] = "Reset recovery codes";
+}
+
+<div class="container form-page" style="padding-top:1.5rem;">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a asp-page="./TwoFactorAuthentication" class="btn btn-sm btn-outline-secondary">
+            <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>
+        </a>
+        <h2 class="mb-0">Reset recovery codes</h2>
+    </div>
+
+    <div class="uc-form-card">
+        <div class="alert alert-warning">
+            <strong>Any codes you already have will stop working.</strong>
+            Generating a new set replaces the old one entirely, so discard the old
+            list once you have saved the new one.
+        </div>
+
+        <p class="text-muted small mb-3">
+            You will get 10 fresh codes, shown once.
+        </p>
+
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-primary" type="submit">Generate new codes</button>
+            <a asp-page="./TwoFactorAuthentication" class="btn btn-outline-secondary ms-1">Cancel</a>
+        </form>
+    </div>
+</div>

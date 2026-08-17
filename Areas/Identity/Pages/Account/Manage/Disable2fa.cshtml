@@ -1,0 +1,33 @@
+@page
+@model Disable2faModel
+@{
+    ViewData["Title"] = "Turn off two-factor authentication";
+}
+
+<div class="container form-page" style="padding-top:1.5rem;">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a asp-page="./TwoFactorAuthentication" class="btn btn-sm btn-outline-secondary">
+            <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>
+        </a>
+        <h2 class="mb-0">Turn off two-factor authentication</h2>
+    </div>
+
+    <div class="uc-form-card">
+        <div class="alert alert-warning">
+            <strong>Your account will be protected by your password alone.</strong>
+            Anyone who learns it can sign in as you — including to your attendance
+            record and your internship applications.
+        </div>
+
+        <p class="text-muted small mb-3">
+            This does not remove your authenticator app setup. You can turn two-factor
+            back on later without re-scanning, unless you also reset the app.
+        </p>
+
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-danger" type="submit">Turn off two-factor</button>
+            <a asp-page="./TwoFactorAuthentication" class="btn btn-outline-secondary ms-1">Cancel</a>
+        </form>
+    </div>
+</div>

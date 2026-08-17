@@ -1,0 +1,13 @@
+@{
+    // Mirrors Views/Profile/Index.cshtml:6 — staff and company accounts live in
+    // the portal chrome, students in the main site layout. Set once here rather
+    // than repeated across the six 2FA pages.
+    var isPortalRole = User.IsInRole("Admin")
+        || User.IsInRole("UniversityAdmin")
+        || User.IsInRole("DepartmentStaff")
+        || User.IsInRole("Company");
+
+    Layout = isPortalRole
+        ? "~/Views/Shared/_PortalLayout.cshtml"
+        : "~/Views/Shared/_Layout.cshtml";
+}

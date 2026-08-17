@@ -71,6 +71,41 @@
         }
     </div>
 
+    @* Security lives on its own card rather than among the shortcuts below:
+       it applies to every role, and burying the only route to 2FA in a row of
+       student links would leave staff with no way to find it. *@
+    <div class="uc-form-card mb-3">
+        <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+            <div>
+                <strong>Two-factor authentication</strong>
+                <p class="text-muted small mb-0">
+                    @if (user?.TwoFactorEnabled == true)
+                    {
+                        <text>On — sign-in asks for a code from your authenticator app.</text>
+                    }
+                    else
+                    {
+                        <text>Off — add a second step to protect your account.</text>
+                    }
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                @if (user?.TwoFactorEnabled == true)
+                {
+                    <span class="uc-pill uc-pill-green">On</span>
+                }
+                else
+                {
+                    <span class="uc-pill uc-pill-grey">Off</span>
+                }
+                <a asp-area="Identity" asp-page="/Account/Manage/TwoFactorAuthentication"
+                   class="btn btn-outline-secondary btn-sm">
+                    @(user?.TwoFactorEnabled == true ? "Manage" : "Set up")
+                </a>
+            </div>
+        </div>
+    </div>
+
     @if (User.IsInRole("Student") && (ViewBag.ShowCareerProfile is true || ViewBag.ShowVehicles is true))
     {
         <div class="uc-form-card d-flex flex-wrap gap-2">

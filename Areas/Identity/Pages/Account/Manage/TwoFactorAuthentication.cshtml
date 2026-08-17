@@ -1,0 +1,123 @@
+@page
+@model TwoFactorAuthenticationModel
+@{
+    ViewData["Title"] = "Two-factor authentication";
+}
+
+<div class="container form-page" style="padding-top:1.5rem;">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a asp-controller="Profile" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <svg class="hgi hgi-sm"><use href="#i-arrow-left"></use></svg>
+        </a>
+        <h2 class="mb-0">Two-factor authentication</h2>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert @(Model.StatusMessage.StartsWith("Error") ? "alert-danger" : "alert-success") alert-dismissible fade show" role="alert">
+            @Model.StatusMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="uc-form-card mb-3">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+                        background:@(Model.Is2faEnabled ? "var(--uc-primary-tint,#e8f5ee)" : "#f1f5f9");">
+                <svg class="hgi" style="color:@(Model.Is2faEnabled ? "var(--uc-primary,#16a34a)" : "#64748b");"><use href="#i-shield"></use></svg>
+            </div>
+            <div>
+                <strong style="font-size:1.05rem;">
+                    @(Model.Is2faEnabled ? "Two-factor authentication is on" : "Two-factor authentication is off")
+                </strong>
+                <p class="text-muted small mb-0">
+                    @if (Model.Is2faEnabled)
+                    {
+                        <text>Signing in on the web needs your password and a code from your authenticator app.</text>
+                    }
+                    else
+                    {
+                        <text>Add a second step to your login using a free authenticator app.</text>
+                    }
+                </p>
+            </div>
+        </div>
+
+        @* The mobile consequence is stated here, before enrolment, so it is a
+           choice the student makes rather than something they discover at the
+           next login. See docs/TWO_FACTOR_PLAN.md step 7. *@
+        <div class="alert alert-warning small mb-3">
+            <strong>While two-factor is on, you can sign in on the web portal only.</strong>
+            The UniConnect mobile app will refuse the login until we add code entry to it.
+        </div>
+
+        @if (!Model.HasAuthenticator)
+        {
+            <a asp-page="./EnableAuthenticator" class="btn btn-primary">
+                <svg class="hgi hgi-sm me-1"><use href="#i-qr"></use></svg>Set up authenticator app
+            </a>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap gap-2">
+                @if (Model.Is2faEnabled)
+                {
+                    <a asp-page="./Disable2fa" class="btn btn-outline-danger">Turn off two-factor</a>
+                    <a asp-page="./GenerateRecoveryCodes" class="btn btn-outline-secondary">Reset recovery codes</a>
+                }
+                else
+                {
+                    <a asp-page="./EnableAuthenticator" class="btn btn-primary">Finish turning it on</a>
+                }
+                <a asp-page="./ResetAuthenticator" class="btn btn-outline-secondary">Change authenticator app</a>
+            </div>
+        }
+    </div>
+
+    @if (Model.Is2faEnabled)
+    {
+        <div class="uc-form-card mb-3">
+            <h5 class="mb-2">Recovery codes</h5>
+
+            @* Zero remaining is a genuine lockout waiting to happen: lose the
+               phone with no codes left and only an administrator can restore
+               access. Escalated visually for that reason. *@
+            @if (Model.RecoveryCodesLeft == 0)
+            {
+                <div class="alert alert-danger mb-2">
+                    <strong>You have no recovery codes left.</strong>
+                    If you lose your phone now, you will need an administrator to restore access.
+                    <a asp-page="./GenerateRecoveryCodes" class="alert-link">Generate a new set</a>.
+                </div>
+            }
+            else if (Model.RecoveryCodesLeft <= 3)
+            {
+                <div class="alert alert-warning mb-2">
+                    <strong>@Model.RecoveryCodesLeft recovery code(s) left.</strong>
+                    <a asp-page="./GenerateRecoveryCodes" class="alert-link">Generate a new set</a> soon.
+                </div>
+            }
+            else
+            {
+                <p class="text-muted small mb-2">
+                    <strong>@Model.RecoveryCodesLeft</strong> of 10 codes remaining. Each one works once.
+                </p>
+            }
+        </div>
+
+        @if (Model.IsMachineRemembered)
+        {
+            <div class="uc-form-card">
+                <h5 class="mb-2">This browser</h5>
+                <p class="text-muted small mb-3">
+                    This browser is remembered, so it is not asking for a code. Forget it if
+                    the device is shared or no longer yours.
+                </p>
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-secondary">Forget this browser</button>
+                </form>
+            </div>
+        }
+    }
+</div>
