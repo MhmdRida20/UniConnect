@@ -59,10 +59,12 @@
                     <input asp-for="ApiBaseUrl" class="form-control" placeholder="https://api.example-university.edu" />
                 </div>
                 <span asp-validation-for="ApiBaseUrl" class="text-danger"></span>
-                <small class="text-muted d-block mt-1">
-                    No real university API to point at yet? This project includes a working simulated one —
-                    use <code>@Context.Request.Scheme://@Context.Request.Host/external-api/v1</code> to try the integration end-to-end.
-                </small>
+                @* Style-dependent, because this field genuinely means different
+                   things: the simulator is addressed at its versioned path, while
+                   the real adapter appends "v1/" itself and needs the bare host.
+                   A single hint showing the /v1 form taught people to paste a
+                   path that produces 404 on every call. *@
+                <small class="text-muted d-block mt-1" id="apiUrlHint"></small>
 
                 <label asp-for="ApiKey" class="form-label mt-3"></label>
                 <div class="input-group">
@@ -162,11 +164,29 @@
                 'in at least 4 courses) for it — every university gets its own data, never shared with another.';
             const realHint = 'Paste the API key the university gave you directly — there is nothing to generate here.';
 
+            const urlHint = document.getElementById('apiUrlHint');
+            const urlInput = document.querySelector('[name="ApiBaseUrl"]');
+
+            const simulatedUrlHint = 'No real university API to point at yet? This project includes a working simulated one — use ' +
+                window.location.origin + '/external-api/v1 to try the integration end-to-end.';
+            // The adapter sets this as the HttpClient BaseAddress and then requests
+            // "v1/courses", "v1/students/…" itself, so anything beyond the host
+            // becomes a prefix on every call — a Swagger UI address gives 404.
+            const realUrlHint = 'Enter the API root only, with no path — e.g. http://85.112.66.69:809. ' +
+                'Do not include /v1 or /swagger: UniConnect adds the version and endpoint to every request itself.';
+
             function applyStyle() {
                 const isReal = styleSelect.value === 'Ums';
                 generateBtn.style.display = isReal ? 'none' : '';
                 hint.textContent = isReal ? realHint : simulatedHint;
                 keyInput.placeholder = isReal ? 'Paste the real API key here' : 'Click Generate →';
+
+                urlHint.textContent = isReal ? realUrlHint : simulatedUrlHint;
+                if (urlInput) {
+                    urlInput.placeholder = isReal
+                        ? 'http://host:port'
+                        : window.location.origin + '/external-api/v1';
+                }
             }
 
             styleSelect.addEventListener('change', applyStyle);
