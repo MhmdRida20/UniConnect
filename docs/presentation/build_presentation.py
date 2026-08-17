@@ -647,7 +647,7 @@ def slide_stack(prs):
         ("i-bell", "Real-time", "SignalR across 6 hubs: group chat, notifications, live ride tracking, attendance, clubs and tickets."),
         ("i-id", "Identity", "ASP.NET Core Identity. Cookie authentication for the web session, JWT bearer for mobile — one account per student, either way in."),
         ("i-target", "Matching", "TF-IDF and cosine similarity over skills, completed coursework, major and interests."),
-        ("i-check-circle", "Testing", "xUnit against a real file-backed SQLite database — 271 tests covering the highest-risk rules."),
+        ("i-check-circle", "Testing", "xUnit against a real file-backed SQLite database — 290 tests covering the highest-risk rules."),
     ]
     cw = (CW - 2 * 0.28) / 3
     ch = 1.72
@@ -1156,7 +1156,7 @@ def slide_security(prs):
     enforced = [
         ("Tenant isolation in the database. ", "Every service row carries a UniversityCode, so isolation survives an application bug."),
         ("A read-only adapter. ", "UniConnect cannot write to university records, by construction."),
-        ("Two-factor authentication. ", "TOTP under RFC 6238, enrolled by scanning a QR code so the secret is never typed."),
+        ("Two-factor authentication (web). ", "TOTP under RFC 6238, enrolled by QR so the secret is never typed; the mobile API refuses 2FA accounts."),
         ("Two schemes, one identity. ", "Cookie for web, JWT for mobile, one Identity store."),
         ("Role-based authorization, ", "with denied attempts written to the audit log."),
         ("Anti-forgery tokens ", "on every state-changing web action."),
@@ -1308,13 +1308,13 @@ def slide_evidence(prs):
     y = heading(s, "Evidence", "What was actually built and verified.")
 
     stats = [
-        ("271", "passing tests"),
-        ("~28,700", "lines of hand-written C#"),
+        ("290", "passing tests"),
+        ("~32,300", "lines of hand-written C#"),
         ("37", "database tables"),
-        ("172", "controller actions"),
+        ("174", "controller actions"),
     ]
     stats2 = [
-        ("21", "services"),
+        ("22", "service classes"),
         ("6", "SignalR hubs"),
         ("33", "EF Core migrations"),
         ("2", "provider implementations"),
@@ -1348,7 +1348,7 @@ SPEAKER A  ·  45 sec  ·  110 words
 Briefly, the scale — a defence should point at something concrete.
 
 About twenty-eight thousand seven hundred lines of hand-written C#, excluding
-generated migrations. Thirty-seven tables, a hundred and seventy-two controller
+generated migrations. Thirty-seven tables, a hundred and seventy-four controller
 actions, six SignalR hubs. Two provider implementations — the adapter claim in
 numeric form.
 
@@ -1372,14 +1372,16 @@ def slide_future(prs):
          "SignalR-backed chat, live ride tracking and push notifications, bringing "
          "the mobile client up to the real-time behaviour the web portal already has."),
         ("i-car", "Full mobile coverage",
-         "Ride Sharing, Clubs and Complaints as complete mobile modules, plus a "
-         "dedicated endpoint for the cross-module My Activity view."),
+         "Clubs and Complaints as complete mobile modules, plus a dedicated "
+         "endpoint for the cross-module My Activity view, and code entry so "
+         "two-factor accounts can sign in on the app."),
         ("i-cloud-sync", "Close the partner-API gaps",
          "An instructor and staff directory, and either a bulk student endpoint or "
          "a documented workaround. Both are already raised with the partner university."),
         ("i-check-circle", "Test depth",
-         "End-to-end tests through a real HTTP pipeline, and a formal authorization "
-         "matrix asserting each role reaches exactly the endpoints it should."),
+         "Extend end-to-end HTTP testing beyond authentication to every module, "
+         "and add a formal authorization matrix asserting each role reaches "
+         "exactly the endpoints it should."),
         ("i-shield", "Data protection",
          "A retention and erasure policy, self-service export and delete, full "
          "disclosure at the point of collection, and a formal DPIA."),
@@ -1445,8 +1447,8 @@ def slide_close(prs):
     n2 = len(s.shapes)
 
     # the headline numbers, at the moment the room is paying most attention
-    stats = [("9", "services"), ("271", "passing tests"),
-             ("2", "universities integrated"), ("~28,700", "lines of C#")]
+    stats = [("9", "services"), ("290", "passing tests"),
+             ("2", "universities integrated"), ("~32,300", "lines of C#")]
     band_w, band_h = 9.40, 1.16
     bx = mid - band_w / 2
     # translucent, so the constellation reads through it as glass
